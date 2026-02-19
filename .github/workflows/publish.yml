@@ -21,6 +21,7 @@ jobs:
           node-version: 22
           cache: npm
           registry-url: https://registry.npmjs.org
+          scope: '@github-ui'
       - run: npm ci
       - run: npm run build
       - name: Create release PR or publish
@@ -32,4 +33,3 @@ jobs:
           commit: "chore: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
