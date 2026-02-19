@@ -9,11 +9,9 @@
   "dependencies": {
     "@github-ui/storybook-addon-performance-panel": "*",
     "@storybook/addon-docs": "^10.2.10",
-    "react": "^19",
-    "react-dom": "^19"
-  },
-  "devDependencies": {
     "@storybook/react-vite": "^10",
+    "react": "^19",
+    "react-dom": "^19",
     "storybook": "^10"
   }
 }

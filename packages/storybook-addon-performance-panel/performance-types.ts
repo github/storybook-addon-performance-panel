@@ -598,6 +598,32 @@ export const DEFAULT_METRICS: PerformanceMetrics = {
 // Utility Types
 // ============================================================================
 
+// ============================================================================
+// Story Parameters
+// ============================================================================
+
+/**
+ * Parameters for the performance panel addon.
+ *
+ * Set via `parameters.performancePanel` on a story, component, or globally.
+ *
+ * @example
+ * // Disable monitoring for a single story
+ * export const Static = {
+ *   parameters: { performancePanel: { disable: true } },
+ * }
+ *
+ * @example
+ * // Disable for all stories in a file
+ * export default {
+ *   parameters: { performancePanel: { disable: true } },
+ * }
+ */
+export interface PerformancePanelParameters {
+  /** When true, skips performance monitoring for this story. */
+  disable?: boolean
+}
+
 /** Status variant for color-coded display */
 export type StatusVariant = 'success' | 'warning' | 'error' | 'neutral'
 

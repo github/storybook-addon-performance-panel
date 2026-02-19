@@ -368,6 +368,10 @@ export const ProfiledComponent = memo(function ProfiledComponent({
  * @see {@link PerformanceMetrics} - The metrics sent to the panel
  */
 export const withPerformanceMonitor: Decorator = (Story, ctx) => {
+  const params = ctx.parameters.performancePanel as {disable?: boolean} | undefined
+  if (params?.disable) {
+    return <Story />
+  }
   const storyId = ctx.id
   const profilerId = `Story(${storyId})`
   return (
