@@ -2,10 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, changeset-release/main]
   pull_request:
     branches: [main]
   merge_group:
+  workflow_dispatch:
 
 permissions:
   contents: read
