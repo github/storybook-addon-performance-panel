@@ -2,6 +2,9 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {PaintCollector} from '../paint-collector'
 
+/** Wait for pending idle callbacks to complete */
+const waitForIdleScan = () => new Promise<void>(resolve => setTimeout(resolve, 50))
+
 describe('PaintCollector', () => {
   let collector: PaintCollector
   let paintObserverCallback: PerformanceObserverCallback | null = null
@@ -144,13 +147,14 @@ describe('PaintCollector', () => {
   })
 
   describe('updateCompositorLayers', () => {
-    it('counts elements with will-change', () => {
+    it('counts elements with will-change', async () => {
       const el = document.createElement('div')
       el.style.willChange = 'transform'
       document.body.appendChild(el)
 
       collector.start()
       collector.updateCompositorLayers()
+      await waitForIdleScan()
 
       const metrics = collector.getMetrics()
       expect(metrics.compositorLayers).toBeGreaterThanOrEqual(1)
@@ -158,7 +162,7 @@ describe('PaintCollector', () => {
       document.body.removeChild(el)
     })
 
-    it('counts elements with 3D transforms', () => {
+    it('counts elements with 3D transforms', async () => {
       const el = document.createElement('div')
       // Use non-zero value - translateZ(0) may be optimized to 2D matrix
       el.style.transform = 'translateZ(1px)'
@@ -166,6 +170,7 @@ describe('PaintCollector', () => {
 
       collector.start()
       collector.updateCompositorLayers()
+      await waitForIdleScan()
 
       const metrics = collector.getMetrics()
       expect(metrics.compositorLayers).toBeGreaterThanOrEqual(1)
@@ -173,13 +178,14 @@ describe('PaintCollector', () => {
       document.body.removeChild(el)
     })
 
-    it('does not count 2D transforms', () => {
+    it('does not count 2D transforms', async () => {
       const el = document.createElement('div')
       el.style.transform = 'translateX(10px)'
       document.body.appendChild(el)
 
       collector.start()
       collector.updateCompositorLayers()
+      await waitForIdleScan()
 
       const metrics = collector.getMetrics()
       // Should not count 2D transforms as compositor layers
@@ -189,24 +195,36 @@ describe('PaintCollector', () => {
       document.body.removeChild(el)
     })
 
-    it('throttles checks to every 3 seconds', () => {
+    it('throttles checks to every 3 seconds', async () => {
       collector.start()
       collector.updateCompositorLayers()
+      await waitForIdleScan()
 
       const firstCount = collector.getMetrics().compositorLayers
+      expect(firstCount).not.toBeNull()
 
       // Add an element
       const el = document.createElement('div')
       el.style.willChange = 'transform'
       document.body.appendChild(el)
 
-      // Call again immediately - should be throttled
+      // Call again immediately - should be throttled (no new scan scheduled)
       collector.updateCompositorLayers()
+      await waitForIdleScan()
 
       const secondCount = collector.getMetrics().compositorLayers
       expect(secondCount).toBe(firstCount) // Should not have updated
 
       document.body.removeChild(el)
+    })
+
+    it('defers scan to idle callback instead of running synchronously', () => {
+      collector.start()
+      collector.updateCompositorLayers()
+
+      // Metrics should still be null immediately after calling updateCompositorLayers
+      // because the scan is deferred to requestIdleCallback
+      expect(collector.getMetrics().compositorLayers).toBeNull()
     })
   })
 
@@ -235,9 +253,10 @@ describe('PaintCollector', () => {
       expect(metrics.scriptEvalTime).toBe(0)
     })
 
-    it('forces compositor layer recheck on next update', () => {
+    it('forces compositor layer recheck on next update', async () => {
       collector.start()
       collector.updateCompositorLayers()
+      await waitForIdleScan()
 
       const el = document.createElement('div')
       el.style.willChange = 'transform'
@@ -245,6 +264,7 @@ describe('PaintCollector', () => {
 
       collector.reset()
       collector.updateCompositorLayers()
+      await waitForIdleScan()
 
       // After reset, the throttle should be cleared and update should run
       const metrics = collector.getMetrics()

@@ -12,13 +12,36 @@ export interface PaintMetrics {
 }
 
 /**
+ * Schedule work during browser idle periods.
+ * Falls back to setTimeout for environments without requestIdleCallback (e.g. Safari).
+ */
+function scheduleIdle(callback: () => void, options?: IdleRequestOptions): number {
+  if (typeof requestIdleCallback === 'function') {
+    return requestIdleCallback(callback, options)
+  }
+  return setTimeout(callback, 0) as unknown as number
+}
+
+function cancelIdle(id: number): void {
+  if (typeof cancelIdleCallback === 'function') {
+    cancelIdleCallback(id)
+  } else {
+    clearTimeout(id)
+  }
+}
+
+/**
  * Collects paint and resource timing metrics.
+ *
+ * Compositor layer scanning is deferred to idle periods via requestIdleCallback
+ * to avoid inflating frame timing and main thread metrics (observer effect).
  */
 export class PaintCollector implements MetricCollector<PaintMetrics> {
   #paintCount = 0
   #scriptEvalTime = 0
   #compositorLayers: number | null = null
   #lastLayerCheckTime = 0
+  #idleCallbackId: number | null = null
 
   /** Minimum interval between compositor layer checks (ms) */
   static readonly #LAYER_CHECK_INTERVAL = 3000
@@ -63,18 +86,29 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
     this.#resourceObserver?.disconnect()
     this.#paintObserver = null
     this.#resourceObserver = null
+    this.#cancelPendingScan()
   }
 
   reset(): void {
     this.#paintCount = 0
     this.#scriptEvalTime = 0
     this.#compositorLayers = null
-    this.#lastLayerCheckTime = 0 // Force recheck on next update
+    this.#lastLayerCheckTime = 0
+    this.#cancelPendingScan()
+  }
+
+  #cancelPendingScan(): void {
+    if (this.#idleCallbackId !== null) {
+      cancelIdle(this.#idleCallbackId)
+      this.#idleCallbackId = null
+    }
   }
 
   /**
    * Call periodically to update compositor layers count.
    * Throttled internally to run at most once every 3 seconds.
+   * The actual DOM scan is deferred to an idle callback to avoid
+   * inflating frame timing metrics with forced style recalculation.
    */
   updateCompositorLayers(): void {
     const now = performance.now()
@@ -85,8 +119,17 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
     }
     this.#lastLayerCheckTime = now
 
-    // Check computed styles for layer-promoting properties
-    // This is expensive but only runs every 3 seconds
+    // Cancel any pending scan before scheduling a new one
+    this.#cancelPendingScan()
+
+    // Defer DOM scan to idle period to avoid inflating frame metrics
+    this.#idleCallbackId = scheduleIdle(() => {
+      this.#idleCallbackId = null
+      this.#scanCompositorLayers()
+    }, {timeout: 1000})
+  }
+
+  #scanCompositorLayers(): void {
     let layerCount = 0
     const allElements = document.querySelectorAll('*')
     for (const el of allElements) {
@@ -105,11 +148,8 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
       }
 
       // 3D transforms promote to compositor layer
-      // Note: getComputedStyle may return matrix3d or the original function names
-      // depending on browser implementation
       const transform = style.transform
       if (transform && transform !== 'none') {
-        // Check for matrix3d (computed form) or explicit 3D transform functions
         if (
           transform.startsWith('matrix3d') ||
           /translate3d|translateZ|rotate3d|rotateX|rotateY|scale3d|perspective/i.test(transform)
