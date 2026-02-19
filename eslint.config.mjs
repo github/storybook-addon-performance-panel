@@ -1,18 +1,11 @@
 // @ts-check
-import {sortImportsConfig} from '@github-ui/eslintrc/configs/sort-imports'
+import eslint from '@eslint/js';
+import { defineConfig } from 'eslint/config';
+import tseslint from 'typescript-eslint';
 
-export default [
-  ...defaultConfig,
-  sortImportsConfig,
-  {
-    // Ignore the dist folder (bundled output), build script, and manual .d.ts files
-    ignores: ['dist/**', 'build.ts', '*.d.ts'],
-  },
-  {
-    // Allow Node.js imports in the preset file (runs in Node.js context)
-    files: ['preset.ts'],
-    rules: {
-      'import/no-nodejs-modules': 'off',
-    },
-  },
-]
+export default defineConfig(
+  eslint.configs.recommended,
+  tseslint.configs.strictTypeChecked,
+  tseslint.configs.stylisticTypeChecked,
+
+);
