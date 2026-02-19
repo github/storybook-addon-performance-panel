@@ -1,4 +1,4 @@
-import {Meta} from 'storybook/blocks'
+import {Meta} from '@storybook/addon-docs/blocks'
 
 <Meta title="Guides/Collectors" />
 
@@ -8,19 +8,85 @@ The addon uses modular collector classes for metrics gathering. Each collector u
 
 ## Overview
 
-| Collector | Method | Type | Browser Support |
-|-----------|--------|------|-----------------|
-| **FrameTimingCollector** | `requestAnimationFrame` loop | Heuristic | All |
-| **InputCollector** | Event Timing API | **Optimal** | Chrome 96+, Firefox 144+ |
-| **MainThreadCollector** | Long Tasks API | **Optimal** | Chrome 58+ |
-| **LongAnimationFrameCollector** | LoAF API | **Optimal** | Chrome 123+ |
-| **ElementTimingCollector** | Element Timing API | **Optimal** | Chrome 77+ |
-| **LayoutShiftCollector** | Layout Instability API | **Optimal** | Chrome 77+ |
-| **MemoryCollector** | `performance.memory` | **Optimal** | Chrome only |
-| **PaintCollector** | Paint Timing API | **Optimal** | All |
-| **StyleMutationCollector** | `MutationObserver` | Heuristic | All |
-| **ForcedReflowCollector** | Property getter instrumentation | Heuristic | All |
-| **ReactProfilerCollector** | React Profiler API | **Optimal** | All |
+<table>
+  <thead>
+    <tr>
+      <th>Collector</th>
+      <th>Method</th>
+      <th>Type</th>
+      <th>Browser Support</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>FrameTimingCollector</strong></td>
+      <td><code>requestAnimationFrame</code> loop</td>
+      <td>Heuristic</td>
+      <td>All</td>
+    </tr>
+    <tr>
+      <td><strong>InputCollector</strong></td>
+      <td>Event Timing API</td>
+      <td><strong>Optimal</strong></td>
+      <td>Chrome 96+, Firefox 144+</td>
+    </tr>
+    <tr>
+      <td><strong>MainThreadCollector</strong></td>
+      <td>Long Tasks API</td>
+      <td><strong>Optimal</strong></td>
+      <td>Chrome 58+</td>
+    </tr>
+    <tr>
+      <td><strong>LongAnimationFrameCollector</strong></td>
+      <td>LoAF API</td>
+      <td><strong>Optimal</strong></td>
+      <td>Chrome 123+</td>
+    </tr>
+    <tr>
+      <td><strong>ElementTimingCollector</strong></td>
+      <td>Element Timing API</td>
+      <td><strong>Optimal</strong></td>
+      <td>Chrome 77+</td>
+    </tr>
+    <tr>
+      <td><strong>LayoutShiftCollector</strong></td>
+      <td>Layout Instability API</td>
+      <td><strong>Optimal</strong></td>
+      <td>Chrome 77+</td>
+    </tr>
+    <tr>
+      <td><strong>MemoryCollector</strong></td>
+      <td><code>performance.memory</code></td>
+      <td><strong>Optimal</strong></td>
+      <td>Chrome only</td>
+    </tr>
+    <tr>
+      <td><strong>PaintCollector</strong></td>
+      <td>Paint Timing API</td>
+      <td><strong>Optimal</strong></td>
+      <td>All</td>
+    </tr>
+    <tr>
+      <td><strong>StyleMutationCollector</strong></td>
+      <td><code>MutationObserver</code></td>
+      <td>Heuristic</td>
+      <td>All</td>
+    </tr>
+    <tr>
+      <td><strong>ForcedReflowCollector</strong></td>
+      <td>Property getter instrumentation</td>
+      <td>Heuristic</td>
+      <td>All</td>
+    </tr>
+    <tr>
+      <td><strong>ReactProfilerCollector</strong></td>
+      <td>React Profiler API</td>
+      <td><strong>Optimal</strong></td>
+      <td>All</td>
+    </tr>
+  </tbody>
+</table>
+
 
 **Optimal** = Uses the browser's native/standard API designed for this measurement.
 **Heuristic** = Uses indirect measurement techniques; accuracy may vary.

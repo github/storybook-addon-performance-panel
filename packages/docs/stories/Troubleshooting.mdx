@@ -1,4 +1,4 @@
-import {Meta} from 'storybook/blocks'
+import {Meta} from '@storybook/addon-docs/blocks'
 
 <Meta title="Guides/Troubleshooting" />
 
@@ -8,13 +8,37 @@ import {Meta} from 'storybook/blocks'
 
 Start by scanning these key indicators:
 
-| Check | What to Look For |
-|-------|------------------|
-| **FPS** | Should be 55–60. Sustained drops indicate rendering issues |
-| **INP** | Should be &lt;200ms. High values mean slow user interactions |
-| **Long Tasks** | Should be 0–1. More than 5 indicates main thread blocking |
-| **CLS** | Should be 0. Any value suggests layout instability |
-| **Slow Updates** | Should be 0. Non-zero means React renders exceed frame budget |
+<table>
+  <thead>
+    <tr>
+      <th>Check</th>
+      <th>What to Look For</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>FPS</strong></td>
+      <td>Should be 55–60. Sustained drops indicate rendering issues</td>
+    </tr>
+    <tr>
+      <td><strong>INP</strong></td>
+      <td>Should be &lt;200ms. High values mean slow user interactions</td>
+    </tr>
+    <tr>
+      <td><strong>Long Tasks</strong></td>
+      <td>Should be 0–1. More than 5 indicates main thread blocking</td>
+    </tr>
+    <tr>
+      <td><strong>CLS</strong></td>
+      <td>Should be 0. Any value suggests layout instability</td>
+    </tr>
+    <tr>
+      <td><strong>Slow Updates</strong></td>
+      <td>Should be 0. Non-zero means React renders exceed frame budget</td>
+    </tr>
+  </tbody>
+</table>
+
 
 ## Debugging Workflow
 
@@ -69,11 +93,33 @@ Start by scanning these key indicators:
 
 **Interpreting the timing breakdown** (`[wait Xms] → [js Xms] → [paint Xms]`):
 
-| Phase | If High... | Common Causes |
-|-------|------------|---------------|
-| **Wait** (input delay) | Main thread blocked | Long tasks running before click |
-| **JS** (processing time) | Expensive handler | Complex state updates, sync operations |
-| **Paint** (presentation delay) | Expensive render | Large DOM changes, layout recalculation |
+<table>
+  <thead>
+    <tr>
+      <th>Phase</th>
+      <th>If High...</th>
+      <th>Common Causes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Wait</strong> (input delay)</td>
+      <td>Main thread blocked</td>
+      <td>Long tasks running before click</td>
+    </tr>
+    <tr>
+      <td><strong>JS</strong> (processing time)</td>
+      <td>Expensive handler</td>
+      <td>Complex state updates, sync operations</td>
+    </tr>
+    <tr>
+      <td><strong>Paint</strong> (presentation delay)</td>
+      <td>Expensive render</td>
+      <td>Large DOM changes, layout recalculation</td>
+    </tr>
+  </tbody>
+</table>
+
 
 **Fixes:**
 - Break up long tasks with `scheduler.yield()` or `setTimeout`
@@ -128,12 +174,50 @@ element.style.width = '100px'        // Write after
 
 ## Metric Correlations
 
-| If you see... | Also check... | Likely cause |
-|---------------|---------------|--------------|
-| Low FPS + High Long Tasks | TBT, Longest Task | Heavy JS execution |
-| Low FPS + High Style Writes | Thrashing, Forced Reflows | Layout thrashing |
-| High INP + High Wait phase | Long Tasks | Blocked main thread |
-| High INP + High JS phase | Slow Updates, P95 | Expensive handlers |
-| High INP + High Paint phase | CLS, DOM Churn | Expensive rendering |
-| Rising Memory + High DOM Churn | DOM Elements | DOM leak |
-| Render Cascades &gt; 0 | Slow Updates | useLayoutEffect issues |
+<table>
+  <thead>
+    <tr>
+      <th>If you see...</th>
+      <th>Also check...</th>
+      <th>Likely cause</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Low FPS + High Long Tasks</td>
+      <td>TBT, Longest Task</td>
+      <td>Heavy JS execution</td>
+    </tr>
+    <tr>
+      <td>Low FPS + High Style Writes</td>
+      <td>Thrashing, Forced Reflows</td>
+      <td>Layout thrashing</td>
+    </tr>
+    <tr>
+      <td>High INP + High Wait phase</td>
+      <td>Long Tasks</td>
+      <td>Blocked main thread</td>
+    </tr>
+    <tr>
+      <td>High INP + High JS phase</td>
+      <td>Slow Updates, P95</td>
+      <td>Expensive handlers</td>
+    </tr>
+    <tr>
+      <td>High INP + High Paint phase</td>
+      <td>CLS, DOM Churn</td>
+      <td>Expensive rendering</td>
+    </tr>
+    <tr>
+      <td>Rising Memory + High DOM Churn</td>
+      <td>DOM Elements</td>
+      <td>DOM leak</td>
+    </tr>
+    <tr>
+      <td>Render Cascades &gt; 0</td>
+      <td>Slow Updates</td>
+      <td>useLayoutEffect issues</td>
+    </tr>
+  </tbody>
+</table>
+

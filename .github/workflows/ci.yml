@@ -21,6 +21,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run build
       - run: npm run lint
 
   typecheck:
@@ -33,6 +34,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run build
       - run: npm run tsc
 
   test:
@@ -49,7 +51,7 @@ jobs:
       - run: npm test
 
   build:
-    name: Build addon
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +60,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - run: npm run docs:build
       - uses: actions/upload-artifact@v4
         with:
           name: addon-dist
