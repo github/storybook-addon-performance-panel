@@ -1,0 +1,528 @@
+import {Meta} from '@storybook/addon-docs/blocks'
+
+<Meta title="Guides/Metrics Reference" />
+
+# Metrics Reference
+
+Every metric collected by the addon, what it measures, where the data comes from, and what the thresholds mean.
+
+---
+
+## Frame Timing
+
+Collected via `requestAnimationFrame` loop (heuristic).
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Description</th>
+      <th>Good</th>
+      <th>Needs Work</th>
+      <th>Poor</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>FPS</strong></td>
+      <td>Frames per second rendered</td>
+      <td>≥55</td>
+      <td>30–55</td>
+      <td>&lt;30</td>
+    </tr>
+    <tr>
+      <td><strong>Frame Time</strong></td>
+      <td>Average ms per frame</td>
+      <td>≤16.67ms</td>
+      <td>16.67–32ms</td>
+      <td>&gt;32ms</td>
+    </tr>
+    <tr>
+      <td><strong>Dropped Frames</strong></td>
+      <td>Frames exceeding 2× budget (33.34ms)</td>
+      <td>0</td>
+      <td>1–5</td>
+      <td>&gt;5</td>
+    </tr>
+    <tr>
+      <td><strong>Frame Jitter</strong></td>
+      <td>Sudden spikes vs baseline frame time</td>
+      <td>Low</td>
+      <td>—</td>
+      <td>High</td>
+    </tr>
+    <tr>
+      <td><strong>Frame Stability</strong></td>
+      <td>Consistency percentage based on deviation from target</td>
+      <td>&gt;90%</td>
+      <td>70–90%</td>
+      <td>&lt;70%</td>
+    </tr>
+  </tbody>
+</table>
+
+
+**How it works:** A `requestAnimationFrame` callback measures the delta between frames. Each delta is compared against the 16.67ms target (60fps). Dropped frames are those where `delta > 33.34ms`. Frame stability tracks how consistently frames hit the target timing.
+
+---
+
+## Input Responsiveness
+
+Collected via [Event Timing API](https://w3c.github.io/event-timing/) (optimal, Chrome 96+, Firefox 144+).
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Description</th>
+      <th>Good</th>
+      <th>Needs Work</th>
+      <th>Poor</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>INP</strong></td>
+      <td>Interaction to Next Paint (p98 of worst interactions)</td>
+      <td>≤200ms</td>
+      <td>200–500ms</td>
+      <td>&gt;500ms</td>
+    </tr>
+    <tr>
+      <td><strong>Input Latency</strong></td>
+      <td>Time from pointer event to processing start</td>
+      <td>≤16ms</td>
+      <td>16–50ms</td>
+      <td>&gt;50ms</td>
+    </tr>
+    <tr>
+      <td><strong>Processing Time</strong></td>
+      <td>Duration of event handler execution</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><strong>Presentation Delay</strong></td>
+      <td>Time from handler completion to next paint</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><strong>FID</strong></td>
+      <td>First Input Delay — latency of the very first interaction</td>
+      <td>≤100ms</td>
+      <td>100–300ms</td>
+      <td>&gt;300ms</td>
+    </tr>
+  </tbody>
+</table>
+
+
+**Interaction breakdown:** Each interaction timing is shown as `[wait Xms] → [js Xms] → [paint Xms]`:
+- **Wait** = input delay (main thread was busy before handlers ran)
+- **JS** = processing time (event handler execution)
+- **Paint** = presentation delay (rendering after handlers completed)
+
+**Inspect button:** Click "Inspect" on any interaction to highlight and scroll to the target element in the story.
+
+INP is calculated as the p98 of worst interactions, matching the [Core Web Vitals specification](https://web.dev/articles/inp).
+
+---
+
+## Main Thread Health
+
+Collected via [Long Tasks API](https://w3c.github.io/longtasks/) (optimal, Chrome 58+).
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Description</th>
+      <th>Good</th>
+      <th>Needs Work</th>
+      <th>Poor</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Long Tasks</strong></td>
+      <td>Tasks blocking main thread &gt;50ms</td>
+      <td>0–1</td>
+      <td>2–5</td>
+      <td>&gt;5</td>
+    </tr>
+    <tr>
+      <td><strong>Longest Task</strong></td>
+      <td>Duration of the worst long task</td>
+      <td>&lt;100ms</td>
+      <td>100–250ms</td>
+      <td>&gt;250ms</td>
+    </tr>
+    <tr>
+      <td><strong>TBT</strong></td>
+      <td>Total Blocking Time: sum of (duration − 50ms) for all long tasks</td>
+      <td>&lt;200ms</td>
+      <td>200–600ms</td>
+      <td>&gt;600ms</td>
+    </tr>
+  </tbody>
+</table>
+
+
+**How TBT works:** For each long task, only the time exceeding 50ms counts. A 70ms task contributes 20ms to TBT. This matches the [Lighthouse TBT methodology](https://web.dev/articles/tbt).
+
+---
+
+## Long Animation Frames
+
+Collected via [Long Animation Frames API](https://w3c.github.io/long-animation-frames/) (optimal, Chrome 123+).
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>LoAF Count</strong></td>
+      <td>Number of animation frames exceeding 50ms</td>
+    </tr>
+    <tr>
+      <td><strong>Blocking Duration</strong></td>
+      <td>Total time frames were blocked</td>
+    </tr>
+    <tr>
+      <td><strong>Longest Blocking</strong></td>
+      <td>Worst single frame's blocking time</td>
+    </tr>
+    <tr>
+      <td><strong>P95 Duration</strong></td>
+      <td>95th percentile LoAF duration</td>
+    </tr>
+    <tr>
+      <td><strong>Script Attribution</strong></td>
+      <td>Source URL, function name, invoker type for each slow frame</td>
+    </tr>
+  </tbody>
+</table>
+
+
+**Why LoAF matters:** Unlike Long Tasks, LoAF provides **script attribution** — which functions in which files caused the slow frame. Invoker types include `event-listener`, `user-callback`, `resolve-promise`, and `classic-script`. This is the primary tool for debugging INP issues.
+
+---
+
+## Layout Stability
+
+Collected via [Layout Instability API](https://w3c.github.io/layout-instability/) (optimal, Chrome 77+).
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Description</th>
+      <th>Good</th>
+      <th>Needs Work</th>
+      <th>Poor</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>CLS</strong></td>
+      <td>Cumulative Layout Shift score</td>
+      <td>&lt;0.1</td>
+      <td>0.1–0.25</td>
+      <td>&gt;0.25</td>
+    </tr>
+    <tr>
+      <td><strong>Layout Shift Count</strong></td>
+      <td>Total number of layout shifts observed</td>
+      <td>0</td>
+      <td>—</td>
+      <td>&gt;0</td>
+    </tr>
+  </tbody>
+</table>
+
+
+**Session windowing:** CLS uses session windows per the Core Web Vitals spec: groups of shifts with &lt;1s gaps and &lt;5s total duration. The final CLS is the maximum session window value.
+
+---
+
+## Style Mutations & Forced Reflows
+
+**Style Mutations** — collected via `MutationObserver` (heuristic).
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Style Writes</strong></td>
+      <td>Inline style mutations on observed elements</td>
+    </tr>
+    <tr>
+      <td><strong>DOM Churn</strong></td>
+      <td>Rate of DOM mutations per measurement period</td>
+    </tr>
+  </tbody>
+</table>
+
+
+**Forced Reflows** — collected via property getter instrumentation (heuristic).
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Forced Reflows</strong></td>
+      <td>Layout property reads after style writes</td>
+    </tr>
+    <tr>
+      <td><strong>Thrashing</strong></td>
+      <td>Score tracking read-after-write patterns + long frames</td>
+    </tr>
+  </tbody>
+</table>
+
+
+**What triggers a forced reflow:** Reading any layout property (`offsetHeight`, `getBoundingClientRect()`, `getComputedStyle()`, etc.) after writing styles forces the browser to synchronously recalculate layout. This is one of the most common causes of jank.
+
+---
+
+## React Profiler
+
+Collected via [React Profiler API](https://react.dev/reference/react/Profiler) (optimal, all browsers).
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Mount Count</strong></td>
+      <td>Number of initial renders</td>
+    </tr>
+    <tr>
+      <td><strong>Mount Duration</strong></td>
+      <td>Time for the initial render</td>
+    </tr>
+    <tr>
+      <td><strong>Post-Mount Updates</strong></td>
+      <td>Number of renders after initial mount</td>
+    </tr>
+    <tr>
+      <td><strong>Slow Updates</strong></td>
+      <td>React updates exceeding 16ms frame budget</td>
+    </tr>
+    <tr>
+      <td><strong>P95 Duration</strong></td>
+      <td>95th percentile React update time</td>
+    </tr>
+    <tr>
+      <td><strong>Render Cascades</strong></td>
+      <td><code>nested-update</code> phase — setState during commit</td>
+    </tr>
+  </tbody>
+</table>
+
+
+**Render cascades** indicate `setState` called during the commit phase, typically in `useLayoutEffect`. These trigger synchronous re-renders and are expensive. Even 1 render cascade per interaction is worth investigating.
+
+**Profiling in production:** By default, React strips the Profiler API in production builds. To keep it working in deployed Storybook, alias `react-dom/client` to `react-dom/profiling` in your Vite config (see [Setup Guide](?path=/docs/guides-setup--docs#react-profiling-in-production-builds)).
+
+---
+
+## Memory & Resources
+
+**Memory** — collected via `performance.memory` (optimal, Chrome only).
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Heap Usage</strong></td>
+      <td>Current JS heap size</td>
+    </tr>
+    <tr>
+      <td><strong>Memory Delta</strong></td>
+      <td>Change from baseline since last reset</td>
+    </tr>
+    <tr>
+      <td><strong>GC Pressure</strong></td>
+      <td>Memory allocation rate (MB/s) over a rolling window</td>
+    </tr>
+  </tbody>
+</table>
+
+
+**GC Pressure:** Sustained values &gt;1 MB/s indicate memory-intensive operations. High GC pressure causes periodic frame drops when the garbage collector runs.
+
+**Paint & Resources** — collected via Paint Timing API and Resource Timing API (optimal, all browsers).
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Paint Count</strong></td>
+      <td>Number of paint operations observed</td>
+    </tr>
+    <tr>
+      <td><strong>Compositor Layers</strong></td>
+      <td>Elements promoted to GPU layers</td>
+    </tr>
+    <tr>
+      <td><strong>Script Eval Time</strong></td>
+      <td>Time spent evaluating scripts</td>
+    </tr>
+  </tbody>
+</table>
+
+
+---
+
+## Element Timing
+
+Collected via [Element Timing API](https://w3c.github.io/element-timing/) (optimal, Chrome 77+).
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Element Count</strong></td>
+      <td>Number of elements with <code>elementtiming</code> attribute</td>
+    </tr>
+    <tr>
+      <td><strong>Largest Render Time</strong></td>
+      <td>Slowest element to render</td>
+    </tr>
+    <tr>
+      <td><strong>Individual Elements</strong></td>
+      <td>Render time for each tracked element</td>
+    </tr>
+  </tbody>
+</table>
+
+
+**Usage:** Add the `elementtiming` attribute to any element you want to track:
+
+```tsx
+<img src="/hero.jpg" elementtiming="hero-image" />
+<div elementtiming="main-content">Important content</div>
+```
+
+---
+
+## Browser Compatibility
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Chrome/Edge</th>
+      <th>Firefox</th>
+      <th>Safari</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Frame Timing (RAF)</td>
+      <td>✅</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>React Profiler</td>
+      <td>✅</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>Paint Timing</td>
+      <td>✅</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>Style Mutations</td>
+      <td>✅</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>Forced Reflows</td>
+      <td>✅</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>Long Tasks</td>
+      <td>✅ 58+</td>
+      <td>❌</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>Event Timing (INP)</td>
+      <td>✅ 96+</td>
+      <td>✅ 144+</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>Layout Instability (CLS)</td>
+      <td>✅ 77+</td>
+      <td>❌</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>Element Timing</td>
+      <td>✅ 77+</td>
+      <td>❌</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>Long Animation Frames</td>
+      <td>✅ 123+</td>
+      <td>❌</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>Memory API</td>
+      <td>✅</td>
+      <td>❌</td>
+      <td>❌</td>
+    </tr>
+  </tbody>
+</table>
+
+
+**Chrome/Edge is recommended** for the most complete metrics during development and debugging.

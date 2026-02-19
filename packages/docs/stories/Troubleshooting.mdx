@@ -8,13 +8,37 @@ import {Meta} from '@storybook/addon-docs/blocks'
 
 Start by scanning these key indicators:
 
-| Check | What to Look For |
-|-------|------------------|
-| **FPS** | Should be 55–60. Sustained drops indicate rendering issues |
-| **INP** | Should be &lt;200ms. High values mean slow user interactions |
-| **Long Tasks** | Should be 0–1. More than 5 indicates main thread blocking |
-| **CLS** | Should be 0. Any value suggests layout instability |
-| **Slow Updates** | Should be 0. Non-zero means React renders exceed frame budget |
+<table>
+  <thead>
+    <tr>
+      <th>Check</th>
+      <th>What to Look For</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>FPS</strong></td>
+      <td>Should be 55–60. Sustained drops indicate rendering issues</td>
+    </tr>
+    <tr>
+      <td><strong>INP</strong></td>
+      <td>Should be &lt;200ms. High values mean slow user interactions</td>
+    </tr>
+    <tr>
+      <td><strong>Long Tasks</strong></td>
+      <td>Should be 0–1. More than 5 indicates main thread blocking</td>
+    </tr>
+    <tr>
+      <td><strong>CLS</strong></td>
+      <td>Should be 0. Any value suggests layout instability</td>
+    </tr>
+    <tr>
+      <td><strong>Slow Updates</strong></td>
+      <td>Should be 0. Non-zero means React renders exceed frame budget</td>
+    </tr>
+  </tbody>
+</table>
+
 
 ## Debugging Workflow
 
@@ -45,9 +69,20 @@ Start by scanning these key indicators:
 
 ## Common Patterns
 
-### 🐌 Slow Initial Load
+### 🐌 Slow Initial Load / Mount
 
-**Symptoms:** High mount duration, long task spikes on story change, high TBT
+**Symptoms:** High mount duration (&gt;100ms), long task spikes on story change, high TBT
+
+**Where to Look:**
+1. Check `Mount Duration` in React section
+2. Look at `Long Tasks` count and `Longest Task` duration
+3. Review `Script Eval Time` in Resources section
+
+**Common Causes:**
+- Heavy component initialization
+- Synchronous data fetching
+- Large bundle imports
+- Complex initial render tree
 
 **Fixes:**
 - Lazy load heavy dependencies with `React.lazy()`
@@ -56,37 +91,87 @@ Start by scanning these key indicators:
 
 ### 🎢 Janky Scrolling / Animations
 
-**Symptoms:** FPS drops below 55, high frame time, dropped frames increasing
+**Symptoms:** FPS drops below 55, high frame time (&gt;16.7ms), dropped frames increasing, frame jitter spikes
+
+**Where to Look:**
+1. Watch FPS sparkline during interaction
+2. Check `Frame Stability` percentage
+3. Look for `Thrashing` score increases
+
+**Common Causes:**
+- Layout thrashing (read/write cycles)
+- Expensive scroll handlers
+- Non-composited animations
+- Large DOM mutations during scroll
 
 **Fixes:**
 - Use `transform` and `opacity` for animations (GPU-accelerated)
 - Debounce/throttle scroll handlers
+- Use `will-change` sparingly for animation targets
 - Batch DOM reads before writes to avoid layout thrashing
 
 ### ⏳ Slow Click/Keyboard Response
 
-**Symptoms:** High INP (&gt;200ms), input latency spikes
+**Symptoms:** High INP (&gt;200ms), input latency spikes, last interaction shows high duration
 
-**Interpreting the timing breakdown** (`[wait Xms] → [js Xms] → [paint Xms]`):
+**Where to Look:**
+1. Click the "Inspect" button on slowest interaction
+2. Review timing breakdown: `[wait Xms] → [js Xms] → [paint Xms]`
+3. Check `Input Jitter` for inconsistency
 
-| Phase | If High... | Common Causes |
-|-------|------------|---------------|
-| **Wait** (input delay) | Main thread blocked | Long tasks running before click |
-| **JS** (processing time) | Expensive handler | Complex state updates, sync operations |
-| **Paint** (presentation delay) | Expensive render | Large DOM changes, layout recalculation |
+**Interpreting the timing breakdown:**
+
+<table>
+  <thead>
+    <tr>
+      <th>Phase</th>
+      <th>If High...</th>
+      <th>Common Causes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Wait</strong> (input delay)</td>
+      <td>Main thread blocked</td>
+      <td>Long tasks running before click</td>
+    </tr>
+    <tr>
+      <td><strong>JS</strong> (processing time)</td>
+      <td>Expensive handler</td>
+      <td>Complex state updates, sync operations</td>
+    </tr>
+    <tr>
+      <td><strong>Paint</strong> (presentation delay)</td>
+      <td>Expensive render</td>
+      <td>Large DOM changes, layout recalculation</td>
+    </tr>
+  </tbody>
+</table>
+
 
 **Fixes:**
 - Break up long tasks with `scheduler.yield()` or `setTimeout`
 - Move expensive work to Web Workers
 - Virtualize long lists
-- Optimize React render paths (memoization)
+- Optimize React render paths (memoization, selective updates)
 
 ### 📦 Layout Shifts (CLS)
 
-**Symptoms:** CLS score &gt;0, elements visually jumping
+**Symptoms:** CLS score &gt;0, layout shift count increasing, elements visually jumping
+
+**Where to Look:**
+1. Watch CLS during interactions
+2. Note the shift count to identify frequency
+3. Check if shifts correlate with data loading
+
+**Common Causes:**
+- Images without explicit dimensions
+- Dynamically injected content
+- Font loading (FOUT/FOIT)
+- Skeleton placeholders with wrong sizes
 
 **Fixes:**
-- Set `width`/`height` or `aspect-ratio` on images/videos
+- Always set `width`/`height` or `aspect-ratio` on images/videos
 - Reserve space for dynamic content with `min-height`
 - Use `font-display: optional` or preload fonts
 - Prefer transforms over layout-affecting properties
@@ -95,45 +180,154 @@ Start by scanning these key indicators:
 
 **Symptoms:** High slow updates count, P95 &gt;16ms, render cascades &gt;0
 
+**Where to Look:**
+1. Check `Slow Updates` and `P95 Duration`
+2. Look for `Render Cascades` (indicates useLayoutEffect issues)
+3. Compare `Mount Count` vs `Post-Mount Update Count`
+
+**Interpreting React Metrics:**
+- **Slow Updates**: Updates taking &gt;16ms. Even 1 is problematic.
+- **P95 Duration**: 95th percentile. Shows worst-case user experience.
+- **Render Cascades**: setState during commit phase (`nested-update`). Very expensive!
+
 **Fixes:**
 - Add `React.memo()` to pure components
 - Memoize context values and callbacks
 - Split contexts to reduce subscriber scope
 - Move state closer to where it's used
+- Use React DevTools Profiler to identify slow components
 
-### 🔥 Forced Reflows
+### 🔥 Forced Reflows (Layout Thrashing)
 
-**Symptoms:** Forced reflows &gt;0, thrashing score increasing, FPS drops
+**Symptoms:** Forced reflows &gt;0, thrashing score increasing, FPS drops during interactions
+
+**Where to Look:**
+1. Check `Forced Reflows` count
+2. Look for `Thrashing` correlation with long frames
+3. Review `Style Writes` frequency
+
+Reading layout properties after writing styles forces synchronous layout calculation:
 
 ```javascript
 // ❌ BAD: Causes forced reflow
 element.style.width = '100px'
 const height = element.offsetHeight  // Forces layout!
+element.style.height = height + 'px'
 
 // ✅ GOOD: Batch reads, then writes
 const height = element.offsetHeight  // Read first
 element.style.width = '100px'        // Write after
+element.style.height = height + 'px'
 ```
+
+**Layout-triggering Properties:**
+- `offsetTop/Left/Width/Height`
+- `scrollTop/Left/Width/Height`
+- `clientTop/Left/Width/Height`
+- `getComputedStyle()`
+- `getBoundingClientRect()`
+
+**Fixes:**
+- Batch all DOM reads before any writes
+- Use `requestAnimationFrame` to defer layout-affecting work
+- Cache layout values when possible
+- Use CSS transforms instead of top/left
 
 ### 💾 Memory Issues
 
-**Symptoms:** Memory delta growing steadily, GC pressure &gt;1 MB/s
+**Symptoms:** Memory delta growing steadily, GC pressure &gt;1 MB/s, peak memory keeps increasing
+
+**Where to Look:**
+1. Watch `Memory Delta` trend over time
+2. Check `GC Pressure` for allocation rate
+3. Compare `Heap Usage` before/after interactions
+
+**Common Causes:**
+- Event listeners not cleaned up
+- Closures holding references
+- Growing arrays/caches without limits
+- Detached DOM nodes
 
 **Fixes:**
-- Clean up event listeners in `useEffect` return
+- Use React's cleanup functions in `useEffect`
 - Implement LRU caches with size limits
 - Use `WeakMap`/`WeakSet` for object references
+- Profile with Chrome DevTools Memory tab
 
 ---
 
 ## Metric Correlations
 
-| If you see... | Also check... | Likely cause |
-|---------------|---------------|--------------|
-| Low FPS + High Long Tasks | TBT, Longest Task | Heavy JS execution |
-| Low FPS + High Style Writes | Thrashing, Forced Reflows | Layout thrashing |
-| High INP + High Wait phase | Long Tasks | Blocked main thread |
-| High INP + High JS phase | Slow Updates, P95 | Expensive handlers |
-| High INP + High Paint phase | CLS, DOM Churn | Expensive rendering |
-| Rising Memory + High DOM Churn | DOM Elements | DOM leak |
-| Render Cascades &gt; 0 | Slow Updates | useLayoutEffect issues |
+Use these correlations to triangulate issues:
+
+<table>
+  <thead>
+    <tr>
+      <th>If you see...</th>
+      <th>Also check...</th>
+      <th>Likely cause</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Low FPS + High Long Tasks</td>
+      <td>TBT, Longest Task</td>
+      <td>Heavy JS execution</td>
+    </tr>
+    <tr>
+      <td>Low FPS + High Style Writes</td>
+      <td>Thrashing, Forced Reflows</td>
+      <td>Layout thrashing</td>
+    </tr>
+    <tr>
+      <td>High INP + High Wait phase</td>
+      <td>Long Tasks</td>
+      <td>Blocked main thread</td>
+    </tr>
+    <tr>
+      <td>High INP + High JS phase</td>
+      <td>Slow Updates, P95</td>
+      <td>Expensive handlers</td>
+    </tr>
+    <tr>
+      <td>High INP + High Paint phase</td>
+      <td>CLS, DOM Churn</td>
+      <td>Expensive rendering</td>
+    </tr>
+    <tr>
+      <td>High CLS + DOM Churn</td>
+      <td>Style Writes</td>
+      <td>Dynamic content</td>
+    </tr>
+    <tr>
+      <td>Rising Memory + High DOM Churn</td>
+      <td>DOM Elements</td>
+      <td>DOM leak</td>
+    </tr>
+    <tr>
+      <td>Render Cascades > 0</td>
+      <td>Slow Updates</td>
+      <td>useLayoutEffect issues</td>
+    </tr>
+  </tbody>
+</table>
+
+
+## Browser-Specific Notes
+
+**Chrome/Edge (recommended for debugging):**
+- Full metric support including memory
+- INP via Event Timing API
+- LoAF for script attribution (123+)
+- Best for initial investigation
+
+**Firefox:**
+- No memory metrics
+- Event Timing API supported (144+)
+- No LoAF
+- Use for cross-browser validation after Chrome debugging
+
+**Safari:**
+- No memory metrics, no Event Timing, no LoAF
+- Core metrics only (FPS, frame time, React profiler)
+- Use for final cross-browser validation

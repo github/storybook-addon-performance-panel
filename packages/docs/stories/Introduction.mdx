@@ -14,7 +14,7 @@ The metrics panel appears as a **⚡ Performance** tab at the bottom of Storyboo
 npm install @github-ui/storybook-addon-performance-panel
 ```
 
-Add the addon to your Storybook configuration:
+Register the addon panel in your Storybook main config:
 
 ```ts
 // .storybook/main.ts
@@ -23,19 +23,19 @@ const config = {
 }
 ```
 
-And compose it in your preview for full type inference:
+Compose the addon in your preview for the decorator and full type inference:
 
 ```ts
 // .storybook/preview.ts
-import {definePreview} from '@storybook/react-vite'
 import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel'
+import {definePreview} from '@storybook/react-vite'
 
 export default definePreview({
   addons: [addonPerformancePanel()],
 })
 ```
 
-That's it — all stories automatically get performance monitoring.
+All stories automatically get performance monitoring. Use `preview.meta()` and `meta.story()` for the CSF factory API.
 
 ## Architecture
 
@@ -66,37 +66,144 @@ That's it — all stories automatically get performance monitoring.
 
 ## Metrics At a Glance
 
-| Category | Key Metrics |
-|----------|-------------|
-| **Frame Timing** | FPS, frame time, dropped frames, jitter, stability |
-| **Input** | INP, input latency, FID, interaction breakdown |
-| **Main Thread** | Long tasks, TBT, thrashing, DOM churn |
-| **Long Animation Frames** | LoAF count, blocking duration, script attribution |
-| **Layout Stability** | CLS, forced reflows, style writes |
-| **React** | Mount time, slow updates, P95 duration, render cascades |
-| **Memory** | Heap usage, delta, GC pressure, compositor layers |
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Key Metrics</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Frame Timing</strong></td>
+      <td>FPS, frame time, dropped frames, jitter, stability</td>
+    </tr>
+    <tr>
+      <td><strong>Input</strong></td>
+      <td>INP, input latency, FID, interaction breakdown</td>
+    </tr>
+    <tr>
+      <td><strong>Main Thread</strong></td>
+      <td>Long tasks, TBT, thrashing, DOM churn</td>
+    </tr>
+    <tr>
+      <td><strong>Long Animation Frames</strong></td>
+      <td>LoAF count, blocking duration, script attribution</td>
+    </tr>
+    <tr>
+      <td><strong>Layout Stability</strong></td>
+      <td>CLS, forced reflows, style writes</td>
+    </tr>
+    <tr>
+      <td><strong>React</strong></td>
+      <td>Mount time, slow updates, P95 duration, render cascades</td>
+    </tr>
+    <tr>
+      <td><strong>Memory</strong></td>
+      <td>Heap usage, delta, GC pressure, compositor layers</td>
+    </tr>
+  </tbody>
+</table>
+
 
 ## Metric Thresholds
 
 Metrics are color-coded based on Web Vitals standards:
 
-| Metric | 🟢 Good | 🟡 Needs Work | 🔴 Poor |
-|--------|------|------------|------|
-| FPS | ≥55 | 30–55 | &lt;30 |
-| Frame Time | ≤16.67ms | 16.67–32ms | &gt;32ms |
-| Input Latency | ≤16ms | 16–50ms | &gt;50ms |
-| INP | ≤200ms | 200–500ms | &gt;500ms |
-| CLS | &lt;0.1 | 0.1–0.25 | &gt;0.25 |
-| TBT | &lt;200ms | 200–600ms | &gt;600ms |
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>🟢 Good</th>
+      <th>🟡 Needs Work</th>
+      <th>🔴 Poor</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>FPS</td>
+      <td>≥55</td>
+      <td>30–55</td>
+      <td>&lt;30</td>
+    </tr>
+    <tr>
+      <td>Frame Time</td>
+      <td>≤16.67ms</td>
+      <td>16.67–32ms</td>
+      <td>&gt;32ms</td>
+    </tr>
+    <tr>
+      <td>Input Latency</td>
+      <td>≤16ms</td>
+      <td>16–50ms</td>
+      <td>&gt;50ms</td>
+    </tr>
+    <tr>
+      <td>INP</td>
+      <td>≤200ms</td>
+      <td>200–500ms</td>
+      <td>&gt;500ms</td>
+    </tr>
+    <tr>
+      <td>CLS</td>
+      <td>&lt;0.1</td>
+      <td>0.1–0.25</td>
+      <td>&gt;0.25</td>
+    </tr>
+    <tr>
+      <td>TBT</td>
+      <td>&lt;200ms</td>
+      <td>200–600ms</td>
+      <td>&gt;600ms</td>
+    </tr>
+  </tbody>
+</table>
+
 
 ## Browser Compatibility
 
-| Feature | Chrome/Edge | Firefox | Safari |
-|---------|-------------|---------|--------|
-| Core metrics | ✅ | ✅ | ✅ |
-| Memory API | ✅ | ❌ | ❌ |
-| Long Animation Frames | ✅ 123+ | ❌ | ❌ |
-| Event Timing (INP) | ✅ | ✅ 144+ | ❌ |
-| Element Timing | ✅ | ❌ | ❌ |
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Chrome/Edge</th>
+      <th>Firefox</th>
+      <th>Safari</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Core metrics</td>
+      <td>✅</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>Memory API</td>
+      <td>✅</td>
+      <td>❌</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>Long Animation Frames</td>
+      <td>✅ 123+</td>
+      <td>❌</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>Event Timing (INP)</td>
+      <td>✅</td>
+      <td>✅ 144+</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>Element Timing</td>
+      <td>✅</td>
+      <td>❌</td>
+      <td>❌</td>
+    </tr>
+  </tbody>
+</table>
+
 
 **Chrome/Edge is recommended** for the most complete metrics during debugging.

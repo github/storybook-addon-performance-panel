@@ -14,7 +14,7 @@ npm install @github-ui/storybook-addon-performance-panel
 
 ### 1. Register the addon (main.ts)
 
-Add the addon to your Storybook `addons` array. This registers the panel UI and the performance monitoring decorator.
+Add the addon to your Storybook `addons` array. This registers the panel UI in the manager.
 
 ```ts
 // .storybook/main.ts
@@ -31,18 +31,15 @@ export default config
 
 ### 2. Compose in preview (preview.ts)
 
-Use `definePreview` to compose the addon with full type inference for CSF factories:
+Use `definePreview` to compose the addon's preview annotations (decorator). This enables the CSF factory API (`preview.meta()`, `meta.story()`):
 
 ```ts
 // .storybook/preview.ts
-import {definePreview} from '@storybook/react-vite'
 import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel'
+import {definePreview} from '@storybook/react-vite'
 
 const preview = definePreview({
   addons: [addonPerformancePanel()],
-  parameters: {
-    controls: {expanded: true},
-  },
 })
 
 export default preview
