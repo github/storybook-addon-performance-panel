@@ -21,10 +21,8 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version-file: '.nvmrc'
           cache: npm
-      - name: Update npm
-        run: npm update -g npm
       - run: npm ci
       - run: npm run build
       - name: Create release PR or publish
@@ -39,12 +37,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ''
           NPM_CONFIG_PROVENANCE: true
-      - name: Report CI status on changeset PR
+      - name: Configure changeset PR
         if: steps.changesets.outputs.pullRequestNumber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          sha=$(gh pr view ${{ steps.changesets.outputs.pullRequestNumber }} --json headRefOid -q .headRefOid)
+          PR=${{ steps.changesets.outputs.pullRequestNumber }}
+          gh pr edit "$PR" --add-label "skip changeset"
+          sha=$(gh pr view "$PR" --json headRefOid -q .headRefOid)
           gh api repos/${{ github.repository }}/statuses/$sha \
             -f state=success \
             -f context=CI \
