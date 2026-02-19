@@ -299,10 +299,14 @@ export interface LoAFScriptAttribution {
   sourceURL: string
   /** Function name that was executing */
   sourceFunctionName: string
+  /** Character position in source */
+  sourceCharPosition: number
   /** Type of script invocation (e.g., 'user-callback', 'event-listener') */
   invokerType: string
   /** Name of the invoker (e.g., 'click', 'setTimeout') */
   invoker: string
+  /** When execution started (ms) */
+  executionStart: number
   /** Duration this script executed (ms) */
   duration: number
 }

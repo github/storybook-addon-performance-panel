@@ -8,32 +8,12 @@
  * @see https://w3c.github.io/long-animation-frames/
  */
 
+import type {LoAFScriptAttribution} from '../performance-types'
 import type {MetricCollector} from './types'
 import {addToWindow, computeAverage, computeP95} from './utils'
 
 /** Rolling window size for LoAF duration history */
 const LOAF_HISTORY_WINDOW = 50
-
-/**
- * Script attribution from LoAF entry.
- * Identifies what scripts contributed to the long frame.
- */
-export interface LoAFScriptAttribution {
-  /** Script source URL */
-  sourceURL: string
-  /** Function name that was executing */
-  sourceFunctionName: string
-  /** Character position in source */
-  sourceCharPosition: number
-  /** Type of script invocation (e.g., 'user-callback', 'event-listener') */
-  invokerType: string
-  /** Name of the invoker (e.g., 'click', 'setTimeout') */
-  invoker: string
-  /** When execution started (ms) */
-  executionStart: number
-  /** Duration from execution start to end */
-  duration: number
-}
 
 /**
  * Long Animation Frame entry interface

@@ -1,9 +1,26 @@
 {
   "name": "@github-ui/storybook-addon-performance-panel",
-  "description": "a performance panel addon for storybook",
+  "description": "A Storybook addon that provides a real-time performance monitoring panel with frame timing, input latency, layout shift, and React render profiling.",
   "type": "module",
   "version": "0.1.2",
-  "homepage": "https://github.com/github/github-ui/blob/main/packages/storybook-addon-performance-panel/README.md",
+  "license": "MIT",
+  "author": "GitHub, Inc.",
+  "homepage": "https://github.com/github/storybook-addon-performance-panel#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/github/storybook-addon-performance-panel.git",
+    "directory": "packages/storybook-addon-performance-panel"
+  },
+  "keywords": [
+    "storybook",
+    "storybook-addon",
+    "performance",
+    "profiling",
+    "react",
+    "web-vitals",
+    "frame-timing",
+    "layout-shift"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -66,6 +83,6 @@
     "supportedFrameworks": [
       "react"
     ],
-    "icon": ""
+    "icon": "https://github.githubassets.com/favicons/favicon.svg"
   }
 }

@@ -102,7 +102,7 @@ import {
  * Information about a registered profiler.
  * The profiler ID serves as both identifier and display label.
  */
-interface ProfilerInfo {
+export interface ProfilerInfo {
   id: string
   metrics: ReactMetrics
   lastUpdated: number
@@ -1359,7 +1359,7 @@ const MemoryAndRenderingSection = React.memo(function MemoryAndRenderingSection(
 /**
  * Connection status represents the panel's relationship with the story/decorator.
  */
-type ConnectionStatus = 'loading' | 'connected' | 'error' | 'no-decorator'
+export type ConnectionStatus = 'loading' | 'connected' | 'error' | 'no-decorator'
 
 /**
  * Profilers are stored by storyId to support:
@@ -1367,7 +1367,7 @@ type ConnectionStatus = 'loading' | 'connected' | 'error' | 'no-decorator'
  * 2. Easy cleanup when story changes
  * 3. No race conditions between story navigation and profiler updates
  */
-interface PanelState {
+export interface PanelState {
   status: ConnectionStatus
   metrics: PerformanceMetrics
   /** Map of storyId → array of profilers for that story */
@@ -1375,7 +1375,7 @@ interface PanelState {
   errorMessage: string | null
 }
 
-type PanelAction =
+export type PanelAction =
   | {type: 'METRICS_RECEIVED'; metrics: PerformanceMetrics}
   | {type: 'PROFILER_UPDATE'; storyId: string; id: string; metrics: ReactMetrics}
   | {type: 'CLEANUP_OLD_STORIES'; currentStoryId: string}
@@ -1383,14 +1383,14 @@ type PanelAction =
   | {type: 'NO_DECORATOR'}
   | {type: 'RESET_METRICS'}
 
-const INITIAL_STATE: PanelState = {
+export const INITIAL_STATE: PanelState = {
   status: 'loading',
   metrics: DEFAULT_METRICS,
   profilersByStory: {},
   errorMessage: null,
 }
 
-function panelReducer(state: PanelState, action: PanelAction): PanelState {
+export function panelReducer(state: PanelState, action: PanelAction): PanelState {
   switch (action.type) {
     case 'METRICS_RECEIVED':
       return {

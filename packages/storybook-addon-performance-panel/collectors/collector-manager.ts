@@ -20,17 +20,8 @@ import {MemoryCollector} from './memory-collector'
 import {PaintCollector} from './paint-collector'
 import {ReactProfilerCollector} from './react-profiler-collector'
 import {StyleMutationCollector} from './style-mutation-collector'
+import type {MetricCollector} from './types'
 import {addToWindow, computeAverage, computeP95} from './utils'
-
-/**
- * Common interface that all collectors implement.
- * Used by CollectorManager to orchestrate lifecycle methods.
- */
-export interface Collector {
-  start(): void
-  stop(): void
-  reset(): void
-}
 
 /**
  * Creates initial decorator state.
@@ -141,7 +132,7 @@ export class CollectorManager {
     return this.#running
   }
 
-  get #allCollectors(): readonly Readonly<Collector>[] {
+  get #allCollectors(): readonly Readonly<MetricCollector<unknown>>[] {
     return Object.values(this.collectors)
   }
 

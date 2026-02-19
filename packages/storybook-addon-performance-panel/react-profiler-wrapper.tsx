@@ -346,7 +346,7 @@ export const ReactProfilerWrapper = memo(function ReactProfilerWrapper({
  * @example
  * // Reactive access in React
  * import { useSyncExternalStore } from 'react'
- * import { performanceStore } from '@github-ui/storybook-addon-performance-panel/store'
+ * import { performanceStore } from './performance-store'
  *
  * function ProfilerDisplay({ id }) {
  *   const state = useSyncExternalStore(
