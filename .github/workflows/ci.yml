@@ -71,7 +71,7 @@ jobs:
       - run: npm run tsc
 
   test:
-    name: Test (${{ matrix.project }})
+    name: Test (${{ matrix.browser }})
     needs: install
     runs-on: ubuntu-latest
     strategy:
