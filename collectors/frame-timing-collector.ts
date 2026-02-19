@@ -69,7 +69,7 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
 
   getMetrics(): FrameTimingMetrics {
     return {
-      frameTimes: [...this.#frameTimes],
+      frameTimes: this.#frameTimes,
       maxFrameTime: this.#maxFrameTime,
       droppedFrames: this.#droppedFrames,
       frameJitter: this.#frameJitter,

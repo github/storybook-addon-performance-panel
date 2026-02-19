@@ -183,7 +183,7 @@ export class ElementTimingCollector implements MetricCollector<ElementTimingMetr
   getMetrics(): ElementTimingMetrics {
     return {
       elementTimingSupported: this.#supported,
-      elements: [...this.#elements],
+      elements: this.#elements,
       largestRenderTime: this.#largestRenderTime,
       elementCount: this.#elements.length,
     }

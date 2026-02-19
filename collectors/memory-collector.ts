@@ -70,8 +70,8 @@ export class MemoryCollector implements MetricCollector<MemoryMetrics> {
 
     addToWindow(this.#memoryHistory, memory, SPARKLINE_HISTORY_SIZE)
 
-    // Update GC pressure
-    this.#updateGcPressure()
+    // Update GC pressure using already-read value
+    this.#updateGcPressure(memory)
   }
 
   getMetrics(): MemoryMetrics {
@@ -79,15 +79,14 @@ export class MemoryCollector implements MetricCollector<MemoryMetrics> {
       baselineMemoryMB: this.#baselineMemoryMB,
       peakMemoryMB: this.#peakMemoryMB,
       lastMemoryMB: this.#lastMemoryMB,
-      memoryHistory: [...this.#memoryHistory],
+      memoryHistory: this.#memoryHistory,
       gcPressure: this.#gcPressure,
     }
   }
 
-  #updateGcPressure(): void {
+  #updateGcPressure(currentMemory: number): void {
     const now = performance.now()
-    const currentMemory = getMemoryMB()
-    if (currentMemory !== null && this.#lastGcMemory !== null) {
+    if (this.#lastGcMemory !== null) {
       const timeDelta = (now - this.#lastGcCheckTime) / 1000 // seconds
       if (timeDelta > 0) {
         const memoryDelta = currentMemory - this.#lastGcMemory

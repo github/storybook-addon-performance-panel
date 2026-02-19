@@ -32,16 +32,15 @@ export class StyleMutationCollector implements MetricCollector<StyleMetrics> {
   #lastStyleWriteTime = 0
   #domMutationCount = 0
 
-  #styleObserver: MutationObserver | null = null
-  #domObserver: MutationObserver | null = null
+  #observer: MutationObserver | null = null
   #sampleInterval: ReturnType<typeof setInterval> | null = null
 
   /** Callback when layout becomes dirty (for reflow detection) */
   onLayoutDirty?: () => void
 
   start(): void {
-    // Style mutation observer
-    this.#styleObserver = new MutationObserver(mutations => {
+    // Single observer for both style and DOM mutations
+    this.#observer = new MutationObserver(mutations => {
       for (const mutation of mutations) {
         if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
           this.#styleWrites++
@@ -49,37 +48,31 @@ export class StyleMutationCollector implements MetricCollector<StyleMetrics> {
           this.#lastStyleWriteTime = performance.now()
           this.onLayoutDirty?.()
 
-          // Count CSS variable changes
+          // Count CSS variable changes by diffing old vs new style
           const target = mutation.target as HTMLElement
-          const styleValue = target.getAttribute('style') ?? ''
-          const cssVarMatches = styleValue.match(/--[\w-]+\s*:/g)
-          if (cssVarMatches) {
-            this.#cssVarChanges += cssVarMatches.length
+          const newValue = target.getAttribute('style') ?? ''
+          const oldValue = mutation.oldValue ?? ''
+          const newVars = newValue.match(/--[\w-]+\s*:[^;]*/g)
+          const oldVars = oldValue.match(/--[\w-]+\s*:[^;]*/g)
+          if (newVars) {
+            const oldSet = new Set(oldVars?.map(s => s.trim()))
+            for (const v of newVars) {
+              if (!oldSet.has(v.trim())) this.#cssVarChanges++
+            }
           }
-        }
-      }
-    })
-    this.#styleObserver.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['style'],
-      subtree: true,
-    })
-
-    // DOM mutation observer
-    this.#domObserver = new MutationObserver(mutations => {
-      for (const mutation of mutations) {
-        if (mutation.type === 'childList') {
+        } else if (mutation.type === 'childList') {
           this.#domMutationCount += mutation.addedNodes.length + mutation.removedNodes.length
         } else if (mutation.type === 'attributes' && mutation.attributeName !== 'style') {
           this.#domMutationCount++
         }
       }
     })
-    this.#domObserver.observe(document.body, {
+    this.#observer.observe(document.body, {
       childList: true,
       attributes: true,
+      attributeOldValue: true,
       subtree: true,
-      attributeFilter: ['class', 'id', 'data-state', 'aria-expanded', 'aria-hidden', 'hidden', 'disabled'],
+      attributeFilter: ['style', 'class', 'id', 'data-state', 'aria-expanded', 'aria-hidden', 'hidden', 'disabled'],
     })
 
     // Sample DOM mutations periodically
@@ -90,11 +83,9 @@ export class StyleMutationCollector implements MetricCollector<StyleMetrics> {
   }
 
   stop(): void {
-    this.#styleObserver?.disconnect()
-    this.#domObserver?.disconnect()
+    this.#observer?.disconnect()
     if (this.#sampleInterval) clearInterval(this.#sampleInterval)
-    this.#styleObserver = null
-    this.#domObserver = null
+    this.#observer = null
     this.#sampleInterval = null
   }
 
@@ -124,7 +115,7 @@ export class StyleMutationCollector implements MetricCollector<StyleMetrics> {
     return {
       styleWrites: this.#styleWrites,
       cssVarChanges: this.#cssVarChanges,
-      domMutationFrames: [...this.#domMutationFrames],
+      domMutationFrames: this.#domMutationFrames,
       thrashingScore: this.#thrashingScore,
     }
   }

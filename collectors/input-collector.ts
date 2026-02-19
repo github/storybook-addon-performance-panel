@@ -131,6 +131,9 @@ export class InputCollector implements MetricCollector<InputMetrics> {
   // Track worst latency per interaction (interactionId -> max duration)
   #interactionMap = new Map<number, number>()
 
+  /** Cap to prevent unbounded growth during long sessions */
+  static readonly #MAX_INTERACTIONS = 500
+
   // First Input Delay tracking
   #firstInputDelay: number | null = null
   #firstInputType: string | null = null
@@ -261,9 +264,21 @@ export class InputCollector implements MetricCollector<InputMetrics> {
     this.#interactionCount = perfWithEventTiming.interactionCount ?? this.#interactionMap.size
     addToWindow(this.#interactionLatencies, duration, INTERACTION_LATENCIES_WINDOW)
 
+    // Prune map if it exceeds the cap to prevent unbounded growth
+    if (this.#interactionMap.size > InputCollector.#MAX_INTERACTIONS) {
+      this.#pruneInteractionMap()
+    }
+
     // Calculate INP as p98 of interaction durations
     // (for small sample sizes, use max)
     this.#updateInp()
+  }
+
+  /** Keep only the worst interactions when the map exceeds the cap */
+  #pruneInteractionMap(): void {
+    const entries = Array.from(this.#interactionMap.entries())
+    entries.sort((a, b) => b[1] - a[1])
+    this.#interactionMap = new Map(entries.slice(0, 100))
   }
 
   #updateInp(): void {
@@ -322,15 +337,15 @@ export class InputCollector implements MetricCollector<InputMetrics> {
 
   getMetrics(): InputMetrics {
     return {
-      inputLatencies: [...this.#inputLatencies],
+      inputLatencies: this.#inputLatencies,
       maxInputLatency: this.#maxInputLatency,
       inputJitter: this.#inputJitter,
-      paintTimes: [...this.#paintTimes],
+      paintTimes: this.#paintTimes,
       maxPaintTime: this.#maxPaintTime,
       paintJitter: this.#paintJitter,
       eventTimingSupported: this.#eventTimingSupported,
       interactionCount: this.#interactionCount,
-      interactionLatencies: [...this.#interactionLatencies],
+      interactionLatencies: this.#interactionLatencies,
       inpMs: this.#inpMs,
       avgInputDelay: computeAverage(this.#inputDelays),
       avgProcessingTime: computeAverage(this.#processingTimes),

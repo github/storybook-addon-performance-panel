@@ -203,34 +203,18 @@ export const PerformanceProvider = memo(function PerformanceProvider({
     channel.on(PERF_EVENTS.RESET, handleReset)
     channel.on(PERF_EVENTS.INSPECT_ELEMENT, handleInspectElement)
 
-    // Periodic updates for sparklines and metrics emission
-    let lastUpdateTime = performance.now()
-    let lastSparklineTime = performance.now()
+    // Use setInterval instead of RAF for periodic polling.
+    // A RAF callback runs every frame (~60/s) but only does work every 50-200ms,
+    // wasting ~55 callbacks/s and adding unnecessary per-frame overhead.
+    const metricsIntervalId = setInterval(() => {
+      const computed = manager.computeMetrics()
+      channel.emit(PERF_EVENTS.METRICS_UPDATE, computed)
+      performanceStore.setGlobalMetrics(computed)
+    }, UPDATE_INTERVAL_MS)
 
-    const updateLoop = () => {
-      const now = performance.now()
-
-      // Update memory and sparklines periodically
-      if (now - lastSparklineTime >= SPARKLINE_SAMPLE_INTERVAL_MS) {
-        lastSparklineTime = now
-        manager.updateSparklineData()
-      }
-
-      // Emit computed metrics periodically to the panel
-      if (now - lastUpdateTime >= UPDATE_INTERVAL_MS) {
-        lastUpdateTime = now
-
-        const computed = manager.computeMetrics()
-
-        // Update both the channel (for panel) and the store (for useSyncExternalStore)
-        channel.emit(PERF_EVENTS.METRICS_UPDATE, computed)
-        performanceStore.setGlobalMetrics(computed)
-      }
-
-      updateAnimationId = requestAnimationFrame(updateLoop)
-    }
-
-    let updateAnimationId = requestAnimationFrame(updateLoop)
+    const sparklineIntervalId = setInterval(() => {
+      manager.updateSparklineData()
+    }, SPARKLINE_SAMPLE_INTERVAL_MS)
 
     return () => {
       // Stop all collectors (story is unmounting)
@@ -239,7 +223,8 @@ export const PerformanceProvider = memo(function PerformanceProvider({
       // 2. Profilers are cleared when a NEW story starts (different storyId)
       manager.stop()
 
-      cancelAnimationFrame(updateAnimationId)
+      clearInterval(metricsIntervalId)
+      clearInterval(sparklineIntervalId)
       channel.off(PERF_EVENTS.REQUEST_METRICS, handleRequestMetrics)
       channel.off(PERF_EVENTS.RESET, handleReset)
       channel.off(PERF_EVENTS.INSPECT_ELEMENT, handleInspectElement)
@@ -394,35 +379,44 @@ export const withPerformanceMonitor: Decorator = (Story, ctx) => {
   )
 }
 
+// Inject CSS rule for inspect highlight (avoids inline style writes that corrupt metrics)
+let inspectStyleInjected = false
+function ensureInspectStyle() {
+  if (inspectStyleInjected) return
+  inspectStyleInjected = true
+  const style = document.createElement('style')
+  style.textContent = `
+    @keyframes perf-inspect-flash {
+      0%, 100% { outline-color: #f06; }
+      33% { outline-color: #06f; }
+      66% { outline-color: #f06; }
+    }
+    [data-perf-inspect] {
+      outline: 3px solid #f06 !important;
+      outline-offset: 2px !important;
+      animation: perf-inspect-flash 0.6s ease-out !important;
+    }
+  `
+  document.head.appendChild(style)
+}
+
 // Handle inspect element request from panel
 function handleInspectElement(selector: string) {
   if (!selector || selector === 'unknown') return
   try {
     const element = document.querySelector(selector)
     if (element instanceof HTMLElement) {
+      ensureInspectStyle()
+
       // Scroll element into view
       element.scrollIntoView({behavior: 'smooth', block: 'center'})
 
-      // Add temporary highlight overlay
-      const originalOutline = element.style.outline
-      const originalOutlineOffset = element.style.outlineOffset
-      element.style.outline = '3px solid #f06'
-      element.style.outlineOffset = '2px'
-
-      // Flash effect (intentionally not tracking timeouts - one-off animation)
-
+      // Use data attribute + CSS rule instead of inline styles
+      // to avoid triggering StyleMutationCollector
+      element.dataset.perfInspect = ''
       setTimeout(() => {
-        element.style.outline = '3px solid #06f'
-
-        setTimeout(() => {
-          element.style.outline = '3px solid #f06'
-
-          setTimeout(() => {
-            element.style.outline = originalOutline
-            element.style.outlineOffset = originalOutlineOffset
-          }, 200)
-        }, 200)
-      }, 200)
+        delete element.dataset.perfInspect
+      }, 600)
 
       // Log to console for DevTools inspection
        
