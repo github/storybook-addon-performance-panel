@@ -11,6 +11,10 @@
     "url": "https://github.com/github/storybook-addon-performance-panel.git",
     "directory": "packages/storybook-addon-performance-panel"
   },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "keywords": [
     "storybook",
     "storybook-addon",
