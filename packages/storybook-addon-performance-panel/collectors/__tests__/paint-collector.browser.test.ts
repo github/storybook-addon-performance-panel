@@ -25,9 +25,13 @@ function waitUntil(fn: () => boolean, timeout = 2000, interval = 10): Promise<vo
 function waitForIdle(): Promise<void> {
   return new Promise<void>(resolve => {
     if (typeof requestIdleCallback === 'function') {
-      requestIdleCallback(() => resolve())
+      requestIdleCallback(() => {
+        resolve()
+      })
     } else {
-      setTimeout(() => resolve(), 0)
+      setTimeout(() => {
+        resolve()
+      }, 0)
     }
   })
 }
