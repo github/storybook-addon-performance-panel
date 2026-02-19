@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react",
+    "jsxFactory": "React.createElement",
+    "jsxFragmentFactory": "React.Fragment",
+    "incremental": false
+  },
+  "include": ["manager.tsx", "performance-panel.tsx", "performance-types.ts", "panel/**/*", "collectors/**/*"]
+}

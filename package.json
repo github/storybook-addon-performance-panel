@@ -1,0 +1,73 @@
+{
+  "name": "@github-ui/storybook-addon-performance-panel",
+  "description": "a performance panel addon for storybook",
+  "type": "module",
+  "version": "0.1.2",
+  "homepage": "https://github.com/github/github-ui/blob/main/packages/storybook-addon-performance-panel/README.md",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./manager": {
+      "types": "./dist/manager.d.ts",
+      "default": "./dist/manager.js"
+    },
+    "./package.json": "./package.json",
+    "./preset": {
+      "types": "./dist/preset.d.ts",
+      "default": "./dist/preset.js"
+    },
+    "./preview": {
+      "types": "./dist/preview.d.ts",
+      "default": "./dist/preview.js"
+    }
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "**/*.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "build:publish": "./publish.sh",
+    "build:watch": "tsup --watch",
+    "lint": "eslint . --cache",
+    "stylelint": "stylelint --aei --rd \"**/*.css\"",
+    "test": "ui-test",
+    "tsc": "tsc"
+  },
+  "bundler": {
+    "managerEntries": [
+      "manager.tsx"
+    ],
+    "previewEntries": [
+      "preview.ts",
+      "index.ts"
+    ],
+    "nodeEntries": [
+      "preset.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@storybook/icons": "^2.0.0",
+    "@storybook/react": "^10.0.0",
+    "react": "^19",
+    "storybook": "^10"
+  },
+  "devDependencies": {
+    "typescript-eslint": "8.56.0",
+    "eslint": "10.0.0",
+    "typescript": "5.9.3",
+    "esbuild": "0.27.3",
+    "tsup": "8.5.1",
+    "vitest": "4.0.18"
+  },
+  "storybook": {
+    "displayName": "Addon Performance Panel",
+    "supportedFrameworks": [
+      "react"
+    ],
+    "icon": ""
+  }
+}

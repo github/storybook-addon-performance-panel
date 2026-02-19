@@ -1,0 +1,6 @@
+{
+  "extends": "@github-ui/tsconfig/base.json",
+  "compilerOptions": {
+    "rootDir": "."
+  }
+}

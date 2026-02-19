@@ -1,0 +1,13 @@
+# Build output
+dist/
+
+# TypeScript build info
+tsconfig.tsbuildinfo
+
+# ESLint cache
+.eslintcache
+
+# SWC cache
+.swc/
+
+node_modules/
