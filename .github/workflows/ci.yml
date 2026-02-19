@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  merge_group:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -67,9 +68,13 @@ jobs:
       - run: npm run tsc
 
   test:
-    name: Test
+    name: Test (${{ matrix.project }})
     needs: install
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
@@ -85,9 +90,10 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ hashFiles('**/package-lock.json') }}
-      - run: npx playwright install chromium --with-deps
-      - run: npm test
+          key: playwright-${{ matrix.project }}-${{ hashFiles('**/package-lock.json') }}
+      - run: npx playwright install --with-deps ${{ matrix.project }}
+      - run: npx vitest run --project ${{ matrix.project }}
+        working-directory: packages/storybook-addon-performance-panel
 
   build:
     name: Build Docs
@@ -111,3 +117,15 @@ jobs:
           name: addon-dist
           path: packages/storybook-addon-performance-panel/dist/
           retention-days: 7
+
+  ci:
+    name: CI
+    if: always()
+    needs: [lint, typecheck, test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "One or more jobs failed or were cancelled"
+            exit 1
+          fi
