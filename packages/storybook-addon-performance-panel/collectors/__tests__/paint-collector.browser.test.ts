@@ -7,8 +7,14 @@ function waitUntil(fn: () => boolean, timeout = 2000, interval = 10): Promise<vo
   return new Promise<void>((resolve, reject) => {
     const start = Date.now()
     const check = () => {
-      if (fn()) return resolve()
-      if (Date.now() - start > timeout) return reject(new Error('waitUntil timed out'))
+      if (fn()) {
+        resolve()
+        return
+      }
+      if (Date.now() - start > timeout) {
+        reject(new Error('waitUntil timed out'))
+        return
+      }
       setTimeout(check, interval)
     }
     check()

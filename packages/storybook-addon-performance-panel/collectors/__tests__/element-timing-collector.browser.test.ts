@@ -70,7 +70,7 @@ describe('ElementTimingCollector', () => {
     const metrics = collector.getMetrics()
     // Element Timing API is only supported in Chromium-based browsers
     const expected =
-      typeof PerformanceObserver !== 'undefined' && PerformanceObserver.supportedEntryTypes?.includes('element')
+      typeof PerformanceObserver !== 'undefined' && PerformanceObserver.supportedEntryTypes.includes('element')
     expect(metrics.elementTimingSupported).toBe(expected)
   })
 })
