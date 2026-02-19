@@ -117,3 +117,15 @@ jobs:
           name: addon-dist
           path: packages/storybook-addon-performance-panel/dist/
           retention-days: 7
+
+  ci:
+    name: CI
+    if: always()
+    needs: [lint, typecheck, test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "One or more jobs failed or were cancelled"
+            exit 1
+          fi
