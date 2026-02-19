@@ -106,7 +106,7 @@ jobs:
             packages/storybook-addon-performance-panel/dist
           key: deps-${{ github.sha }}
       - run: npm run build-storybook -w @github-ui/docs
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: addon-dist
           path: packages/storybook-addon-performance-panel/dist/
