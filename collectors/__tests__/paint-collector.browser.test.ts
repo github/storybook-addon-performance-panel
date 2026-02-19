@@ -2,7 +2,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {PaintCollector} from '../paint-collector'
 
-/** Wait for pending idle callbacks to complete */
+/** Wait for MutationObserver + idle callback to complete */
 const waitForIdleScan = () => new Promise<void>(resolve => setTimeout(resolve, 50))
 
 describe('PaintCollector', () => {
@@ -146,34 +146,29 @@ describe('PaintCollector', () => {
     })
   })
 
-  describe('updateCompositorLayers', () => {
-    it('counts elements with will-change', async () => {
+  describe('compositor layer tracking', () => {
+    it('detects elements with will-change via initial scan', async () => {
       const el = document.createElement('div')
       el.style.willChange = 'transform'
       document.body.appendChild(el)
 
       collector.start()
-      collector.updateCompositorLayers()
       await waitForIdleScan()
 
-      const metrics = collector.getMetrics()
-      expect(metrics.compositorLayers).toBeGreaterThanOrEqual(1)
+      expect(collector.getMetrics().compositorLayers).toBeGreaterThanOrEqual(1)
 
       document.body.removeChild(el)
     })
 
-    it('counts elements with 3D transforms', async () => {
+    it('detects elements with 3D transforms', async () => {
       const el = document.createElement('div')
-      // Use non-zero value - translateZ(0) may be optimized to 2D matrix
       el.style.transform = 'translateZ(1px)'
       document.body.appendChild(el)
 
       collector.start()
-      collector.updateCompositorLayers()
       await waitForIdleScan()
 
-      const metrics = collector.getMetrics()
-      expect(metrics.compositorLayers).toBeGreaterThanOrEqual(1)
+      expect(collector.getMetrics().compositorLayers).toBeGreaterThanOrEqual(1)
 
       document.body.removeChild(el)
     })
@@ -184,47 +179,74 @@ describe('PaintCollector', () => {
       document.body.appendChild(el)
 
       collector.start()
-      collector.updateCompositorLayers()
       await waitForIdleScan()
 
-      const metrics = collector.getMetrics()
-      // Should not count 2D transforms as compositor layers
-      // (exact count depends on other elements in DOM)
-      expect(metrics.compositorLayers).not.toBeNull()
-
-      document.body.removeChild(el)
-    })
-
-    it('throttles checks to every 3 seconds', async () => {
-      collector.start()
-      collector.updateCompositorLayers()
-      await waitForIdleScan()
-
-      const firstCount = collector.getMetrics().compositorLayers
-      expect(firstCount).not.toBeNull()
-
-      // Add an element
-      const el = document.createElement('div')
-      el.style.willChange = 'transform'
-      document.body.appendChild(el)
-
-      // Call again immediately - should be throttled (no new scan scheduled)
-      collector.updateCompositorLayers()
-      await waitForIdleScan()
-
-      const secondCount = collector.getMetrics().compositorLayers
-      expect(secondCount).toBe(firstCount) // Should not have updated
+      // Should have a numeric count but 2D transforms don't create compositor layers
+      expect(collector.getMetrics().compositorLayers).not.toBeNull()
 
       document.body.removeChild(el)
     })
 
     it('defers scan to idle callback instead of running synchronously', () => {
       collector.start()
-      collector.updateCompositorLayers()
 
-      // Metrics should still be null immediately after calling updateCompositorLayers
-      // because the scan is deferred to requestIdleCallback
+      // Immediately after start, layers should still be null (scan is deferred)
       expect(collector.getMetrics().compositorLayers).toBeNull()
+    })
+
+    it('incrementally tracks added elements via MutationObserver', async () => {
+      collector.start()
+      await waitForIdleScan()
+
+      const baseline = collector.getMetrics().compositorLayers ?? 0
+
+      const el = document.createElement('div')
+      el.style.willChange = 'transform'
+      document.body.appendChild(el)
+      await waitForIdleScan()
+
+      expect(collector.getMetrics().compositorLayers).toBe(baseline + 1)
+
+      document.body.removeChild(el)
+    })
+
+    it('decrements count when compositor-layer elements are removed', async () => {
+      const el = document.createElement('div')
+      el.style.willChange = 'transform'
+      document.body.appendChild(el)
+
+      collector.start()
+      await waitForIdleScan()
+
+      const countWithEl = collector.getMetrics().compositorLayers ?? 0
+      expect(countWithEl).toBeGreaterThanOrEqual(1)
+
+      document.body.removeChild(el)
+      await waitForIdleScan()
+
+      expect(collector.getMetrics().compositorLayers).toBe(countWithEl - 1)
+    })
+
+    it('tracks style attribute changes on existing elements', async () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+
+      collector.start()
+      await waitForIdleScan()
+
+      const baseline = collector.getMetrics().compositorLayers ?? 0
+
+      el.style.willChange = 'transform'
+      await waitForIdleScan()
+
+      expect(collector.getMetrics().compositorLayers).toBe(baseline + 1)
+
+      el.style.willChange = 'auto'
+      await waitForIdleScan()
+
+      expect(collector.getMetrics().compositorLayers).toBe(baseline)
+
+      document.body.removeChild(el)
     })
   })
 
@@ -253,22 +275,22 @@ describe('PaintCollector', () => {
       expect(metrics.scriptEvalTime).toBe(0)
     })
 
-    it('forces compositor layer recheck on next update', async () => {
+    it('rescans compositor layers after reset', async () => {
       collector.start()
-      collector.updateCompositorLayers()
       await waitForIdleScan()
 
       const el = document.createElement('div')
       el.style.willChange = 'transform'
       document.body.appendChild(el)
-
-      collector.reset()
-      collector.updateCompositorLayers()
       await waitForIdleScan()
 
-      // After reset, the throttle should be cleared and update should run
-      const metrics = collector.getMetrics()
-      expect(metrics.compositorLayers).toBeGreaterThanOrEqual(1)
+      collector.reset()
+      // Immediately after reset, compositorLayers is null
+      expect(collector.getMetrics().compositorLayers).toBeNull()
+
+      await waitForIdleScan()
+      // After idle scan completes, count is restored
+      expect(collector.getMetrics().compositorLayers).toBeGreaterThanOrEqual(1)
 
       document.body.removeChild(el)
     })
@@ -280,6 +302,25 @@ describe('PaintCollector', () => {
       collector.stop()
 
       expect(mockDisconnect).toHaveBeenCalledTimes(2) // paint + resource observers
+    })
+
+    it('stops tracking layer changes after stop', async () => {
+      collector.start()
+      await waitForIdleScan()
+
+      collector.stop()
+
+      const countAfterStop = collector.getMetrics().compositorLayers
+
+      const el = document.createElement('div')
+      el.style.willChange = 'transform'
+      document.body.appendChild(el)
+      await waitForIdleScan()
+
+      // Count should not change after stop
+      expect(collector.getMetrics().compositorLayers).toBe(countAfterStop)
+
+      document.body.removeChild(el)
     })
   })
 })

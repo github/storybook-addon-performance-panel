@@ -1,12 +1,11 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest'
-
 import React, {useEffect} from 'react'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
+import { page, userEvent } from 'vitest/browser'
+import { render } from 'vitest-browser-react'
 
 import {PerformanceProvider, ProfiledComponent, withPerformanceMonitor} from '../performance-decorator'
 import {PERF_EVENTS} from '../performance-types'
 import {useReportReactRenderProfile} from '../ReportReactRenderProfileContext'
-import { render } from 'vitest-browser-react'
-import { page, userEvent } from 'vitest/browser'
 
 // Mock storybook's addons API
 const mockChannel = {

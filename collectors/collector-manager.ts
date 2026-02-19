@@ -213,7 +213,6 @@ export class CollectorManager {
    */
   updateSparklineData(): void {
     this.collectors.memory.update()
-    this.collectors.paint.updateCompositorLayers()
 
     // Build sparkline data from frame metrics
     const frameMetrics = this.collectors.frame.getMetrics()
