@@ -1,5 +1,4 @@
 // @ts-check
-import {defaultConfig} from '@github-ui/eslintrc'
 import {sortImportsConfig} from '@github-ui/eslintrc/configs/sort-imports'
 
 export default [
