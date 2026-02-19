@@ -10,7 +10,7 @@ import tseslint from 'typescript-eslint'
 
 export default defineConfig(
   {
-    ignores: ['dist/**', 'node_modules/**', 'storybook-static/**'],
+    ignores: ['dist/**', 'node_modules/**', 'storybook-static/**', 'demo/**'],
   },
   eslint.configs.recommended,
   tseslint.configs.strictTypeChecked,

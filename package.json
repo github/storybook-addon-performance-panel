@@ -36,7 +36,8 @@
     "stylelint": "stylelint --aei --rd \"**/*.css\"",
     "test": "vitest",
     "tsc": "tsc",
-    "test:browser": "vitest"
+    "test:browser": "vitest",
+    "demo": "npm run build && npm --prefix demo run storybook"
   },
   "bundler": {
     "managerEntries": [

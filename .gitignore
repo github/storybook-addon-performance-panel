@@ -11,3 +11,6 @@ tsconfig.tsbuildinfo
 .swc/
 
 node_modules/
+
+# Demo Storybook build output
+demo/storybook-static/
