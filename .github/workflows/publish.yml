@@ -39,12 +39,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ''
           NPM_CONFIG_PROVENANCE: true
-      - name: Report CI status on changeset PR
+      - name: Configure changeset PR
         if: steps.changesets.outputs.pullRequestNumber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          sha=$(gh pr view ${{ steps.changesets.outputs.pullRequestNumber }} --json headRefOid -q .headRefOid)
+          PR=${{ steps.changesets.outputs.pullRequestNumber }}
+          gh pr edit "$PR" --add-label "skip changeset"
+          sha=$(gh pr view "$PR" --json headRefOid -q .headRefOid)
           gh api repos/${{ github.repository }}/statuses/$sha \
             -f state=success \
             -f context=CI \
