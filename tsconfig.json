@@ -11,7 +11,6 @@
     "jsx": "react-jsx",
     "lib": ["es2024", "dom", "dom.iterable"],
     "module": "esnext",
-    "types": [],
     "moduleResolution": "bundler",
     "noEmit": true,
     "noImplicitOverride": true,

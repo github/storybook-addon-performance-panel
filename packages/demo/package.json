@@ -1,5 +1,5 @@
 {
-  "name": "demo-storybook",
+  "name": "@github-ui/demo-storybook",
   "private": true,
   "type": "module",
   "scripts": {
@@ -7,7 +7,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@github-ui/storybook-addon-performance-panel": "file:..",
+    "@github-ui/storybook-addon-performance-panel": "*",
     "react": "^19",
     "react-dom": "^19"
   },

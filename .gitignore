@@ -2,7 +2,7 @@
 dist/
 
 # TypeScript build info
-tsconfig.tsbuildinfo
+*.tsbuildinfo
 
 # ESLint cache
 .eslintcache
@@ -12,5 +12,5 @@ tsconfig.tsbuildinfo
 
 node_modules/
 
-# Demo Storybook build output
-demo/storybook-static/
+# Storybook build output
+storybook-static/

@@ -1,87 +1,30 @@
 {
-  "name": "@github-ui/storybook-addon-performance-panel",
-  "description": "a performance panel addon for storybook",
+  "name": "storybook-addon-performance-panel-repo",
+  "private": true,
   "type": "module",
-  "version": "0.1.2",
-  "homepage": "https://github.com/github/github-ui/blob/main/packages/storybook-addon-performance-panel/README.md",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./manager": {
-      "types": "./dist/manager.d.ts",
-      "default": "./dist/manager.js"
-    },
-    "./package.json": "./package.json",
-    "./preset": {
-      "types": "./dist/preset.d.ts",
-      "default": "./dist/preset.js"
-    },
-    "./preview": {
-      "types": "./dist/preview.d.ts",
-      "default": "./dist/preview.js"
-    }
-  },
-  "files": [
-    "dist/**/*",
-    "README.md",
-    "**/*.md"
+  "workspaces": [
+    "packages/*"
   ],
   "scripts": {
-    "build": "tsup",
-    "build:publish": "./publish.sh",
-    "build:watch": "tsup --watch",
+    "build": "npm run build -w packages/storybook-addon-performance-panel",
+    "build:watch": "npm run build:watch -w packages/storybook-addon-performance-panel",
     "lint": "eslint . --cache",
-    "stylelint": "stylelint --aei --rd \"**/*.css\"",
-    "test": "vitest",
-    "tsc": "tsc",
-    "test:browser": "vitest",
-    "demo": "npm run build && npm --prefix demo run storybook"
-  },
-  "bundler": {
-    "managerEntries": [
-      "manager.tsx"
-    ],
-    "previewEntries": [
-      "preview.ts",
-      "index.ts"
-    ],
-    "nodeEntries": [
-      "preset.ts"
-    ]
-  },
-  "peerDependencies": {
-    "@storybook/icons": "^2.0.0",
-    "@storybook/react": "^10.0.0",
-    "react": "^19",
-    "storybook": "^10"
+    "test": "npm test -w packages/storybook-addon-performance-panel",
+    "tsc": "tsc -b packages/storybook-addon-performance-panel/tsconfig.build.json",
+    "demo": "npm run build && npm run storybook -w packages/demo",
+    "demo:build": "npm run build && npm run build-storybook -w packages/demo"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.1",
-    "@types/node": "^25",
-    "@types/react": "^19.0.0",
-    "@vitejs/plugin-react": "^5.1.4",
-    "@vitest/browser-playwright": "^4.0.18",
-    "esbuild": "0.27.3",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-simple-import-sort": "12.1.1",
+    "jiti": "^2.6.1",
     "prettier": "^3.8.1",
-    "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.0",
-    "vitest": "^4.0.18",
-    "vitest-browser-react": "^2.0.5"
-  },
-  "storybook": {
-    "displayName": "Addon Performance Panel",
-    "supportedFrameworks": [
-      "react"
-    ],
-    "icon": ""
+    "typescript-eslint": "^8.56.0"
   }
 }

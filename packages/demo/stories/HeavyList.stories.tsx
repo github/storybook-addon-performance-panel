@@ -1,5 +1,14 @@
 import {useCallback, useMemo, useState} from 'react'
+
 import preview from '../.storybook/preview'
+
+/**
+ * Simple deterministic hash for seeding item values.
+ * Avoids Math.random() which is impure inside render.
+ */
+function seededValue(index: number): number {
+  return ((index * 2654435761) >>> 0) % 1000
+}
 
 /**
  * A component that generates heavy DOM and triggers layout shifts.
@@ -13,7 +22,7 @@ function HeavyList({itemCount = 200}: {itemCount?: number}) {
     const list = Array.from({length: itemCount}, (_, i) => ({
       id: i,
       name: `Item ${String(i + 1)}`,
-      value: Math.round(Math.random() * 1000),
+      value: seededValue(i),
     }))
     const filtered = filter ? list.filter(item => item.name.toLowerCase().includes(filter.toLowerCase())) : list
     return sortAsc ? filtered : [...filtered].reverse()
@@ -25,7 +34,17 @@ function HeavyList({itemCount = 200}: {itemCount?: number}) {
 
   return (
     <div style={{maxHeight: '400px', overflow: 'auto'}}>
-      <div style={{display: 'flex', gap: '8px', marginBottom: '8px', position: 'sticky', top: 0, background: 'white', padding: '4px'}}>
+      <div
+        style={{
+          display: 'flex',
+          gap: '8px',
+          marginBottom: '8px',
+          position: 'sticky',
+          top: 0,
+          background: 'white',
+          padding: '4px',
+        }}
+      >
         <input
           placeholder="Filter items..."
           value={filter}
@@ -34,7 +53,10 @@ function HeavyList({itemCount = 200}: {itemCount?: number}) {
           }}
           style={{padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px', flex: 1}}
         />
-        <button onClick={toggleSort} style={{padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer'}}>
+        <button
+          onClick={toggleSort}
+          style={{padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer'}}
+        >
           Sort {sortAsc ? '↓' : '↑'}
         </button>
       </div>
