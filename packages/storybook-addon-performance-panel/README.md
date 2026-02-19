@@ -26,19 +26,6 @@ This follows [Storybook addon best practices](https://storybook.js.org/docs/addo
 
 The performance monitor decorator is applied globally when the addon is added to `.storybook/main.ts`, so all stories automatically have performance monitoring enabled. The metrics panel appears as a "⚡ Performance" tab at the bottom of Storybook.
 
-### Manual Integration
-
-If you need to add the decorator to a specific story or configure it manually:
-
-```tsx
-import { withPerformanceMonitor } from '@github-ui/storybook-addon-performance-panel/decorator'
-
-export default {
-  title: 'MyComponent',
-  decorators: [withPerformanceMonitor],
-}
-```
-
 ### View Mode Behavior
 
 The performance panel automatically detects the Storybook view mode:
@@ -161,26 +148,17 @@ Metrics are color-coded based on Web Vitals standards:
 The addon follows [Storybook addon best practices](https://storybook.js.org/docs/addons/writing-presets) with the following entry points:
 
 ```typescript
-// Main entry point - re-exports types and constants
-import { ADDON_ID, PANEL_ID, PERF_EVENTS, THRESHOLDS, DEFAULT_METRICS } from '@github-ui/storybook-addon-performance-panel'
+// CSF factory entry — used in preview.ts with definePreview()
+import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel'
 
-// Preset for automatic addon registration (used by main.ts)
+// Preset — registers the manager panel (used in main.ts addons array)
 import '@github-ui/storybook-addon-performance-panel/preset'
 
-// Manager entry - registers the panel in Storybook UI
-import '@github-ui/storybook-addon-performance-panel/manager'
-
-// Preview entry - exports decorator for stories
+// Preview annotations — used internally by the preset
 import '@github-ui/storybook-addon-performance-panel/preview'
 
-// Types and constants
-import {
-  ADDON_ID,
-  PANEL_ID,
-  PERF_EVENTS,
-  THRESHOLDS,
-  DEFAULT_METRICS
-} from '@github-ui/storybook-addon-performance-panel/types'
+// Manager — registers the panel UI in Storybook's manager
+import '@github-ui/storybook-addon-performance-panel/manager'
 ```
 
 ## Collectors
