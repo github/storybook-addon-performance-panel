@@ -11,8 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    name: Lint
+  install:
+    name: Install & Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,45 +22,90 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - uses: actions/cache/save@v4
+        with:
+          path: |
+            node_modules
+            packages/*/node_modules
+            packages/storybook-addon-performance-panel/dist
+          key: deps-${{ github.sha }}
+
+  lint:
+    name: Lint
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            packages/*/node_modules
+            packages/storybook-addon-performance-panel/dist
+          key: deps-${{ github.sha }}
       - run: npm run lint
 
   typecheck:
     name: Typecheck
+    needs: install
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run build
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            packages/*/node_modules
+            packages/storybook-addon-performance-panel/dist
+          key: deps-${{ github.sha }}
       - run: npm run tsc
 
   test:
     name: Test
+    needs: install
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            packages/*/node_modules
+            packages/storybook-addon-performance-panel/dist
+          key: deps-${{ github.sha }}
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('**/package-lock.json') }}
       - run: npx playwright install chromium --with-deps
       - run: npm test
 
   build:
-    name: Build
+    name: Build Docs
+    needs: install
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run docs:build
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            packages/*/node_modules
+            packages/storybook-addon-performance-panel/dist
+          key: deps-${{ github.sha }}
+      - run: npm run build-storybook -w @github-ui/docs
       - uses: actions/upload-artifact@v4
         with:
           name: addon-dist
