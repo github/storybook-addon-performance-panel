@@ -1,0 +1,104 @@
+import {Meta} from 'storybook/blocks'
+
+<Meta title="Guides/Setup" />
+
+# Setup Guide
+
+## Installation
+
+```bash
+npm install @github-ui/storybook-addon-performance-panel
+```
+
+## Configuration
+
+### 1. Register the addon (main.ts)
+
+Add the addon to your Storybook `addons` array. This registers the panel UI and the performance monitoring decorator.
+
+```ts
+// .storybook/main.ts
+import type {StorybookConfig} from '@storybook/react-vite'
+
+const config: StorybookConfig = {
+  stories: ['../src/**/*.stories.@(ts|tsx)'],
+  framework: '@storybook/react-vite',
+  addons: ['@github-ui/storybook-addon-performance-panel'],
+}
+
+export default config
+```
+
+### 2. Compose in preview (preview.ts)
+
+Use `definePreview` to compose the addon with full type inference for CSF factories:
+
+```ts
+// .storybook/preview.ts
+import {definePreview} from '@storybook/react-vite'
+import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel'
+
+const preview = definePreview({
+  addons: [addonPerformancePanel()],
+  parameters: {
+    controls: {expanded: true},
+  },
+})
+
+export default preview
+```
+
+### 3. Write stories with CSF factories
+
+```tsx
+// Button.stories.tsx
+import preview from '../.storybook/preview'
+
+function Button({label = 'Click me'}: {label?: string}) {
+  return <button>{label}</button>
+}
+
+const meta = preview.meta({
+  title: 'Components/Button',
+  component: Button,
+})
+export default meta
+
+export const Default = meta.story({})
+export const WithLabel = meta.story({args: {label: 'Submit'}})
+```
+
+## React Profiling in Production Builds
+
+To keep the React Profiler panel working in production Storybook builds (e.g., deployed to GitHub Pages), alias `react-dom/client` to `react-dom/profiling`:
+
+```ts
+// .storybook/main.ts
+const config: StorybookConfig = {
+  // ...
+  viteFinal(config) {
+    config.resolve ??= {}
+    config.resolve.alias ??= {}
+    ;(config.resolve.alias as Record<string, string>)['react-dom/client'] = 'react-dom/profiling'
+    return config
+  },
+}
+```
+
+This uses the profiling build of React DOM which includes Profiler API support but with minimal overhead.
+
+## View Mode Behavior
+
+- **Story/Canvas view**: Full performance metrics are collected and displayed
+- **Docs view**: A message indicates metrics are optimized for Canvas view, since docs mode renders stories in iframes which affects timing accuracy
+
+## Element Timing
+
+To track specific elements with the Element Timing collector, add the `elementtiming` attribute:
+
+```tsx
+<img src="/hero.jpg" elementtiming="hero-image" />
+<div elementtiming="main-content">Important content</div>
+```
+
+Each tracked element will appear individually in the Element Timing section of the panel with its render time.

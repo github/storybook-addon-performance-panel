@@ -1,5 +1,6 @@
 import eslint from '@eslint/js'
 import type {Linter} from 'eslint'
+import type {ESLint} from 'eslint'
 import {defineConfig} from 'eslint/config'
 import eslintPluginPrettier from 'eslint-plugin-prettier/recommended'
 import eslintPluginReact from 'eslint-plugin-react'
@@ -33,7 +34,7 @@ export default defineConfig(
   },
   eslintPluginReact.configs.flat['jsx-runtime'] as Linter.Config,
   {
-    plugins: {'react-hooks': eslintPluginReactHooks},
+    plugins: {'react-hooks': eslintPluginReactHooks as unknown as ESLint.Plugin},
     rules: eslintPluginReactHooks.configs.recommended.rules,
   },
   {

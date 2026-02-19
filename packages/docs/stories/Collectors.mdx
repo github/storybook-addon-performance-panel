@@ -1,0 +1,101 @@
+import {Meta} from 'storybook/blocks'
+
+<Meta title="Guides/Collectors" />
+
+# Collectors Reference
+
+The addon uses modular collector classes for metrics gathering. Each collector uses the most accurate available browser API for its metrics.
+
+## Overview
+
+| Collector | Method | Type | Browser Support |
+|-----------|--------|------|-----------------|
+| **FrameTimingCollector** | `requestAnimationFrame` loop | Heuristic | All |
+| **InputCollector** | Event Timing API | **Optimal** | Chrome 96+, Firefox 144+ |
+| **MainThreadCollector** | Long Tasks API | **Optimal** | Chrome 58+ |
+| **LongAnimationFrameCollector** | LoAF API | **Optimal** | Chrome 123+ |
+| **ElementTimingCollector** | Element Timing API | **Optimal** | Chrome 77+ |
+| **LayoutShiftCollector** | Layout Instability API | **Optimal** | Chrome 77+ |
+| **MemoryCollector** | `performance.memory` | **Optimal** | Chrome only |
+| **PaintCollector** | Paint Timing API | **Optimal** | All |
+| **StyleMutationCollector** | `MutationObserver` | Heuristic | All |
+| **ForcedReflowCollector** | Property getter instrumentation | Heuristic | All |
+| **ReactProfilerCollector** | React Profiler API | **Optimal** | All |
+
+**Optimal** = Uses the browser's native/standard API designed for this measurement.
+**Heuristic** = Uses indirect measurement techniques; accuracy may vary.
+
+---
+
+## Frame Timing
+
+Measures rendering smoothness using a `requestAnimationFrame` loop.
+
+**Metrics:** FPS, frame time, dropped frames, frame jitter, frame stability (%)
+
+The RAF loop calculates delta time between frames. Dropped frames are those exceeding 2× the 16.67ms budget (33.34ms). Frame stability is a consistency percentage based on deviation from the target frame time.
+
+---
+
+## Input Responsiveness
+
+Uses the [Event Timing API](https://w3c.github.io/event-timing/) for accurate interaction measurement — the same API behind the INP Core Web Vital.
+
+**Metrics:** INP (p98), input latency, processing time, presentation delay, FID, interaction details
+
+Each interaction is broken down into three phases:
+- **Input delay** — time before event handlers start (main thread busy?)
+- **Processing time** — event handler execution duration
+- **Presentation delay** — time from handlers to next paint
+
+Click "Inspect" on any interaction to highlight and scroll to the target element.
+
+---
+
+## Main Thread Health
+
+Uses the [Long Tasks API](https://w3c.github.io/longtasks/) to detect tasks blocking the main thread for &gt;50ms.
+
+**Metrics:** Long task count, longest task duration, Total Blocking Time (TBT)
+
+TBT is calculated as the sum of `(duration - 50ms)` for all long tasks, matching the Lighthouse methodology.
+
+---
+
+## Long Animation Frames
+
+Uses the [Long Animation Frames API](https://w3c.github.io/long-animation-frames/) (Chrome 123+) for detailed frame attribution.
+
+**Metrics:** LoAF count, blocking duration, P95 duration, script attribution
+
+Unlike Long Tasks, LoAF provides **script attribution** — which functions in which files caused the slow frame. This is essential for debugging INP issues.
+
+---
+
+## Layout Stability
+
+Uses the [Layout Instability API](https://w3c.github.io/layout-instability/) with session windowing per the Core Web Vitals specification.
+
+**Metrics:** CLS score, layout shift count, session tracking
+
+CLS uses session windows: groups of shifts with &lt;1s gaps and &lt;5s total duration. The final CLS is the maximum session window value.
+
+---
+
+## React Profiler
+
+Uses the official [React Profiler API](https://react.dev/reference/react/Profiler) via a wrapper component.
+
+**Metrics:** Mount count/duration, slow updates (&gt;16ms), P95 duration, render cascades
+
+Render cascades (`nested-update` phase) indicate `setState` called during commit phase — typically in `useLayoutEffect`. These are synchronous re-renders and are expensive.
+
+---
+
+## Memory & Resources
+
+Uses `performance.memory` (Chrome only) for heap introspection, plus Paint Timing and Resource Timing APIs.
+
+**Metrics:** Heap usage, memory delta, GC pressure (MB/s), compositor layers, paint count, script eval time
+
+GC pressure is calculated as the allocation rate over a rolling window — sustained high values (&gt;1 MB/s) indicate memory-intensive operations.

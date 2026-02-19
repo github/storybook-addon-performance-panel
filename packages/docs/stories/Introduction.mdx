@@ -1,0 +1,102 @@
+import {Meta} from 'storybook/blocks'
+
+<Meta title="Introduction" />
+
+# Performance Panel Addon
+
+A Storybook addon that provides real-time performance monitoring for stories. It displays comprehensive metrics including frame timing, input responsiveness, memory usage, React profiling, and more.
+
+The metrics panel appears as a **⚡ Performance** tab at the bottom of Storybook when viewing any story.
+
+## Quick Start
+
+```bash
+npm install @github-ui/storybook-addon-performance-panel
+```
+
+Add the addon to your Storybook configuration:
+
+```ts
+// .storybook/main.ts
+const config = {
+  addons: ['@github-ui/storybook-addon-performance-panel'],
+}
+```
+
+And compose it in your preview for full type inference:
+
+```ts
+// .storybook/preview.ts
+import {definePreview} from '@storybook/react-vite'
+import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel'
+
+export default definePreview({
+  addons: [addonPerformancePanel()],
+})
+```
+
+That's it — all stories automatically get performance monitoring.
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Preview Iframe (Decorator)                                      │
+│  ┌─────────────────────┐    ┌─────────────────────────────┐    │
+│  │ PerformanceProvider │───▶│ Metrics Collection          │    │
+│  │   └─ProfiledComponent│   │  • RAF loop (frame timing)  │    │
+│  │       └─Story       │   │  • PerformanceObservers     │    │
+│  └─────────────────────┘   │  • MutationObservers        │    │
+│                             │  • Event listeners          │    │
+│                             │  • React Profiler API       │    │
+│                             └──────────────┬──────────────┘    │
+│                                            │                    │
+│                              channel.emit(METRICS_UPDATE)       │
+└──────────────────────────────────────────────┼──────────────────┘
+                                               │
+                                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ Manager (Panel)                                                 │
+│  ┌─────────────────────┐                                        │
+│  │ PerformancePanel    │◀── useChannel(METRICS_UPDATE)          │
+│  │   └─MetricsSections │                                        │
+│  └─────────────────────┘                                        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Metrics At a Glance
+
+| Category | Key Metrics |
+|----------|-------------|
+| **Frame Timing** | FPS, frame time, dropped frames, jitter, stability |
+| **Input** | INP, input latency, FID, interaction breakdown |
+| **Main Thread** | Long tasks, TBT, thrashing, DOM churn |
+| **Long Animation Frames** | LoAF count, blocking duration, script attribution |
+| **Layout Stability** | CLS, forced reflows, style writes |
+| **React** | Mount time, slow updates, P95 duration, render cascades |
+| **Memory** | Heap usage, delta, GC pressure, compositor layers |
+
+## Metric Thresholds
+
+Metrics are color-coded based on Web Vitals standards:
+
+| Metric | 🟢 Good | 🟡 Needs Work | 🔴 Poor |
+|--------|------|------------|------|
+| FPS | ≥55 | 30–55 | &lt;30 |
+| Frame Time | ≤16.67ms | 16.67–32ms | &gt;32ms |
+| Input Latency | ≤16ms | 16–50ms | &gt;50ms |
+| INP | ≤200ms | 200–500ms | &gt;500ms |
+| CLS | &lt;0.1 | 0.1–0.25 | &gt;0.25 |
+| TBT | &lt;200ms | 200–600ms | &gt;600ms |
+
+## Browser Compatibility
+
+| Feature | Chrome/Edge | Firefox | Safari |
+|---------|-------------|---------|--------|
+| Core metrics | ✅ | ✅ | ✅ |
+| Memory API | ✅ | ❌ | ❌ |
+| Long Animation Frames | ✅ 123+ | ❌ | ❌ |
+| Event Timing (INP) | ✅ | ✅ 144+ | ❌ |
+| Element Timing | ✅ | ❌ | ❌ |
+
+**Chrome/Edge is recommended** for the most complete metrics during debugging.
