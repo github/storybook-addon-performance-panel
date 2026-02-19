@@ -10,12 +10,6 @@ concurrency:
   group: pages-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-  pull-requests: write
-
 jobs:
   build-docs:
     name: Build Storybook
@@ -33,14 +27,16 @@ jobs:
           name: storybook-static
           path: packages/docs/storybook-static/
 
-  # Deploy to GitHub Pages on pushes to main
   deploy:
     name: Deploy to Pages
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build-docs
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
-      name: github-pages
+      name: ${{ github.event_name == 'pull_request' && 'github-pages-preview' || 'github-pages' }}
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/download-artifact@v4
@@ -51,23 +47,8 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: storybook-static
-      - id: deploy
+      - name: Deploy to GitHub Pages
+        id: deploy
         uses: actions/deploy-pages@v4
-
-  # Post preview link on PRs
-  preview:
-    name: Preview link
-    if: github.event_name == 'pull_request'
-    needs: build-docs
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
         with:
-          name: storybook-static
-          path: storybook-static
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: storybook-static
-      - id: deploy
-        uses: actions/deploy-pages@v4
+          preview: ${{ github.event_name == 'pull_request' }}
