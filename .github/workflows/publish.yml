@@ -8,6 +8,7 @@ permissions:
   contents: write
   pull-requests: write
   id-token: write
+  statuses: write
 
 jobs:
   release:
@@ -21,9 +22,11 @@ jobs:
           node-version: 22
           cache: npm
           registry-url: https://registry.npmjs.org
+          scope: '@github-ui'
       - run: npm ci
       - run: npm run build
       - name: Create release PR or publish
+        id: changesets
         uses: changesets/action@v1
         with:
           version: npm run version-packages
@@ -32,3 +35,13 @@ jobs:
           commit: "chore: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Report CI status on changeset PR
+        if: steps.changesets.outputs.pullRequestNumber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sha=$(gh pr view ${{ steps.changesets.outputs.pullRequestNumber }} --json headRefOid -q .headRefOid)
+          gh api repos/${{ github.repository }}/statuses/$sha \
+            -f state=success \
+            -f context=CI \
+            -f description="Skipped for version-only PR (code validated on main)"
