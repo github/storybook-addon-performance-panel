@@ -26,7 +26,7 @@ jobs:
       - name: Create release PR or publish
         uses: changesets/action@v1
         with:
-          version: npx changeset version && npm install --package-lock-only
+          version: sh -c 'npx changeset version && npm install --package-lock-only'
           publish: npx changeset publish --provenance
           title: "chore: version packages"
           commit: "chore: version packages"
