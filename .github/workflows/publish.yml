@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
 
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
 permissions:
   contents: write
   pull-requests: write
@@ -21,8 +23,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          registry-url: https://registry.npmjs.org
-          scope: '@github-ui'
+      - name: Update npm
+        run: npm update -g npm
       - run: npm ci
       - run: npm run build
       - name: Create release PR or publish
@@ -30,11 +32,13 @@ jobs:
         uses: changesets/action@v1
         with:
           version: npm run version-packages
-          publish: npx changeset publish --provenance
+          publish: npx changeset publish
           title: "chore: version packages"
           commit: "chore: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ''
+          NPM_CONFIG_PROVENANCE: true
       - name: Report CI status on changeset PR
         if: steps.changesets.outputs.pullRequestNumber
         env:
