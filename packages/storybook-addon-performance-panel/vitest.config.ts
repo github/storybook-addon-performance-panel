@@ -2,6 +2,11 @@ import react from '@vitejs/plugin-react'
 import {playwright} from '@vitest/browser-playwright'
 import {defineConfig} from 'vitest/config'
 
+const allBrowsers = ['chromium', 'firefox', 'webkit'] as const
+const activeBrowsers = process.env.VITEST_BROWSER
+  ? [process.env.VITEST_BROWSER as (typeof allBrowsers)[number]]
+  : [...allBrowsers]
+
 export default defineConfig({
   plugins: [react()],
   test: {
@@ -16,33 +21,11 @@ export default defineConfig({
       {
         test: {
           include: ['**/*.browser.{test,spec}.ts'],
-          name: 'chromium',
+          name: 'browser',
           browser: {
             enabled: true,
             provider: playwright(),
-            instances: [{browser: 'chromium', headless: true}],
-          },
-        },
-      },
-      {
-        test: {
-          include: ['**/*.browser.{test,spec}.ts'],
-          name: 'firefox',
-          browser: {
-            enabled: true,
-            provider: playwright(),
-            instances: [{browser: 'firefox', headless: true}],
-          },
-        },
-      },
-      {
-        test: {
-          include: ['**/*.browser.{test,spec}.ts'],
-          name: 'webkit',
-          browser: {
-            enabled: true,
-            provider: playwright(),
-            instances: [{browser: 'webkit', headless: true}],
+            instances: activeBrowsers.map(browser => ({browser, headless: true})),
           },
         },
       },

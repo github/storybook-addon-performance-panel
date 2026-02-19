@@ -21,6 +21,21 @@ function waitUntil(fn: () => boolean, timeout = 2000, interval = 10): Promise<vo
   })
 }
 
+/** Wait for an idle callback to fire, proving the browser had a chance to process pending work */
+function waitForIdle(): Promise<void> {
+  return new Promise<void>(resolve => {
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(() => {
+        resolve()
+      })
+    } else {
+      setTimeout(() => {
+        resolve()
+      }, 0)
+    }
+  })
+}
+
 describe('PaintCollector', () => {
   let collector: PaintCollector
   let paintObserverCallback: PerformanceObserverCallback | null = null
@@ -333,10 +348,10 @@ describe('PaintCollector', () => {
       const el = document.createElement('div')
       el.style.willChange = 'transform'
       document.body.appendChild(el)
-      await new Promise(resolve => setTimeout(resolve, 100))
+      await waitForIdle()
 
       // Count should not change after stop
-      expect(collector.getMetrics().compositorLayers).toBe(countAfterStop)
+      await expect.poll(() => collector.getMetrics().compositorLayers).toBe(countAfterStop)
 
       document.body.removeChild(el)
     })
