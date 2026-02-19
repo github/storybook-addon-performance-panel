@@ -102,7 +102,9 @@ export class CollectorManager {
       // Order matters: style/reflow should be early (they patch DOM APIs)
       style: new StyleMutationCollector(),
       reflow: new ForcedReflowCollector(),
-      frame: new FrameTimingCollector(delta => { this.collectors.style.checkThrashing(delta); }),
+      frame: new FrameTimingCollector(delta => {
+        this.collectors.style.checkThrashing(delta)
+      }),
       input: new InputCollector(),
       mainThread: new MainThreadCollector(),
       loaf: new LongAnimationFrameCollector(),
@@ -114,7 +116,9 @@ export class CollectorManager {
     }
 
     // Wire up style → reflow dependency
-    this.collectors.style.onLayoutDirty = () => { this.collectors.reflow.markLayoutDirty(); }
+    this.collectors.style.onLayoutDirty = () => {
+      this.collectors.reflow.markLayoutDirty()
+    }
 
     // Wire up profiler update callback with automatic cleanup
     if (onProfilerUpdate) {

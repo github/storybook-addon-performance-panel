@@ -29,7 +29,9 @@ describe('PaintCollector', () => {
           }
           observerIndex++
         }
-        observe() { /* empty */ }
+        observe() {
+          /* empty */
+        }
         disconnect() {
           mockDisconnect()
         }

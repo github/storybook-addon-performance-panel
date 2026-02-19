@@ -527,7 +527,9 @@ const InputSection = React.memo(function InputSection({
                   <span>worst:</span>
                   <Code>{slowestInteraction.targetSelector.slice(0, 20)}</Code>
                   <InspectButton
-                    onClick={() => { handleInspect(slowestInteraction.targetSelector); }}
+                    onClick={() => {
+                      handleInspect(slowestInteraction.targetSelector)
+                    }}
                     title="Inspect slowest interaction element"
                   >
                     🔍
@@ -577,7 +579,9 @@ const InputSection = React.memo(function InputSection({
                   <span>·</span>
                   <Code>{lastInteraction.targetSelector.slice(0, 18)}</Code>
                   <InspectButton
-                    onClick={() => { handleInspect(lastInteraction.targetSelector); }}
+                    onClick={() => {
+                      handleInspect(lastInteraction.targetSelector)
+                    }}
                     title="Highlight element in preview"
                   >
                     🔍
@@ -629,7 +633,9 @@ const InputSection = React.memo(function InputSection({
                   <span>·</span>
                   <Code>{slowestInteraction.targetSelector.slice(0, 18)}</Code>
                   <InspectButton
-                    onClick={() => { handleInspect(slowestInteraction.targetSelector); }}
+                    onClick={() => {
+                      handleInspect(slowestInteraction.targetSelector)
+                    }}
                     title="Highlight element in preview"
                   >
                     🔍
@@ -1048,7 +1054,9 @@ const LayoutAndInternalsSection = React.memo(function LayoutAndInternalsSection(
         label="Input Jitter"
         tooltip="Unexpected input latency spikes causing visible hitches during interaction."
       >
-        <StatusBadge variant={jitterStatus}>{inputJitter === 0 ? '✨ None' : `😵 ${String(inputJitter)} hitches`}</StatusBadge>
+        <StatusBadge variant={jitterStatus}>
+          {inputJitter === 0 ? '✨ None' : `😵 ${String(inputJitter)} hitches`}
+        </StatusBadge>
       </Metric>
     </MetricsSection>
   )
@@ -1499,12 +1507,18 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
       emit(PERF_EVENTS.REQUEST_METRICS)
     },
 
-    storyErrored: () => { dispatch({type: 'STORY_ERROR', message: 'Story failed to render'}); },
-    storyMissing: () => { dispatch({type: 'STORY_ERROR', message: 'Story not found'}); },
-    storyThrewException: (error: Error) =>
-      { dispatch({type: 'STORY_ERROR', message: error.message || 'Story threw an exception'}); },
-    playFunctionThrewException: (error: Error) =>
-      { dispatch({type: 'STORY_ERROR', message: `Play function error: ${error.message || 'Unknown error'}`}); },
+    storyErrored: () => {
+      dispatch({type: 'STORY_ERROR', message: 'Story failed to render'})
+    },
+    storyMissing: () => {
+      dispatch({type: 'STORY_ERROR', message: 'Story not found'})
+    },
+    storyThrewException: (error: Error) => {
+      dispatch({type: 'STORY_ERROR', message: error.message || 'Story threw an exception'})
+    },
+    playFunctionThrewException: (error: Error) => {
+      dispatch({type: 'STORY_ERROR', message: `Play function error: ${error.message || 'Unknown error'}`})
+    },
 
     storyArgsUpdated: () => {
       if (isConnected()) {
@@ -1531,7 +1545,9 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
       dispatch({type: 'NO_DECORATOR'})
     }, 500)
 
-    return () => { clearTimeout(timeoutId); }
+    return () => {
+      clearTimeout(timeoutId)
+    }
   }, [previewInitialized, state.status])
 
   const handleReset = React.useCallback(() => {
@@ -1777,7 +1793,7 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // You can log the error to an error reporting service
-     
+
     console.error('Error in PerformancePanel:', error, errorInfo)
   }
 

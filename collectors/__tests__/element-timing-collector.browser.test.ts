@@ -23,8 +23,12 @@ describe('ElementTimingCollector', () => {
   })
 
   it('starts and stops without errors', () => {
-    expect(() => { collector.start(); }).not.toThrow()
-    expect(() => { collector.stop(); }).not.toThrow()
+    expect(() => {
+      collector.start()
+    }).not.toThrow()
+    expect(() => {
+      collector.stop()
+    }).not.toThrow()
   })
 
   it('resets metrics', () => {
@@ -42,15 +46,23 @@ describe('ElementTimingCollector', () => {
     collector.start()
     collector.stop()
     collector.reset()
-    expect(() => { collector.start(); }).not.toThrow()
+    expect(() => {
+      collector.start()
+    }).not.toThrow()
     collector.stop()
   })
 
   it('handles multiple start/stop cycles', () => {
     for (let i = 0; i < 3; i++) {
-      expect(() => { collector.start(); }).not.toThrow()
-      expect(() => { collector.stop(); }).not.toThrow()
-      expect(() => { collector.reset(); }).not.toThrow()
+      expect(() => {
+        collector.start()
+      }).not.toThrow()
+      expect(() => {
+        collector.stop()
+      }).not.toThrow()
+      expect(() => {
+        collector.reset()
+      }).not.toThrow()
     }
   })
 

@@ -419,7 +419,7 @@ function handleInspectElement(selector: string) {
       }, 600)
 
       // Log to console for DevTools inspection
-       
+
       console.log(
         '%c[Performance Panel] Inspecting element:',
         'color: #f06; font-weight: bold',

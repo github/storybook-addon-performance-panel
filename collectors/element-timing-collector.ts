@@ -116,10 +116,7 @@ export class ElementTimingCollector implements MetricCollector<ElementTimingMetr
 
   #checkSupport(): boolean {
     try {
-      return (
-        typeof PerformanceObserver !== 'undefined' &&
-        PerformanceObserver.supportedEntryTypes.includes('element')
-      )
+      return typeof PerformanceObserver !== 'undefined' && PerformanceObserver.supportedEntryTypes.includes('element')
     } catch {
       return false
     }

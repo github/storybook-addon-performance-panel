@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import { page, userEvent } from 'vitest/browser'
-import { render } from 'vitest-browser-react'
+import {page, userEvent} from 'vitest/browser'
+import {render} from 'vitest-browser-react'
 
 import {PerformanceProvider, ProfiledComponent, withPerformanceMonitor} from '../performance-decorator'
 import {PERF_EVENTS} from '../performance-types'
@@ -101,9 +101,7 @@ describe('performance-decorator', () => {
       )
 
       // Get the request handler that was registered
-      const requestCall = mockChannel.on.mock.calls.find(
-        (call: unknown[]) => call[0] === PERF_EVENTS.REQUEST_METRICS,
-      )
+      const requestCall = mockChannel.on.mock.calls.find((call: unknown[]) => call[0] === PERF_EVENTS.REQUEST_METRICS)
 
       expect(requestCall).toBeDefined()
 
@@ -124,9 +122,7 @@ describe('performance-decorator', () => {
 
       await new Promise(resolve => setTimeout(resolve, 150))
 
-      const emittedCall = mockChannel.emit.mock.calls.find(
-        (call: unknown[]) => call[0] === PERF_EVENTS.METRICS_UPDATE,
-      )
+      const emittedCall = mockChannel.emit.mock.calls.find((call: unknown[]) => call[0] === PERF_EVENTS.METRICS_UPDATE)
 
       expect(emittedCall).toBeDefined()
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -196,13 +192,16 @@ describe('performance-decorator', () => {
         return null
       }
 
-      await expect.poll(async () =>
-        await render(
-          <PerformanceProvider storyId="test-story" enabled={false}>
-            <TestComponent />
-          </PerformanceProvider>,
-        ),
-      ).toThrow('useReportReactRenderProfile must be used within a PerformanceProvider')
+      await expect
+        .poll(
+          async () =>
+            await render(
+              <PerformanceProvider storyId="test-story" enabled={false}>
+                <TestComponent />
+              </PerformanceProvider>,
+            ),
+        )
+        .toThrow('useReportReactRenderProfile must be used within a PerformanceProvider')
 
       consoleSpy.mockRestore()
     })
@@ -229,7 +228,12 @@ describe('performance-decorator', () => {
         renderCount++
 
         return (
-          <button data-testid="button" onClick={() => { setCount(c => c + 1); }}>
+          <button
+            data-testid="button"
+            onClick={() => {
+              setCount(c => c + 1)
+            }}
+          >
             Count: {count}
           </button>
         )
@@ -295,9 +299,7 @@ describe('performance-decorator', () => {
       // Wait for initial count and metrics emission
       await new Promise(resolve => setTimeout(resolve, 600))
 
-      const emittedCall2 = mockChannel.emit.mock.calls.find(
-        (call: unknown[]) => call[0] === PERF_EVENTS.METRICS_UPDATE,
-      )
+      const emittedCall2 = mockChannel.emit.mock.calls.find((call: unknown[]) => call[0] === PERF_EVENTS.METRICS_UPDATE)
 
       // Should count the div and three spans = 4 elements
       expect(emittedCall2).toBeDefined()

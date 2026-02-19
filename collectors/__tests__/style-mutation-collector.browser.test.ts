@@ -71,7 +71,9 @@ describe('StyleMutationCollector', () => {
 
       // DOM mutations are sampled on interval, so just verify observer is working
       // by checking that stop doesn't throw
-      expect(() => { collector.stop(); }).not.toThrow()
+      expect(() => {
+        collector.stop()
+      }).not.toThrow()
 
       document.body.removeChild(parent)
     })
@@ -173,11 +175,15 @@ describe('StyleMutationCollector', () => {
   describe('stop', () => {
     it('stops without error', () => {
       collector.start()
-      expect(() => { collector.stop(); }).not.toThrow()
+      expect(() => {
+        collector.stop()
+      }).not.toThrow()
     })
 
     it('can be stopped without starting', () => {
-      expect(() => { collector.stop(); }).not.toThrow()
+      expect(() => {
+        collector.stop()
+      }).not.toThrow()
     })
   })
 })

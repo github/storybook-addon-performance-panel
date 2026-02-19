@@ -1,11 +1,12 @@
 // @ts-check
-import eslint from '@eslint/js';
-import { defineConfig } from 'eslint/config';
-import eslintPluginReact from 'eslint-plugin-react';
-import eslintPluginReactHooks from 'eslint-plugin-react-hooks';
-import simpleImportSort from "eslint-plugin-simple-import-sort";
+import eslint from '@eslint/js'
+import {defineConfig} from 'eslint/config'
+import eslintPluginPrettier from 'eslint-plugin-prettier/recommended'
+import eslintPluginReact from 'eslint-plugin-react'
+import eslintPluginReactHooks from 'eslint-plugin-react-hooks'
+import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import globals from 'globals'
-import tseslint from 'typescript-eslint';
+import tseslint from 'typescript-eslint'
 
 export default defineConfig(
   {
@@ -28,21 +29,30 @@ export default defineConfig(
   {
     files: ['**/*.{js,mjs,cjs,jsx,mjsx,ts,tsx,mtsx}'],
     ...eslintPluginReact.configs.flat.recommended,
-    settings: { react: { version: 'detect' } },
+    settings: {react: {version: 'detect'}},
   },
   // @ts-expect-error -- eslint-plugin-react doesn't have a 'jsx-runtime' config, but it does export one and it works fine
   eslintPluginReact.configs.flat['jsx-runtime'],
   {
-    plugins: { 'react-hooks': eslintPluginReactHooks },
+    plugins: {'react-hooks': eslintPluginReactHooks},
     rules: eslintPluginReactHooks.configs.recommended.rules,
   },
-   {
+  {
     plugins: {
-      "simple-import-sort": simpleImportSort,
+      'simple-import-sort': simpleImportSort,
     },
     rules: {
-      "simple-import-sort/imports": "error",
-      "simple-import-sort/exports": "error",
+      'simple-import-sort/imports': 'error',
+      'simple-import-sort/exports': 'error',
     },
   },
-);
+  {
+    files: ['**/*.{ts,tsx,mtsx}'],
+    rules: {
+      // TypeScript handles prop type validation; PropTypes are redundant
+      'react/prop-types': 'off',
+    },
+  },
+  // Must be last: disables ESLint rules that conflict with Prettier, then runs Prettier as a rule
+  eslintPluginPrettier,
+)

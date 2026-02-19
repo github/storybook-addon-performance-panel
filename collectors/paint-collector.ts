@@ -163,10 +163,13 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
 
   #scheduleFullScan(): void {
     this.#cancelPendingScan()
-    this.#idleCallbackId = scheduleIdle(() => {
-      this.#idleCallbackId = null
-      this.#fullScan()
-    }, {timeout: 1000})
+    this.#idleCallbackId = scheduleIdle(
+      () => {
+        this.#idleCallbackId = null
+        this.#fullScan()
+      },
+      {timeout: 1000},
+    )
   }
 
   #scheduleIncrementalScan(): void {
