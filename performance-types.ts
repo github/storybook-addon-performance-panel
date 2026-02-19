@@ -511,7 +511,7 @@ export interface PerformanceMetrics {
   /** Largest render time across all tracked elements (ms) */
   largestElementRenderTime: number
   /** Details about tracked elements (identifier → renderTime) */
-  elementTimings: Array<{identifier: string; renderTime: number; selector: string}>
+  elementTimings: {identifier: string; renderTime: number; selector: string}[]
 }
 
 /**

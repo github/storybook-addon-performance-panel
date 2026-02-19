@@ -527,7 +527,7 @@ const InputSection = React.memo(function InputSection({
                   <span>worst:</span>
                   <Code>{slowestInteraction.targetSelector.slice(0, 20)}</Code>
                   <InspectButton
-                    onClick={() => handleInspect(slowestInteraction.targetSelector)}
+                    onClick={() => { handleInspect(slowestInteraction.targetSelector); }}
                     title="Inspect slowest interaction element"
                   >
                     🔍
@@ -577,7 +577,7 @@ const InputSection = React.memo(function InputSection({
                   <span>·</span>
                   <Code>{lastInteraction.targetSelector.slice(0, 18)}</Code>
                   <InspectButton
-                    onClick={() => handleInspect(lastInteraction.targetSelector)}
+                    onClick={() => { handleInspect(lastInteraction.targetSelector); }}
                     title="Highlight element in preview"
                   >
                     🔍
@@ -629,7 +629,7 @@ const InputSection = React.memo(function InputSection({
                   <span>·</span>
                   <Code>{slowestInteraction.targetSelector.slice(0, 18)}</Code>
                   <InspectButton
-                    onClick={() => handleInspect(slowestInteraction.targetSelector)}
+                    onClick={() => { handleInspect(slowestInteraction.targetSelector); }}
                     title="Highlight element in preview"
                   >
                     🔍
@@ -1180,7 +1180,7 @@ const ReactPerformancePanel = React.memo(function ReactPerformancePanel({
  *
  * @component
  */
-type ReactSectionProps = {
+interface ReactSectionProps {
   /** List of registered profilers */
   profilers?: ProfilerInfo[]
 }
@@ -1531,7 +1531,7 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
       dispatch({type: 'NO_DECORATOR'})
     }, 500)
 
-    return () => clearTimeout(timeoutId)
+    return () => { clearTimeout(timeoutId); }
   }, [previewInitialized, state.status])
 
   const handleReset = React.useCallback(() => {
@@ -1777,7 +1777,7 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // You can log the error to an error reporting service
-    // eslint-disable-next-line no-console
+     
     console.error('Error in PerformancePanel:', error, errorInfo)
   }
 

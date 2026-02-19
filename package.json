@@ -34,7 +34,7 @@
     "build:watch": "tsup --watch",
     "lint": "eslint . --cache",
     "stylelint": "stylelint --aei --rd \"**/*.css\"",
-    "test": "ui-test",
+    "test": "vitest",
     "tsc": "tsc"
   },
   "bundler": {
@@ -57,6 +57,7 @@
   },
   "devDependencies": {
     "@eslint/js":"10.0.1",
+    "@types/node": "^25",
     "esbuild": "0.27.3",
     "eslint": "10.0.0",
     "eslint-plugin-simple-import-sort": "12.1.1",

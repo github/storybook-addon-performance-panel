@@ -427,7 +427,7 @@ function handleInspectElement(selector: string) {
       }, 200)
 
       // Log to console for DevTools inspection
-      // eslint-disable-next-line no-console
+       
       console.log(
         '%c[Performance Panel] Inspecting element:',
         'color: #f06; font-weight: bold',

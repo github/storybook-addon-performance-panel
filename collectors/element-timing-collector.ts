@@ -118,7 +118,7 @@ export class ElementTimingCollector implements MetricCollector<ElementTimingMetr
     try {
       return (
         typeof PerformanceObserver !== 'undefined' &&
-        PerformanceObserver.supportedEntryTypes?.includes('element') === true
+        PerformanceObserver.supportedEntryTypes?.includes('element')
       )
     } catch {
       return false

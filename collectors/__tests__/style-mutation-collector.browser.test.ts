@@ -1,6 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {StyleMutationCollector} from '../collectors/style-mutation-collector'
+import {StyleMutationCollector} from '../style-mutation-collector'
 
 // Helper to wait for MutationObserver callbacks (microtask)
 const flushMutations = () => new Promise(resolve => setTimeout(resolve, 0))
@@ -71,7 +71,7 @@ describe('StyleMutationCollector', () => {
 
       // DOM mutations are sampled on interval, so just verify observer is working
       // by checking that stop doesn't throw
-      expect(() => collector.stop()).not.toThrow()
+      expect(() => { collector.stop(); }).not.toThrow()
 
       document.body.removeChild(parent)
     })
@@ -175,11 +175,11 @@ describe('StyleMutationCollector', () => {
   describe('stop', () => {
     it('stops without error', () => {
       collector.start()
-      expect(() => collector.stop()).not.toThrow()
+      expect(() => { collector.stop(); }).not.toThrow()
     })
 
     it('can be stopped without starting', () => {
-      expect(() => collector.stop()).not.toThrow()
+      expect(() => { collector.stop(); }).not.toThrow()
     })
   })
 })

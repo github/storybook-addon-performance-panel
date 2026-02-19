@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-extraneous-dependencies -- build only tool
 import {defineConfig, type Options} from 'tsup'
 
 const NODE_TARGET = 'node20.19' // Minimum Node version supported by Storybook 10
@@ -17,7 +16,7 @@ export default defineConfig(async () => {
   const packageJson = (await import('./package.json', {with: {type: 'json'}})).default
 
   const {
-    bundler: {managerEntries = [], previewEntries = [], nodeEntries = []},
+    bundler: {managerEntries, previewEntries, nodeEntries},
   } = packageJson
 
   const commonConfig: Options = {
