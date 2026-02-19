@@ -12,14 +12,18 @@
     "test": "npm test -w @github-ui/storybook-addon-performance-panel",
     "tsc": "tsc -b packages/storybook-addon-performance-panel/tsconfig.build.json",
     "docs": "npm run build && npm run storybook -w @github-ui/docs",
-    "docs:build": "npm run build && npm run build-storybook -w @github-ui/docs"
+    "docs:build": "npm run build && npm run build-storybook -w @github-ui/docs",
+    "changeset": "changeset"
   },
   "engines": {
     "node": ">=22"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.5.2",
+    "@changesets/cli": "^2.29.8",
     "@eslint/js": "^9.0.1",
-    "eslint": "^9.0.0",
+    "@storybook/react-vite": "^10",
+    "eslint": "^9.0.0 <10",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-react": "^7.37.5",
