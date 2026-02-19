@@ -16,11 +16,33 @@ export default defineConfig({
       {
         test: {
           include: ['**/*.browser.{test,spec}.ts'],
-          name: 'browser',
+          name: 'chromium',
           browser: {
             enabled: true,
             provider: playwright(),
             instances: [{browser: 'chromium', headless: true}],
+          },
+        },
+      },
+      {
+        test: {
+          include: ['**/*.browser.{test,spec}.ts'],
+          name: 'firefox',
+          browser: {
+            enabled: true,
+            provider: playwright(),
+            instances: [{browser: 'firefox', headless: true}],
+          },
+        },
+      },
+      {
+        test: {
+          include: ['**/*.browser.{test,spec}.ts'],
+          name: 'webkit',
+          browser: {
+            enabled: true,
+            provider: playwright(),
+            instances: [{browser: 'webkit', headless: true}],
           },
         },
       },

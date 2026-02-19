@@ -67,9 +67,13 @@ jobs:
       - run: npm run tsc
 
   test:
-    name: Test
+    name: Test (${{ matrix.project }})
     needs: install
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
@@ -85,9 +89,9 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ hashFiles('**/package-lock.json') }}
-      - run: npx playwright install chromium --with-deps
-      - run: npm test
+          key: playwright-${{ matrix.project }}-${{ hashFiles('**/package-lock.json') }}
+      - run: npx playwright install --with-deps ${{ matrix.project }}
+      - run: npm test -- --project ${{ matrix.project }}
 
   build:
     name: Build Docs
