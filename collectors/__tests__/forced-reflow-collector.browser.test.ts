@@ -85,6 +85,7 @@ describe('ForcedReflowCollector', () => {
       collector.stop()
 
       const currentDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth')
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(currentDescriptor?.get).toBe(originalDescriptor?.get)
     })
 

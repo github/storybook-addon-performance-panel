@@ -118,7 +118,7 @@ export class ElementTimingCollector implements MetricCollector<ElementTimingMetr
     try {
       return (
         typeof PerformanceObserver !== 'undefined' &&
-        PerformanceObserver.supportedEntryTypes?.includes('element')
+        PerformanceObserver.supportedEntryTypes.includes('element')
       )
     } catch {
       return false
@@ -150,7 +150,7 @@ export class ElementTimingCollector implements MetricCollector<ElementTimingMetr
       renderTime,
       loadTime: entry.loadTime || 0,
       selector: getSimpleSelector(entry.element),
-      tagName: entry.element?.tagName.toLowerCase() || 'unknown',
+      tagName: entry.element?.tagName.toLowerCase() ?? 'unknown',
     }
 
     // Add image-specific data if present

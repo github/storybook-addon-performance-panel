@@ -1,10 +1,12 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {render, screen} from '@testing-library/react'
+
 import React, {useEffect} from 'react'
 
 import {PerformanceProvider, ProfiledComponent, withPerformanceMonitor} from '../performance-decorator'
 import {PERF_EVENTS} from '../performance-types'
 import {useReportReactRenderProfile} from '../ReportReactRenderProfileContext'
+import { render } from 'vitest-browser-react'
+import { page, userEvent } from 'vitest/browser'
 
 // Mock storybook's addons API
 const mockChannel = {
@@ -25,28 +27,28 @@ describe('performance-decorator', () => {
   })
 
   describe('PerformanceProvider', () => {
-    it('renders children', () => {
-      render(
+    it('renders children', async () => {
+      await render(
         <PerformanceProvider storyId="test-story">
           <div data-testid="child">Hello</div>
         </PerformanceProvider>,
       )
 
-      expect(screen.getByTestId('child')).toBeInTheDocument()
+      await expect.element(page.getByTestId('child')).toBeInTheDocument()
     })
 
-    it('renders children when disabled', () => {
-      render(
+    it('renders children when disabled', async () => {
+      await render(
         <PerformanceProvider storyId="test-story" enabled={false}>
           <div data-testid="child">Hello</div>
         </PerformanceProvider>,
       )
 
-      expect(screen.getByTestId('child')).toBeInTheDocument()
+      await expect.element(page.getByTestId('child')).toBeInTheDocument()
     })
 
-    it('subscribes to channel events when enabled', () => {
-      render(
+    it('subscribes to channel events when enabled', async () => {
+      await render(
         <PerformanceProvider storyId="test-story">
           <div>Test</div>
         </PerformanceProvider>,
@@ -56,8 +58,8 @@ describe('performance-decorator', () => {
       expect(mockChannel.on).toHaveBeenCalledWith(PERF_EVENTS.RESET, expect.any(Function))
     })
 
-    it('does not subscribe to channel events when disabled', () => {
-      render(
+    it('does not subscribe to channel events when disabled', async () => {
+      await render(
         <PerformanceProvider storyId="test-story" enabled={false}>
           <div>Test</div>
         </PerformanceProvider>,
@@ -67,7 +69,7 @@ describe('performance-decorator', () => {
     })
 
     it('emits metrics periodically', async () => {
-      render(
+      await render(
         <PerformanceProvider storyId="test-story">
           <div>Test</div>
         </PerformanceProvider>,
@@ -79,41 +81,43 @@ describe('performance-decorator', () => {
       expect(mockChannel.emit).toHaveBeenCalledWith(PERF_EVENTS.METRICS_UPDATE, expect.any(Object))
     })
 
-    it('unsubscribes from channel events on unmount', () => {
-      const {unmount} = render(
+    it('unsubscribes from channel events on unmount', async () => {
+      const {unmount} = await render(
         <PerformanceProvider storyId="test-story">
           <div>Test</div>
         </PerformanceProvider>,
       )
 
-      unmount()
+      await unmount()
 
       expect(mockChannel.off).toHaveBeenCalledWith(PERF_EVENTS.REQUEST_METRICS, expect.any(Function))
       expect(mockChannel.off).toHaveBeenCalledWith(PERF_EVENTS.RESET, expect.any(Function))
     })
 
     it('responds to REQUEST_METRICS by emitting current metrics', async () => {
-      render(
+      await render(
         <PerformanceProvider storyId="test-story">
           <div>Test</div>
         </PerformanceProvider>,
       )
 
       // Get the request handler that was registered
-      const requestHandler = mockChannel.on.mock.calls.find(
+      const requestCall = mockChannel.on.mock.calls.find(
         (call: unknown[]) => call[0] === PERF_EVENTS.REQUEST_METRICS,
-      )?.[1]
+      )
 
-      expect(requestHandler).toBeDefined()
+      expect(requestCall).toBeDefined()
 
       // Simulate request
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const requestHandler = requestCall![1] as () => void
       requestHandler()
 
       expect(mockChannel.emit).toHaveBeenCalledWith(PERF_EVENTS.METRICS_UPDATE, expect.any(Object))
     })
 
     it('emits metrics with expected shape', async () => {
-      render(
+      await render(
         <PerformanceProvider storyId="test-story">
           <div>Test</div>
         </PerformanceProvider>,
@@ -121,10 +125,14 @@ describe('performance-decorator', () => {
 
       await new Promise(resolve => setTimeout(resolve, 150))
 
-      const emittedMetrics = mockChannel.emit.mock.calls.find(
+      const emittedCall = mockChannel.emit.mock.calls.find(
         (call: unknown[]) => call[0] === PERF_EVENTS.METRICS_UPDATE,
-      )?.[1]
+      )
 
+      expect(emittedCall).toBeDefined()
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const emittedMetrics = emittedCall![1] as Record<string, unknown>
+      /* eslint-disable @typescript-eslint/no-unsafe-assignment */
       expect(emittedMetrics).toMatchObject({
         fps: expect.any(Number),
         frameTime: expect.any(Number),
@@ -136,12 +144,14 @@ describe('performance-decorator', () => {
         fpsHistory: expect.any(Array),
         frameTimeHistory: expect.any(Array),
       })
+      /* eslint-enable @typescript-eslint/no-unsafe-assignment */
     })
   })
 
   describe('useReportReactRenderProfile', () => {
     it('throws outside of PerformanceProvider', () => {
       // Suppress React's console.error for expected error boundary behavior
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       function TestComponent() {
@@ -156,11 +166,10 @@ describe('performance-decorator', () => {
       consoleSpy.mockRestore()
     })
 
-    it('returns context value inside PerformanceProvider', () => {
+    it('returns context value inside PerformanceProvider', async () => {
       let contextValue: ReturnType<typeof useReportReactRenderProfile> | null = null
 
       function TestComponent() {
-        // eslint-disable-next-line testing-library/render-result-naming-convention
         const cv = useReportReactRenderProfile()
         useEffect(() => {
           contextValue = cv
@@ -168,18 +177,19 @@ describe('performance-decorator', () => {
         return null
       }
 
-      render(
+      await render(
         <PerformanceProvider storyId="test-story">
           <TestComponent />
         </PerformanceProvider>,
       )
 
-      expect(contextValue!).not.toBeNull()
+      expect(contextValue).not.toBeNull()
       expect(typeof contextValue).toBe('function')
     })
 
-    it('throws when provider is disabled', () => {
+    it('throws when provider is disabled', async () => {
       // Suppress React's console.error for expected error boundary behavior
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       function TestComponent() {
@@ -187,8 +197,8 @@ describe('performance-decorator', () => {
         return null
       }
 
-      expect(() =>
-        render(
+      await expect.poll(async () =>
+        await render(
           <PerformanceProvider storyId="test-story" enabled={false}>
             <TestComponent />
           </PerformanceProvider>,
@@ -200,8 +210,8 @@ describe('performance-decorator', () => {
   })
 
   describe('ProfiledComponent', () => {
-    it('renders children', () => {
-      render(
+    it('renders children', async () => {
+      await render(
         <PerformanceProvider storyId="test-story">
           <ProfiledComponent id="test">
             <div data-testid="profiled-child">Hello</div>
@@ -209,7 +219,7 @@ describe('performance-decorator', () => {
         </PerformanceProvider>,
       )
 
-      expect(screen.getByTestId('profiled-child')).toBeInTheDocument()
+      await expect.element(page.getByTestId('profiled-child')).toBeInTheDocument()
     })
 
     it('tracks React renders via context', async () => {
@@ -220,13 +230,13 @@ describe('performance-decorator', () => {
         renderCount++
 
         return (
-          <button data-testid="button" onClick={() => setCount(c => c + 1)}>
+          <button data-testid="button" onClick={() => { setCount(c => c + 1); }}>
             Count: {count}
           </button>
         )
       }
 
-      render(
+      await render(
         <PerformanceProvider storyId="test-story">
           <ProfiledComponent id="counter">
             <Counter />
@@ -237,7 +247,7 @@ describe('performance-decorator', () => {
       expect(renderCount).toBe(1)
 
       // Trigger a re-render
-      screen.getByTestId('button').click()
+      await userEvent.click(page.getByTestId('button'))
       await new Promise(resolve => setTimeout(resolve, 0))
 
       expect(renderCount).toBe(2)
@@ -245,15 +255,15 @@ describe('performance-decorator', () => {
   })
 
   describe('withPerformanceMonitor', () => {
-    it('wraps story in PerformanceProvider and ProfiledComponent', () => {
+    it('wraps story in PerformanceProvider and ProfiledComponent', async () => {
       const Story = () => <div data-testid="story">Story Content</div>
       const context = {id: 'test-story'} as Parameters<typeof withPerformanceMonitor>[1]
 
       const WrappedStory = () => withPerformanceMonitor(Story, context)
 
-      render(<WrappedStory />)
+      await render(<WrappedStory />)
 
-      expect(screen.getByTestId('story')).toBeInTheDocument()
+      await expect.element(page.getByTestId('story')).toBeInTheDocument()
       expect(mockChannel.on).toHaveBeenCalled() // Provider is active
     })
 
@@ -263,7 +273,7 @@ describe('performance-decorator', () => {
 
       const WrappedStory = () => withPerformanceMonitor(Story, context)
 
-      render(<WrappedStory />)
+      await render(<WrappedStory />)
 
       await new Promise(resolve => setTimeout(resolve, 150))
 
@@ -273,7 +283,7 @@ describe('performance-decorator', () => {
 
   describe('DOM element counting', () => {
     it('counts DOM elements in the provider container', async () => {
-      render(
+      await render(
         <PerformanceProvider storyId="test-story">
           <div>
             <span>One</span>
@@ -286,12 +296,15 @@ describe('performance-decorator', () => {
       // Wait for initial count and metrics emission
       await new Promise(resolve => setTimeout(resolve, 600))
 
-      const emittedMetrics = mockChannel.emit.mock.calls.find(
+      const emittedCall2 = mockChannel.emit.mock.calls.find(
         (call: unknown[]) => call[0] === PERF_EVENTS.METRICS_UPDATE,
-      )?.[1]
+      )
 
       // Should count the div and three spans = 4 elements
-      expect(emittedMetrics?.domElements).toBeGreaterThanOrEqual(4)
+      expect(emittedCall2).toBeDefined()
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const metrics = emittedCall2![1] as Record<string, unknown>
+      expect(metrics.domElements).toBeGreaterThanOrEqual(4)
     })
   })
 })

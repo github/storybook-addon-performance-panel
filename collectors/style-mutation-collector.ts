@@ -51,7 +51,7 @@ export class StyleMutationCollector implements MetricCollector<StyleMetrics> {
 
           // Count CSS variable changes
           const target = mutation.target as HTMLElement
-          const styleValue = target.getAttribute('style') || ''
+          const styleValue = target.getAttribute('style') ?? ''
           const cssVarMatches = styleValue.match(/--[\w-]+\s*:/g)
           if (cssVarMatches) {
             this.#cssVarChanges += cssVarMatches.length

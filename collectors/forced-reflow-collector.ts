@@ -80,6 +80,7 @@ export class ForcedReflowCollector implements MetricCollector<ReflowMetrics> {
                 collector.#forcedReflowCount++
                 collector.#layoutDirty = false
               }
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-return
               return descriptor.get?.call(this)
             },
             configurable: true,

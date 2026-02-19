@@ -159,7 +159,8 @@ export class InputCollector implements MetricCollector<InputMetrics> {
   #checkEventTimingSupport(): boolean {
     try {
       // Check if 'event' entry type is supported
-      return PerformanceObserver.supportedEntryTypes?.includes('event') ?? false
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unnecessary-type-conversion
+      return !!PerformanceObserver.supportedEntryTypes?.includes('event')
     } catch {
       return false
     }

@@ -49,7 +49,7 @@ interface PerformanceLongAnimationFrameTiming extends PerformanceEntry {
   /** First UI event timestamp during this frame */
   firstUIEventTimestamp: DOMHighResTimeStamp
   /** Scripts that contributed to this long frame */
-  scripts: readonly PerformanceScriptTiming[]
+  scripts?: readonly PerformanceScriptTiming[]
 }
 
 /**
@@ -151,7 +151,7 @@ export class LongAnimationFrameCollector implements MetricCollector<LongAnimatio
 
   #checkSupport(): boolean {
     try {
-      return PerformanceObserver.supportedEntryTypes?.includes('long-animation-frame') ?? false
+      return PerformanceObserver.supportedEntryTypes.includes('long-animation-frame')
     } catch {
       return false
     }
@@ -178,16 +178,17 @@ export class LongAnimationFrameCollector implements MetricCollector<LongAnimatio
 
     addToWindow(this.#loafDurations, entry.duration, LOAF_HISTORY_WINDOW)
 
+    const scripts = entry.scripts ?? []
+
     // Track scripts
-    const hasScripts = entry.scripts && entry.scripts.length > 0
-    if (hasScripts) {
+    if (scripts.length > 0) {
       this.#loafsWithScripts++
     }
 
     // Extract top contributing script (longest duration)
     let topScript: LoAFScriptAttribution | null = null
-    if (hasScripts) {
-      const sortedScripts = [...entry.scripts].sort((a, b) => b.duration - a.duration)
+    if (scripts.length > 0) {
+      const sortedScripts = [...scripts].sort((a, b) => b.duration - a.duration)
       const top = sortedScripts[0]
       if (top) {
         topScript = {
@@ -208,7 +209,7 @@ export class LongAnimationFrameCollector implements MetricCollector<LongAnimatio
       blockingDuration: entry.blockingDuration,
       renderStart: entry.renderStart,
       styleAndLayoutStart: entry.styleAndLayoutStart,
-      scriptCount: entry.scripts?.length ?? 0,
+      scriptCount: scripts.length,
       topScript,
     }
 

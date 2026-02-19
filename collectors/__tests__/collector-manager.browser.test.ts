@@ -163,9 +163,7 @@ describe('CollectorManager', () => {
     })
 
     it('is the same function reference on each access', () => {
-      // eslint-disable-next-line testing-library/render-result-naming-convention
       const ref1 = manager.reportRender
-      // eslint-disable-next-line testing-library/render-result-naming-convention
       const ref2 = manager.reportRender
       expect(ref1).toBe(ref2)
     })

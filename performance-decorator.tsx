@@ -163,15 +163,13 @@ export const PerformanceProvider = memo(function PerformanceProvider({
   const contentRef = useRef<HTMLDivElement>(null)
 
   const managerRef = useRef<CollectorManager>(null)
-  if (managerRef.current == null) {
-    managerRef.current = new CollectorManager({
-      onProfilerUpdate: (profilerStoryId, id, metrics) => {
-        performanceStore.updateProfiler(id, metrics)
-        // Include storyId so panel can group profilers by story
-        addons.getChannel().emit(PERF_EVENTS.PROFILER_UPDATE, {id, metrics, storyId: profilerStoryId})
-      },
-    })
-  }
+  managerRef.current ??= new CollectorManager({
+    onProfilerUpdate: (profilerStoryId, id, metrics) => {
+      performanceStore.updateProfiler(id, metrics)
+      // Include storyId so panel can group profilers by story
+      addons.getChannel().emit(PERF_EVENTS.PROFILER_UPDATE, {id, metrics, storyId: profilerStoryId})
+    },
+  })
 
   // Main measurement loop - collector manager already created in useRef
   useLayoutEffect(() => {

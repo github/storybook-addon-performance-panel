@@ -86,7 +86,6 @@ export class CollectorManager {
 
   #running = false
   #state: DecoratorState
-  #lastMetrics: PerformanceMetrics | null = null
   #lastCleanedStoryId: string | null = null
 
   /**
@@ -177,7 +176,6 @@ export class CollectorManager {
       collector.reset()
     }
     this.#state = createInitialState()
-    this.#lastMetrics = null
   }
 
   // ============================================================================
@@ -381,7 +379,6 @@ export class CollectorManager {
       })),
     }
 
-    this.#lastMetrics = metrics
     return metrics
   }
 }

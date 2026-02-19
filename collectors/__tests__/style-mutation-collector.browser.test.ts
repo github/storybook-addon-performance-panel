@@ -99,7 +99,6 @@ describe('StyleMutationCollector', () => {
     it('increments thrashing score for long frames after style writes', async () => {
       // Mock performance.now to control timing
       let mockNow = 1000
-      const originalNow = performance.now
       vi.spyOn(performance, 'now').mockImplementation(() => mockNow)
 
       collector.start()
@@ -120,13 +119,12 @@ describe('StyleMutationCollector', () => {
       expect(metrics.thrashingScore).toBe(1)
 
       document.body.removeChild(el)
-      performance.now = originalNow
+      vi.restoreAllMocks()
     })
 
     it('does not increment for short frames', async () => {
       // Mock performance.now to control timing
       let mockNow = 1000
-      const originalNow = performance.now
       vi.spyOn(performance, 'now').mockImplementation(() => mockNow)
 
       collector.start()
@@ -146,7 +144,7 @@ describe('StyleMutationCollector', () => {
       expect(metrics.thrashingScore).toBe(0)
 
       document.body.removeChild(el)
-      performance.now = originalNow
+      vi.restoreAllMocks()
     })
   })
 

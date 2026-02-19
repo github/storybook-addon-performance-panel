@@ -17,7 +17,7 @@ describe('MainThreadCollector', () => {
         constructor(callback: PerformanceObserverCallback) {
           observerCallback = callback
         }
-        observe() {}
+        observe() { /* empty */ }
         disconnect() {
           mockDisconnect()
         }

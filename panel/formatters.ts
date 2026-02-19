@@ -66,7 +66,7 @@ export const formatScore = (value: number): string => scoreFormatter.format(valu
  * @param value - Percentage value (0-100)
  * @returns Formatted string (e.g., "48%")
  */
-export const formatPercent = (value: number): string => `${Math.round(value)}%`
+export const formatPercent = (value: number): string => `${String(Math.round(value))}%`
 
 /**
  * Formatter for rate values with 2 decimal places.

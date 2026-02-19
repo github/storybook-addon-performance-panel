@@ -59,7 +59,7 @@ const instanceCounts = new Map<string, number>()
 function getInstanceId(baseId: string): string {
   const count = (instanceCounts.get(baseId) ?? 0) + 1
   instanceCounts.set(baseId, count)
-  return count === 1 ? baseId : `${baseId}#${count}`
+  return count === 1 ? baseId : `${baseId}#${String(count)}`
 }
 
 /**

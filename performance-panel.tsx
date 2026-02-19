@@ -284,7 +284,7 @@ const Metric = React.memo(function Metric({
   reserveDetailSpace,
   children,
 }: MetricProps) {
-  const hasDetail = detail || reserveDetailSpace
+  const hasDetail = detail != null || reserveDetailSpace === true
   const Container = hasDetail ? MetricItemWithDetail : MetricItem
 
   return (
@@ -423,7 +423,7 @@ const FrameTimingSection = React.memo(function FrameTimingSection({
         tooltip="Sudden spikes in frame time vs recent baseline. Indicates inconsistent rendering."
       >
         <StatusBadge variant={frameJitterStatus}>
-          {frameJitter === 0 ? '✨ Smooth' : `⚡ ${frameJitter} spikes`}
+          {frameJitter === 0 ? '✨ Smooth' : `⚡ ${String(frameJitter)} spikes`}
         </StatusBadge>
       </Metric>
 
@@ -447,7 +447,7 @@ const FrameTimingSection = React.memo(function FrameTimingSection({
         tooltip="Sudden spikes in paint time vs recent baseline. Indicates rendering inconsistency."
       >
         <StatusBadge variant={paintJitterStatus}>
-          {paintJitter === 0 ? '✨ None' : `🎢 ${paintJitter} spikes`}
+          {paintJitter === 0 ? '✨ None' : `🎢 ${String(paintJitter)} spikes`}
         </StatusBadge>
       </Metric>
     </MetricsSection>
@@ -734,7 +734,7 @@ const MainThreadSection = React.memo(function MainThreadSection({
 
       <Metric label="Thrashing" tooltip="Frame blocking >50ms near style writes. Indicates forced synchronous layout.">
         <StatusBadge variant={thrashingStatus}>
-          {thrashingScore === 0 ? '✨ None' : `🔄 ${thrashingScore} stalls`}
+          {thrashingScore === 0 ? '✨ None' : `🔄 ${String(thrashingScore)} stalls`}
         </StatusBadge>
       </Metric>
 
@@ -850,7 +850,7 @@ const LoAFSection = React.memo(function LoAFSection({
         </StatusBadge>
       </Metric>
 
-      {worstLoaf && worstLoaf.topScript && (
+      {worstLoaf?.topScript && (
         <Metric
           label="Top Script"
           tooltip={`Worst LoAF caused by: ${worstLoaf.topScript.invokerType} (${worstLoaf.topScript.invoker})`}
@@ -949,7 +949,7 @@ const ElementTimingSection = React.memo(function ElementTimingSection({
         <Metric
           key={el.identifier}
           label={el.identifier}
-          tooltip={`Element: ${el.selector}\nRender time: ${el.renderTime}ms`}
+          tooltip={`Element: ${el.selector}\nRender time: ${String(el.renderTime)}ms`}
         >
           <StatusBadge variant={getStatus(el.renderTime, 100, 250)}>
             <span>{i === 0 ? '🥇 ' : i === 1 ? '🥈 ' : '🥉 '}</span>
@@ -1003,7 +1003,7 @@ const LayoutAndInternalsSection = React.memo(function LayoutAndInternalsSection(
   // Build detail parts - always show both when available
   const detailParts: string[] = []
   if (layoutShiftCount > 0) {
-    detailParts.push(`${layoutShiftCount} shifts`)
+    detailParts.push(`${String(layoutShiftCount)} shifts`)
   }
   if (currentSessionCLS > 0) {
     detailParts.push(`session: ${formatScore(currentSessionCLS)}`)
@@ -1048,7 +1048,7 @@ const LayoutAndInternalsSection = React.memo(function LayoutAndInternalsSection(
         label="Input Jitter"
         tooltip="Unexpected input latency spikes causing visible hitches during interaction."
       >
-        <StatusBadge variant={jitterStatus}>{inputJitter === 0 ? '✨ None' : `😵 ${inputJitter} hitches`}</StatusBadge>
+        <StatusBadge variant={jitterStatus}>{inputJitter === 0 ? '✨ None' : `😵 ${String(inputJitter)} hitches`}</StatusBadge>
       </Metric>
     </MetricsSection>
   )
@@ -1499,12 +1499,12 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
       emit(PERF_EVENTS.REQUEST_METRICS)
     },
 
-    storyErrored: () => dispatch({type: 'STORY_ERROR', message: 'Story failed to render'}),
-    storyMissing: () => dispatch({type: 'STORY_ERROR', message: 'Story not found'}),
+    storyErrored: () => { dispatch({type: 'STORY_ERROR', message: 'Story failed to render'}); },
+    storyMissing: () => { dispatch({type: 'STORY_ERROR', message: 'Story not found'}); },
     storyThrewException: (error: Error) =>
-      dispatch({type: 'STORY_ERROR', message: error?.message || 'Story threw an exception'}),
+      { dispatch({type: 'STORY_ERROR', message: error.message || 'Story threw an exception'}); },
     playFunctionThrewException: (error: Error) =>
-      dispatch({type: 'STORY_ERROR', message: `Play function error: ${error?.message || 'Unknown error'}`}),
+      { dispatch({type: 'STORY_ERROR', message: `Play function error: ${error.message || 'Unknown error'}`}); },
 
     storyArgsUpdated: () => {
       if (isConnected()) {

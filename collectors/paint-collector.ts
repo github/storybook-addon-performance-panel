@@ -68,6 +68,7 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
   reset(): void {
     this.#paintCount = 0
     this.#scriptEvalTime = 0
+    this.#compositorLayers = null
     this.#lastLayerCheckTime = 0 // Force recheck on next update
   }
 

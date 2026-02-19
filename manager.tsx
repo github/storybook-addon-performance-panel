@@ -24,7 +24,7 @@ addons.register(ADDON_ID, () => {
     type: types.PANEL,
     title: '⚡ Performance',
     match: ({viewMode}) => viewMode === 'story',
-    // eslint-disable-next-line @github-ui/github-monorepo/no-react-create-element -- Required for React 19 compatibility with Storybook manager (see storybookjs/storybook#32095)
+    // Required for React 19 compatibility with Storybook manager (see storybookjs/storybook#32095)
     render: ({active}) => React.createElement(PerformancePanel, {active: !!active}),
   })
 })

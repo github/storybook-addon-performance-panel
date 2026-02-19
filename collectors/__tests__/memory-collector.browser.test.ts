@@ -8,6 +8,7 @@ describe('MemoryCollector', () => {
   beforeEach(() => {
     // Mock performance.memory (Chrome-only API)
     vi.stubGlobal('performance', {
+      // eslint-disable-next-line @typescript-eslint/no-misused-spread
       ...performance,
       memory: {
         usedJSHeapSize: 50 * 1024 * 1024, // 50MB
@@ -42,6 +43,7 @@ describe('MemoryCollector', () => {
 
       // Simulate memory increase
       vi.stubGlobal('performance', {
+        // eslint-disable-next-line @typescript-eslint/no-misused-spread
         ...performance,
         memory: {
           usedJSHeapSize: 60 * 1024 * 1024, // 60MB
@@ -63,6 +65,7 @@ describe('MemoryCollector', () => {
 
       // Memory goes up
       vi.stubGlobal('performance', {
+        // eslint-disable-next-line @typescript-eslint/no-misused-spread
         ...performance,
         memory: {
           usedJSHeapSize: 80 * 1024 * 1024,
@@ -75,6 +78,7 @@ describe('MemoryCollector', () => {
 
       // Memory goes down
       vi.stubGlobal('performance', {
+        // eslint-disable-next-line @typescript-eslint/no-misused-spread
         ...performance,
         memory: {
           usedJSHeapSize: 60 * 1024 * 1024,
@@ -106,6 +110,7 @@ describe('MemoryCollector', () => {
 
       // Change memory
       vi.stubGlobal('performance', {
+        // eslint-disable-next-line @typescript-eslint/no-misused-spread
         ...performance,
         memory: {
           usedJSHeapSize: 70 * 1024 * 1024,
@@ -128,6 +133,7 @@ describe('MemoryCollector', () => {
   describe('when memory API is not available', () => {
     it('returns null values', () => {
       vi.stubGlobal('performance', {
+        // eslint-disable-next-line @typescript-eslint/no-misused-spread
         ...performance,
         memory: undefined,
         now: performance.now.bind(performance),
