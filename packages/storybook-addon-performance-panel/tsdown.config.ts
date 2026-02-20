@@ -31,6 +31,9 @@ export default defineConfig(async () => {
     external: ['react', 'react-dom', '@storybook/icons', /^@storybook\//, /^storybook\//],
     // Disable dts in watch mode to prevent infinite rebuild loops
     dts: !isWatch,
+    // Validate package.json exports and type resolution at build time
+    publint: !isWatch,
+    attw: !isWatch && {profile: 'esm-only'},
   }
 
   const configs: UserConfig[] = []
