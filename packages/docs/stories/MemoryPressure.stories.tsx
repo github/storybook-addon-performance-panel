@@ -1,4 +1,4 @@
-import {useCallback, useRef, useState} from 'react'
+import {useCallback, useEffect, useRef, useState} from 'react'
 
 import preview from '../.storybook/preview'
 
@@ -35,6 +35,15 @@ function MemoryPressure({chunkSizeKB = 512, retainChunks = true}: {chunkSizeKB?:
       timerRef.current = null
     }
     setRunning(false)
+  }, [])
+
+  // Clean up interval on unmount so it doesn't leak across story switches
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+      }
+    }
   }, [])
 
   const releaseAll = useCallback(() => {

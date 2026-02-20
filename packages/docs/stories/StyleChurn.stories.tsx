@@ -1,4 +1,4 @@
-import {useCallback, useRef, useState} from 'react'
+import {useCallback, useEffect, useRef, useState} from 'react'
 
 import preview from '../.storybook/preview'
 
@@ -55,23 +55,25 @@ function StyleChurn({nodeCount = 300, burstSize = 50}: {nodeCount?: number; burs
     setRunning(false)
   }, [])
 
-  const addRemoveNodes = useCallback(() => {
-    const container = containerRef.current
-    if (!container) return
+  // Clean up interval on unmount so it doesn't leak across story switches
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+      }
+    }
+  }, [])
 
-    // DOM churn: remove half the nodes and re-add new ones
-    const cells = container.querySelectorAll('[data-cell]')
-    const toRemove = Math.floor(cells.length / 2)
-    for (let i = 0; i < toRemove; i++) {
-      cells[i]?.remove()
-    }
-    for (let i = 0; i < toRemove; i++) {
-      const div = document.createElement('div')
-      div.setAttribute('data-cell', '')
-      const hue = Math.floor(Math.random() * 360)
-      div.style.cssText = `width:24px;height:24px;background:hsl(${String(hue)},70%,80%);border-radius:2px;transition:all 0.15s`
-      container.appendChild(div)
-    }
+  // DOM churn driven via React state so reconciliation stays in sync
+  const [cellHues, setCellHues] = useState(() => Array.from({length: nodeCount}, (_, i) => (i * 7) % 360))
+
+  const addRemoveNodes = useCallback(() => {
+    setCellHues(prev => {
+      const half = Math.floor(prev.length / 2)
+      const kept = prev.slice(half)
+      const added = Array.from({length: half}, () => Math.floor(Math.random() * 360))
+      return [...kept, ...added]
+    })
     setPhase(p => p + 1)
   }, [])
 
@@ -150,14 +152,14 @@ function StyleChurn({nodeCount = 300, burstSize = 50}: {nodeCount?: number; burs
           ['--churn-scale' as string]: '1',
         }}
       >
-        {Array.from({length: nodeCount}, (_, i) => (
+        {cellHues.map((hue, i) => (
           <div
             key={i}
             data-cell
             style={{
               width: '24px',
               height: '24px',
-              background: `hsl(${String((i * 7) % 360)}, 70%, 80%)`,
+              background: `hsl(${String(hue)}, 70%, 80%)`,
               borderRadius: '2px',
               transition: 'all 0.15s',
             }}

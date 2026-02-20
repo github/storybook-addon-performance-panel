@@ -54,10 +54,9 @@ function MemoizationWaste({rowCount = 200, stableConfig = false}: {rowCount?: nu
     value: ((i * 2654435761) >>> 0) % 1000,
   }))
 
-  // The bug: creating a new config object every render defeats React.memo
-  const config = stableConfig ? {highlight: true} : {highlight: true}
-  // In the "stable" variant we use a module-level constant
-  const configProp = stableConfig ? STABLE_CONFIG : config
+  // In the "stable" variant we use a module-level constant; in the "broken" variant we
+  // create a new config object every render to defeat React.memo.
+  const configProp = stableConfig ? STABLE_CONFIG : {highlight: true}
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '500px'}}>
