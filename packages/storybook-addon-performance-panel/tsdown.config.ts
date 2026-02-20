@@ -1,4 +1,4 @@
-import {defineConfig, type Options} from 'tsup'
+import {defineConfig, type UserConfig} from 'tsdown'
 
 const NODE_TARGET = 'node20.19' // Minimum Node version supported by Storybook 10
 const isWatch = process.argv.includes('--watch')
@@ -19,26 +19,21 @@ export default defineConfig(async () => {
     bundler: {managerEntries, previewEntries, nodeEntries},
   } = packageJson
 
-  const commonConfig: Options = {
-    /*
-     keep this line commented until https://github.com/egoist/tsup/issues/1270 is resolved
-     clean: options.watch ? false : true,
-    */
+  const commonConfig: UserConfig = {
     clean: false,
     format: ['esm'],
     treeshake: true,
-    splitting: true,
     tsconfig: 'tsconfig.build.json',
     /*
      The following packages are provided by Storybook and should always be externalized
      Meaning they shouldn't be bundled with the addon, and they shouldn't be regular dependencies either
     */
-    external: ['react', 'react-dom', '@storybook/icons', '@storybook/*', 'storybook/*', 'storybook'],
+    external: ['react', 'react-dom', '@storybook/icons', /^@storybook\//, /^storybook\//],
     // Disable dts in watch mode to prevent infinite rebuild loops
     dts: !isWatch,
   }
 
-  const configs: Options[] = []
+  const configs: UserConfig[] = []
 
   /*
    manager entries are entries meant to be loaded into the manager UI
@@ -83,6 +78,8 @@ export default defineConfig(async () => {
       entry: nodeEntries,
       platform: 'node',
       target: NODE_TARGET,
+      // With "type": "module", .js is already ESM — no need for .mjs
+      fixedExtension: false,
     })
   }
 
