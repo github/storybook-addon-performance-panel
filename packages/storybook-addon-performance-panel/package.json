@@ -50,8 +50,8 @@
     "**/*.md"
   ],
   "scripts": {
-    "build": "tsup",
-    "build:watch": "tsup --watch",
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
     "test": "vitest run"
   },
   "bundler": {
@@ -78,7 +78,7 @@
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/browser-playwright": "^4.0.18",
     "esbuild": "0.27.3",
-    "tsup": "^8.5.1",
+    "tsdown": "^0.20.3",
     "vitest": "^4.0.18",
     "vitest-browser-react": "^2.0.5"
   },
