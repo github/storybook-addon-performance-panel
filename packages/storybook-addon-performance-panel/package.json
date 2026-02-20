@@ -8,7 +8,7 @@
   "homepage": "https://github.com/github/storybook-addon-performance-panel#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/github/storybook-addon-performance-panel.git",
+    "url": "git+https://github.com/github/storybook-addon-performance-panel.git",
     "directory": "packages/storybook-addon-performance-panel"
   },
   "publishConfig": {
@@ -73,11 +73,13 @@
     "storybook": "^10"
   },
   "devDependencies": {
+    "@arethetypeswrong/core": "^0.18.2",
     "@types/node": "^25",
     "@types/react": "^19.0.0",
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/browser-playwright": "^4.0.18",
     "esbuild": "0.27.3",
+    "publint": "^0.3.17",
     "tsdown": "^0.20.3",
     "vitest": "^4.0.18",
     "vitest-browser-react": "^2.0.5"
