@@ -13,6 +13,8 @@ concurrency:
 jobs:
   build-docs:
     name: Build Storybook
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
