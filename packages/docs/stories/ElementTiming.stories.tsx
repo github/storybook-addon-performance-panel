@@ -1,6 +1,36 @@
-import {useEffect, useState} from 'react'
+import {useCallback, useEffect, useState} from 'react'
 
 import preview from '../.storybook/preview'
+
+/**
+ * Sets the `elementtiming` attribute imperatively since React doesn't
+ * recognise it as a valid DOM property.
+ */
+function useElementTiming(identifier: string) {
+  return useCallback(
+    (node: HTMLElement | null) => {
+      node?.setAttribute('elementtiming', identifier)
+    },
+    [identifier],
+  )
+}
+
+function TimedCard({index, src}: {index: number; src: string}) {
+  const ref = useElementTiming(`card-${String(index + 1)}`)
+  return (
+    <div style={{borderRadius: '8px', overflow: 'hidden', border: '1px solid #e0e0e0'}}>
+      <img
+        ref={ref}
+        src={src}
+        alt={`Card ${String(index + 1)}`}
+        width={320}
+        height={240}
+        style={{width: '100%', height: 'auto', display: 'block'}}
+      />
+      <div style={{padding: '8px', fontSize: '13px', fontFamily: 'monospace'}}>card-{index + 1}</div>
+    </div>
+  )
+}
 
 /**
  * Demonstrates the Element Timing API by marking elements with the
@@ -26,43 +56,27 @@ function ElementTimingDemo({imageCount = 6, staggerMs = 400}: {imageCount?: numb
   // Generate deterministic placeholder colors
   const hue = (i: number) => (i * 137) % 360
 
+  // Element Timing API only tracks <img> elements and text nodes rendered as
+  // contentful paint. We use dynamically-generated SVG data-URIs as img sources
+  // so each card is a real image element that the API observes.
+  const placeholderSrc = (i: number) => {
+    const h = hue(i)
+    const h2 = h + 60
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="hsl(${String(h)},70%,60%)"/><stop offset="100%" stop-color="hsl(${String(h2)},70%,40%)"/></linearGradient></defs><rect width="320" height="240" fill="url(#g)"/><text x="160" y="135" text-anchor="middle" font-size="64" font-weight="bold" fill="white">${String(i + 1)}</text></svg>`
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+  }
+
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '600px'}}>
       <p style={{fontSize: '13px', color: '#666', margin: 0}}>
-        Each card below has an <code>elementtiming</code> attribute. They load one at a time so you can see individual
-        render times in the Element Timing section.{' '}
+        Each card below is an <code>&lt;img&gt;</code> with an <code>elementtiming</code> attribute. They load one at a
+        time so you can see individual render times in the Element Timing section.{' '}
         {visibleCount < imageCount && `Loading ${String(visibleCount + 1)} of ${String(imageCount)}...`}
       </p>
 
       <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px'}}>
         {Array.from({length: visibleCount}, (_, i) => (
-          <div
-            key={i}
-            // eslint-disable-next-line react/no-unknown-property -- elementtiming is a valid HTML attribute for Element Timing API
-            elementtiming={`card-${String(i + 1)}`}
-            style={{
-              borderRadius: '8px',
-              overflow: 'hidden',
-              border: '1px solid #e0e0e0',
-            }}
-          >
-            {/* Large gradient block to give the renderer real work */}
-            <div
-              style={{
-                height: '120px',
-                background: `linear-gradient(135deg, hsl(${String(hue(i))}, 70%, 60%), hsl(${String(hue(i) + 60)}, 70%, 40%))`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontSize: '32px',
-                fontWeight: 'bold',
-              }}
-            >
-              {i + 1}
-            </div>
-            <div style={{padding: '8px', fontSize: '13px', fontFamily: 'monospace'}}>card-{i + 1}</div>
-          </div>
+          <TimedCard key={i} index={i} src={placeholderSrc(i)} />
         ))}
       </div>
 
