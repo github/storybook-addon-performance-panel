@@ -5,7 +5,10 @@ import {githubDarkTheme, githubLightTheme} from './githubTheme'
 const darkMQ = window.matchMedia('(prefers-color-scheme: dark)')
 
 function applyTheme(prefersDark: boolean): void {
-  addons.setConfig({theme: prefersDark ? githubDarkTheme : githubLightTheme})
+  addons.setConfig({
+    title: 'Storybook Addon Performance Panel',
+    theme: prefersDark ? githubDarkTheme : githubLightTheme,
+  })
 }
 
 // Apply immediately based on current OS colour-scheme preference
