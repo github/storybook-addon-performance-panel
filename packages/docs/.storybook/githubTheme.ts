@@ -1,6 +1,6 @@
 import {create} from 'storybook/theming/create'
 
-const BRAND_TITLE = 'GitHub • Performance Panel Docs'
+const BRAND_TITLE = 'Storybook Addon Performance Panel'
 const BRAND_URL = 'https://github.com/github/storybook-addon-performance-panel'
 
 // Inline data-URI variants of the GitHub Octocat mark so the images are
