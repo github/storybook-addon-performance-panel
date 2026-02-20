@@ -6,6 +6,7 @@ const preview = definePreview({
   addons: [addonDocs(), addonPerformancePanel()],
   parameters: {
     controls: {expanded: true},
+    docs: {codePanel: true},
   },
 })
 
