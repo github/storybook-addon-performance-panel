@@ -1,6 +1,7 @@
 import {useCallback, useLayoutEffect, useState} from 'react'
 
 import preview from '../.storybook/preview'
+import styles from './RenderCascade.module.css'
 
 /**
  * Demonstrates render cascades caused by setState in useLayoutEffect.
@@ -23,29 +24,17 @@ function RenderCascade({cascade = true}: {cascade?: boolean}) {
   }, [])
 
   return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '400px'}}>
-      <button
-        onClick={handleClick}
-        style={{
-          padding: '12px 20px',
-          cursor: 'pointer',
-          background: cascade ? '#ff4444' : '#22cc44',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          fontSize: '14px',
-          alignSelf: 'flex-start',
-        }}
-      >
+    <div className={styles.container}>
+      <button className={cascade ? styles.dangerButton : styles.successButton} onClick={handleClick}>
         {cascade ? '❌' : '✅'} Increment ({count})
       </button>
 
-      <div style={{fontFamily: 'monospace', fontSize: '13px'}}>
+      <div className={styles.output}>
         <div>count: {count}</div>
         <div>adjusted: {adjusted}</div>
       </div>
 
-      <p style={{fontSize: '13px', color: '#666', margin: 0}}>
+      <p className={styles.description}>
         {cascade
           ? 'Each click triggers setState in useLayoutEffect → synchronous re-render (render cascade). Watch the "Render Cascades" counter increase.'
           : 'No cascade — adjusted value is computed during render, not in useLayoutEffect.'}
@@ -53,6 +42,8 @@ function RenderCascade({cascade = true}: {cascade?: boolean}) {
     </div>
   )
 }
+
+RenderCascade.displayName = 'RenderCascade'
 
 const meta = preview.meta({
   title: 'Examples/Render Cascade',

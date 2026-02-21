@@ -1,6 +1,7 @@
 import {useCallback, useState} from 'react'
 
 import preview from '../.storybook/preview'
+import styles from './SlowHandler.module.css'
 
 /**
  * Demonstrates a component that blocks the main thread during click handlers.
@@ -32,59 +33,25 @@ function SlowHandler({blockMs = 200}: {blockMs?: number}) {
   }, [blockMs])
 
   return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '400px'}}>
-      <div style={{display: 'flex', gap: '8px'}}>
-        <button
-          onClick={handleSlowClick}
-          disabled={processing}
-          style={{
-            padding: '12px 20px',
-            cursor: processing ? 'wait' : 'pointer',
-            background: '#ff4444',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '14px',
-          }}
-        >
+    <div className={styles.container}>
+      <div className={styles.toolbar}>
+        <button className={styles.dangerButton} onClick={handleSlowClick} disabled={processing}>
           ❌ Blocking Click ({blockMs}ms)
         </button>
-        <button
-          onClick={handleFastClick}
-          disabled={processing}
-          style={{
-            padding: '12px 20px',
-            cursor: processing ? 'wait' : 'pointer',
-            background: '#22cc44',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '14px',
-          }}
-        >
+        <button className={styles.successButton} onClick={handleFastClick} disabled={processing}>
           ✅ Async Click ({blockMs}ms)
         </button>
       </div>
-      {result && (
-        <div
-          style={{
-            padding: '8px 12px',
-            background: '#f5f5f5',
-            borderRadius: '4px',
-            fontFamily: 'monospace',
-            fontSize: '13px',
-          }}
-        >
-          {result}
-        </div>
-      )}
-      <p style={{fontSize: '13px', color: '#666', margin: 0}}>
+      {result && <div className={styles.result}>{result}</div>}
+      <p className={styles.description}>
         Click the red button and watch INP, Long Tasks, and TBT spike. Then try the green button — same delay but
         without blocking the main thread.
       </p>
     </div>
   )
 }
+
+SlowHandler.displayName = 'SlowHandler'
 
 const meta = preview.meta({
   title: 'Examples/Slow Handler',

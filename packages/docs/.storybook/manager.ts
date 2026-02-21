@@ -8,6 +8,7 @@ function applyTheme(prefersDark: boolean): void {
   addons.setConfig({
     title: 'Storybook Addon Performance Panel',
     theme: prefersDark ? githubDarkTheme : githubLightTheme,
+    selectedPanel: 'primer-performance-monitor/panel',
   })
 }
 

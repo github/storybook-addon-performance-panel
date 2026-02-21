@@ -1,0 +1,80 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-12);
+  max-width: 600px;
+}
+
+.toolbar {
+  display: flex;
+  gap: var(--base-size-8);
+  flex-wrap: wrap;
+}
+
+.dangerButton {
+  padding: var(--base-size-12) var(--base-size-20);
+  cursor: pointer;
+  background: var(--bgColor-severe-emphasis);
+  color: var(--fgColor-onEmphasis);
+  border: none;
+  border-radius: var(--borderRadius-medium);
+  font-size: var(--text-body-size-medium);
+}
+
+.dangerButton[data-active] {
+  background: var(--bgColor-danger-emphasis);
+}
+
+.accentButton {
+  padding: var(--base-size-12) var(--base-size-20);
+  cursor: pointer;
+  background: var(--bgColor-accent-emphasis);
+  color: var(--fgColor-onEmphasis);
+  border: none;
+  border-radius: var(--borderRadius-medium);
+  font-size: var(--text-body-size-medium);
+}
+
+.accentButton:disabled {
+  opacity: 0.5;
+}
+
+.doneButton {
+  padding: var(--base-size-12) var(--base-size-20);
+  cursor: pointer;
+  background: var(--bgColor-done-emphasis);
+  color: var(--fgColor-onEmphasis);
+  border: none;
+  border-radius: var(--borderRadius-medium);
+  font-size: var(--text-body-size-medium);
+}
+
+.stats {
+  font-family: var(--fontStack-monospace);
+  font-size: var(--text-body-size-small);
+  padding: var(--base-size-8) var(--base-size-12);
+  background: var(--bgColor-muted);
+  border-radius: var(--borderRadius-medium);
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--base-size-2);
+  padding: var(--base-size-8);
+  border: 1px solid var(--borderColor-default);
+  border-radius: var(--borderRadius-medium);
+}
+
+.cell {
+  width: var(--base-size-24);
+  height: var(--base-size-24);
+  border-radius: var(--borderRadius-small);
+  transition: all 0.15s;
+}
+
+.description {
+  font-size: var(--text-body-size-small);
+  color: var(--fgColor-muted);
+  margin: 0;
+}

@@ -1,0 +1,15 @@
+.button {
+  padding: var(--base-size-12) var(--base-size-24);
+  font-size: var(--text-body-size-large);
+  border-radius: var(--borderRadius-large);
+  border: 2px solid var(--borderColor-accent-emphasis);
+  background: var(--bgColor-default);
+  color: var(--fgColor-accent);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.button[data-active] {
+  background: var(--bgColor-accent-emphasis);
+  color: var(--fgColor-onEmphasis);
+}

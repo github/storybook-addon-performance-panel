@@ -2,6 +2,7 @@ import eslint from '@eslint/js'
 import type {Linter} from 'eslint'
 import type {ESLint} from 'eslint'
 import {defineConfig} from 'eslint/config'
+import jsxA11y from 'eslint-plugin-jsx-a11y'
 import eslintPluginPrettier from 'eslint-plugin-prettier/recommended'
 import eslintPluginReact from 'eslint-plugin-react'
 import eslintPluginReactHooks from 'eslint-plugin-react-hooks'
@@ -12,6 +13,10 @@ import tseslint from 'typescript-eslint'
 export default defineConfig(
   {
     ignores: ['**/dist/**', '**/node_modules/**', '**/storybook-static/**'],
+  },
+  {
+    // ESLint 9 ignores dotfiles by default; explicitly include .storybook
+    files: ['**/.storybook/**/*.{ts,tsx}'],
   },
   eslint.configs.recommended,
   tseslint.configs.strictTypeChecked,
@@ -33,6 +38,8 @@ export default defineConfig(
     settings: {react: {version: 'detect'}},
   },
   eslintPluginReact.configs.flat['jsx-runtime'] as Linter.Config,
+
+  jsxA11y.flatConfigs.strict,
   {
     plugins: {'react-hooks': eslintPluginReactHooks as unknown as ESLint.Plugin},
     rules: eslintPluginReactHooks.configs.recommended.rules,

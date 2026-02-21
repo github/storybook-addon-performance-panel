@@ -1,6 +1,7 @@
 import {useEffect, useRef, useState} from 'react'
 
 import preview from '../.storybook/preview'
+import styles from './AnimatedBox.module.css'
 
 /**
  * A component with a CSS animation.
@@ -29,28 +30,21 @@ function AnimatedBox({speed = 2}: {speed?: number}) {
   }, [running, speed])
 
   return (
-    <div style={{padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px'}}>
-      <div
-        ref={boxRef}
-        style={{
-          width: '100px',
-          height: '100px',
-          background: 'linear-gradient(135deg, #667eea, #764ba2)',
-          borderRadius: '12px',
-          willChange: 'transform',
-        }}
-      />
+    <div className={styles.container}>
+      <div ref={boxRef} className={styles.box} />
       <button
+        className={styles.button}
         onClick={() => {
           setRunning(r => !r)
         }}
-        style={{padding: '8px 16px', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer'}}
       >
         {running ? 'Pause' : 'Resume'}
       </button>
     </div>
   )
 }
+
+AnimatedBox.displayName = 'AnimatedBox'
 
 const meta = preview.meta({
   title: 'Demo/AnimatedBox',

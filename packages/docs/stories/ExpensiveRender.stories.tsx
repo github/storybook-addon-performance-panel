@@ -1,6 +1,7 @@
 import {useMemo, useState} from 'react'
 
 import preview from '../.storybook/preview'
+import styles from './ExpensiveRender.module.css'
 
 /**
  * Intentionally expensive computation during render.
@@ -21,16 +22,16 @@ function ExpensiveRender({items = 5000}: {items?: number}) {
   return (
     <div>
       <button
+        className={styles.button}
         onClick={() => {
           setCount(c => c + 1)
         }}
-        style={{padding: '8px 16px', marginBottom: '8px', cursor: 'pointer'}}
       >
         Re-render ({count})
       </button>
-      <div style={{maxHeight: '300px', overflow: 'auto', fontSize: '12px', fontFamily: 'monospace'}}>
+      <div className={styles.list}>
         {data.map(item => (
-          <div key={item.id} style={{padding: '2px 4px', borderBottom: '1px solid #f0f0f0'}}>
+          <div key={item.id} className={styles.item}>
             {item.value}
           </div>
         ))}
@@ -38,6 +39,8 @@ function ExpensiveRender({items = 5000}: {items?: number}) {
     </div>
   )
 }
+
+ExpensiveRender.displayName = 'ExpensiveRender'
 
 const expensiveRenderMeta = preview.meta({
   title: 'Examples/Expensive Render',

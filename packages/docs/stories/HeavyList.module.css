@@ -1,0 +1,71 @@
+.container {
+  max-height: 400px;
+  overflow: auto;
+}
+
+.toolbar {
+  display: flex;
+  gap: var(--base-size-8);
+  margin-bottom: var(--base-size-8);
+  position: sticky;
+  top: 0;
+  background: var(--bgColor-default);
+  padding: var(--base-size-4);
+}
+
+.input {
+  padding: var(--base-size-8) var(--base-size-12);
+  border: 1px solid var(--borderColor-default);
+  border-radius: var(--borderRadius-medium);
+  flex: 1;
+  background: var(--bgColor-default);
+  color: var(--fgColor-default);
+}
+
+.sortButton {
+  padding: var(--base-size-8) var(--base-size-12);
+  border: 1px solid var(--borderColor-default);
+  border-radius: var(--borderRadius-medium);
+  cursor: pointer;
+  background: var(--bgColor-default);
+  color: var(--fgColor-default);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-body-size-small);
+}
+
+.headerRow {
+  border-bottom: 2px solid var(--borderColor-muted);
+}
+
+.headerCell {
+  text-align: left;
+  padding: var(--base-size-4) var(--base-size-8);
+}
+
+.headerCellRight {
+  text-align: right;
+  padding: var(--base-size-4) var(--base-size-8);
+}
+
+.row {
+  border-bottom: 1px solid var(--borderColor-muted);
+}
+
+.cellMuted {
+  padding: var(--base-size-4) var(--base-size-8);
+  color: var(--fgColor-muted);
+}
+
+.cell {
+  padding: var(--base-size-4) var(--base-size-8);
+}
+
+.cellMono {
+  padding: var(--base-size-4) var(--base-size-8);
+  text-align: right;
+  font-family: var(--fontStack-monospace);
+}

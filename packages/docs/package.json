@@ -8,10 +8,16 @@
   },
   "dependencies": {
     "@github-ui/storybook-addon-performance-panel": "*",
+    "@primer/primitives": "^11.4.0",
     "@storybook/addon-docs": "^10.2.10",
     "@storybook/react-vite": "^10",
     "react": "^19",
     "react-dom": "^19",
     "storybook": "^10"
+  },
+  "devDependencies": {
+    "@types/eslint-plugin-jsx-a11y": "^6.10.1",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "lightningcss": "^1.31.1"
   }
 }

@@ -109,6 +109,8 @@ export class ElementTimingCollector implements MetricCollector<ElementTimingMetr
   #supported = false
   #elements: ElementTimingRecord[] = []
   #largestRenderTime = 0
+  /** Entries with renderTime/loadTime before this threshold are ignored (stale from before reset). */
+  #epochMs = 0
 
   constructor() {
     this.#supported = this.#checkSupport()
@@ -124,6 +126,8 @@ export class ElementTimingCollector implements MetricCollector<ElementTimingMetr
 
   start(): void {
     if (!this.#supported) return
+
+    this.#epochMs = performance.now()
 
     try {
       this.#observer = new PerformanceObserver(list => {
@@ -141,6 +145,9 @@ export class ElementTimingCollector implements MetricCollector<ElementTimingMetr
   #processEntry(entry: PerformanceElementTiming): void {
     // Use renderTime if available, fall back to loadTime for images
     const renderTime = entry.renderTime || entry.loadTime || 0
+
+    // Ignore entries from before the current epoch (stale after reset/restart)
+    if (renderTime < this.#epochMs) return
 
     const record: ElementTimingRecord = {
       identifier: entry.identifier || 'unnamed',
@@ -175,6 +182,7 @@ export class ElementTimingCollector implements MetricCollector<ElementTimingMetr
   reset(): void {
     this.#elements = []
     this.#largestRenderTime = 0
+    this.#epochMs = performance.now()
   }
 
   getMetrics(): ElementTimingMetrics {

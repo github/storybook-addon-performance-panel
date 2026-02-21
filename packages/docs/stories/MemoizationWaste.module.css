@@ -1,0 +1,51 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-12);
+  max-width: 500px;
+}
+
+.dangerButton {
+  padding: var(--base-size-12) var(--base-size-20);
+  cursor: pointer;
+  background: var(--bgColor-danger-emphasis);
+  color: var(--fgColor-onEmphasis);
+  border: none;
+  border-radius: var(--borderRadius-medium);
+  font-size: var(--text-body-size-medium);
+  align-self: flex-start;
+}
+
+.successButton {
+  padding: var(--base-size-12) var(--base-size-20);
+  cursor: pointer;
+  background: var(--bgColor-success-emphasis);
+  color: var(--fgColor-onEmphasis);
+  border: none;
+  border-radius: var(--borderRadius-medium);
+  font-size: var(--text-body-size-medium);
+  align-self: flex-start;
+}
+
+.description {
+  font-size: var(--text-body-size-small);
+  color: var(--fgColor-muted);
+  margin: 0;
+}
+
+.list {
+  max-height: 300px;
+  overflow: auto;
+}
+
+.row {
+  padding: var(--base-size-4) var(--base-size-8);
+  border-bottom: 1px solid var(--borderColor-muted);
+  font-family: var(--fontStack-monospace);
+  font-size: var(--text-body-size-small);
+}
+
+.rowHighlight {
+  composes: row;
+  background: var(--bgColor-attention-muted);
+}

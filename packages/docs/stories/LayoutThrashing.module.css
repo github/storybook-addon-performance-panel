@@ -1,0 +1,65 @@
+.toolbar {
+  display: flex;
+  gap: var(--base-size-8);
+  margin-bottom: var(--base-size-12);
+}
+
+.dangerButton {
+  padding: var(--base-size-8) var(--base-size-16);
+  cursor: pointer;
+  background: var(--bgColor-severe-emphasis);
+  color: var(--fgColor-onEmphasis);
+  border: none;
+  border-radius: var(--borderRadius-medium);
+  font-size: var(--text-body-size-medium);
+}
+
+.dangerButton[data-active] {
+  background: var(--bgColor-danger-emphasis);
+}
+
+.successButton {
+  padding: var(--base-size-8) var(--base-size-16);
+  cursor: pointer;
+  background: var(--bgColor-success-emphasis);
+  color: var(--fgColor-onEmphasis);
+  border: none;
+  border-radius: var(--borderRadius-medium);
+  font-size: var(--text-body-size-medium);
+}
+
+.accentButton {
+  padding: var(--base-size-8) var(--base-size-16);
+  cursor: pointer;
+  background: var(--bgColor-accent-emphasis);
+  color: var(--fgColor-onEmphasis);
+  border: none;
+  border-radius: var(--borderRadius-medium);
+  font-size: var(--text-body-size-medium);
+}
+
+.accentButton:disabled {
+  opacity: 0.5;
+}
+
+.stats {
+  font-family: var(--fontStack-monospace);
+  font-size: var(--text-body-size-small);
+  padding: var(--base-size-8) var(--base-size-12);
+  background: var(--bgColor-muted);
+  border-radius: var(--borderRadius-medium);
+  margin-bottom: var(--base-size-12);
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--base-size-4);
+}
+
+.gridBox {
+  width: 100px;
+  height: 50px;
+  border-radius: var(--borderRadius-medium);
+  transition: all 0.2s;
+}

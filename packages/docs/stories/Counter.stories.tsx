@@ -1,6 +1,7 @@
 import {useCallback, useState} from 'react'
 
 import preview from '../.storybook/preview'
+import styles from './Counter.module.css'
 
 /**
  * A counter button that triggers React re-renders on click.
@@ -13,23 +14,13 @@ function Counter({label = 'Click me'}: {label?: string}) {
   }, [])
 
   return (
-    <button
-      onClick={increment}
-      style={{
-        padding: '12px 24px',
-        fontSize: '16px',
-        borderRadius: '8px',
-        border: '2px solid #0366d6',
-        background: count > 0 ? '#0366d6' : 'white',
-        color: count > 0 ? 'white' : '#0366d6',
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-      }}
-    >
+    <button className={styles.button} data-active={count > 0 || undefined} onClick={increment}>
       {label}: {count}
     </button>
   )
 }
+
+Counter.displayName = 'Counter'
 
 const meta = preview.meta({
   title: 'Demo/Counter',
