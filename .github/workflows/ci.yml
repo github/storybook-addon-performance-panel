@@ -71,13 +71,9 @@ jobs:
       - run: npm run tsc
 
   test:
-    name: Test (${{ matrix.browser }})
+    name: Test
     needs: install
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -93,40 +89,15 @@ jobs:
       - uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ matrix.browser }}-${{ hashFiles('**/package-lock.json') }}
-      - run: npx playwright install --with-deps ${{ matrix.browser }}
+          key: playwright-${{ hashFiles('**/package-lock.json') }}
+      - run: npx playwright install --with-deps chromium firefox webkit
       - run: npx vitest run --project browser
         working-directory: packages/storybook-addon-performance-panel
-        env:
-          VITEST_BROWSER: ${{ matrix.browser }}
-
-  build:
-    name: Build Docs
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
-      - uses: actions/cache/restore@v5
-        with:
-          path: |
-            node_modules
-            packages/*/node_modules
-            packages/storybook-addon-performance-panel/dist
-          key: deps-${{ github.sha }}
-      - run: npm run build-storybook -w @github-ui/docs
-      - uses: actions/upload-artifact@v6
-        with:
-          name: addon-dist
-          path: packages/storybook-addon-performance-panel/dist/
-          retention-days: 7
 
   ci:
     name: CI
     if: always()
-    needs: [lint, typecheck, test, build]
+    needs: [lint, typecheck, test]
     runs-on: ubuntu-latest
     steps:
       - run: |
