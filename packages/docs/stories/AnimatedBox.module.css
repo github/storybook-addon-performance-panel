@@ -1,0 +1,25 @@
+.container {
+  padding: var(--base-size-40);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--base-size-16);
+}
+
+.box {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, var(--bgColor-accent-emphasis), var(--bgColor-done-emphasis));
+  border-radius: var(--borderRadius-large);
+  will-change: transform;
+}
+
+.button {
+  padding: var(--base-size-8) var(--base-size-16);
+  border: 1px solid var(--borderColor-default);
+  border-radius: var(--borderRadius-medium);
+  cursor: pointer;
+  background: var(--bgColor-default);
+  color: var(--fgColor-default);
+  font-size: var(--text-body-size-medium);
+}

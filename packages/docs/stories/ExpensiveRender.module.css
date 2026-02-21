@@ -1,0 +1,22 @@
+.button {
+  padding: var(--base-size-8) var(--base-size-16);
+  margin-bottom: var(--base-size-8);
+  cursor: pointer;
+  background: var(--bgColor-default);
+  color: var(--fgColor-default);
+  border: 1px solid var(--borderColor-default);
+  border-radius: var(--borderRadius-medium);
+  font-size: var(--text-body-size-medium);
+}
+
+.list {
+  max-height: 300px;
+  overflow: auto;
+  font-size: var(--text-caption-size);
+  font-family: var(--fontStack-monospace);
+}
+
+.item {
+  padding: var(--base-size-2) var(--base-size-4);
+  border-bottom: 1px solid var(--borderColor-muted);
+}

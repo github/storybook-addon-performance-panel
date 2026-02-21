@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useRef, useState} from 'react'
 
 import preview from '../.storybook/preview'
+import styles from './MemoryPressure.module.css'
 
 /**
  * Demonstrates memory pressure and GC churn by rapidly allocating objects.
@@ -56,69 +57,34 @@ function MemoryPressure({chunkSizeKB = 512, retainChunks = true}: {chunkSizeKB?:
   const retainedMB = retainChunks ? ((retained.current.length * chunkSizeKB) / 1024).toFixed(1) : '0 (GC eligible)'
 
   return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '500px'}}>
-      <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
+    <div className={styles.container}>
+      <div className={styles.toolbar}>
         <button
+          className={styles.dangerButton}
+          data-active={running || undefined}
           onClick={running ? stopAllocating : startAllocating}
-          style={{
-            padding: '12px 20px',
-            cursor: 'pointer',
-            background: running ? '#ff4444' : '#ff8800',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '14px',
-          }}
         >
           {running ? '⏸ Stop' : '❌ Start Allocating'}
         </button>
         <button
+          className={styles.accentButton}
           onClick={allocate}
           disabled={running}
-          style={{
-            padding: '12px 20px',
-            cursor: 'pointer',
-            background: '#0969da',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '14px',
-            opacity: running ? 0.5 : 1,
-          }}
         >
           Allocate Once ({chunkSizeKB} KB)
         </button>
-        <button
-          onClick={releaseAll}
-          style={{
-            padding: '12px 20px',
-            cursor: 'pointer',
-            background: '#22cc44',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '14px',
-          }}
-        >
+        <button className={styles.successButton} onClick={releaseAll}>
           ✅ Release All
         </button>
       </div>
 
-      <div
-        style={{
-          fontFamily: 'monospace',
-          fontSize: '13px',
-          padding: '8px 12px',
-          background: '#f5f5f5',
-          borderRadius: '4px',
-        }}
-      >
+      <div className={styles.stats}>
         <div>Allocations: {allocCount}</div>
         <div>Retained: ~{retainedMB} MB</div>
         <div>Mode: {retainChunks ? 'Retained (leak simulation)' : 'Ephemeral (GC pressure)'}</div>
       </div>
 
-      <p style={{fontSize: '13px', color: '#666', margin: 0}}>
+      <p className={styles.description}>
         {retainChunks
           ? 'Each allocation is retained — heap grows continuously. Watch the memory sparkline climb and peak increase.'
           : 'Allocations are not retained — GC must constantly reclaim. Watch GC pressure (MB/s) spike.'}

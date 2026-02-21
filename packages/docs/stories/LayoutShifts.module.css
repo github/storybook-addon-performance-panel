@@ -1,0 +1,56 @@
+.container {
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-8);
+}
+
+.title {
+  margin: 0;
+}
+
+.description {
+  margin: 0;
+  font-size: var(--text-body-size-medium);
+  color: var(--fgColor-muted);
+}
+
+.banner {
+  background: linear-gradient(135deg, var(--bgColor-accent-emphasis), var(--bgColor-done-emphasis));
+  height: 150px;
+  border-radius: var(--borderRadius-large);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fgColor-onEmphasis);
+  font-weight: bold;
+}
+
+.text {
+  margin: 0;
+  font-size: var(--text-body-size-medium);
+}
+
+.button {
+  padding: var(--base-size-8) var(--base-size-16);
+  cursor: pointer;
+  border: 1px solid var(--borderColor-default);
+  border-radius: var(--borderRadius-medium);
+  align-self: flex-start;
+  background: var(--bgColor-default);
+  color: var(--fgColor-default);
+}
+
+.alert {
+  padding: var(--base-size-12);
+  background: var(--bgColor-attention-muted);
+  border: 1px solid var(--borderColor-attention-emphasis);
+  border-radius: var(--borderRadius-medium);
+  font-size: var(--text-body-size-small);
+}
+
+.hint {
+  margin: 0;
+  font-size: var(--text-body-size-small);
+  color: var(--fgColor-muted);
+}

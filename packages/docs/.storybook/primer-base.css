@@ -1,0 +1,6 @@
+/* Apply Primer design tokens to the Storybook preview iframe */
+body {
+  background-color: var(--bgColor-default);
+  color: var(--fgColor-default);
+  font-family: var(--fontStack-sansSerif);
+}

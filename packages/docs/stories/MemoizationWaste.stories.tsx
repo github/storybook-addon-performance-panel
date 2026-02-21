@@ -1,6 +1,7 @@
 import {memo, useCallback, useState} from 'react'
 
 import preview from '../.storybook/preview'
+import styles from './MemoizationWaste.module.css'
 
 /**
  * Demonstrates wasted React renders from missing or broken memoization.
@@ -27,15 +28,7 @@ const ExpensiveRow = memo(function ExpensiveRow({label, value, config}: RowProps
   }
 
   return (
-    <div
-      style={{
-        padding: '4px 8px',
-        borderBottom: '1px solid #f0f0f0',
-        fontFamily: 'monospace',
-        fontSize: '13px',
-        background: config.highlight && value > 500 ? '#fff3cd' : 'transparent',
-      }}
-    >
+    <div className={config.highlight && value > 500 ? styles.rowHighlight : styles.row}>
       {label}: {value}
     </div>
   )
@@ -59,30 +52,21 @@ function MemoizationWaste({rowCount = 200, stableConfig = false}: {rowCount?: nu
   const configProp = stableConfig ? STABLE_CONFIG : {highlight: true}
 
   return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '500px'}}>
+    <div className={styles.container}>
       <button
+        className={stableConfig ? styles.successButton : styles.dangerButton}
         onClick={handleClick}
-        style={{
-          padding: '12px 20px',
-          cursor: 'pointer',
-          background: stableConfig ? '#22cc44' : '#ff4444',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          fontSize: '14px',
-          alignSelf: 'flex-start',
-        }}
       >
         {stableConfig ? '✅' : '❌'} Re-render parent ({counter})
       </button>
 
-      <p style={{fontSize: '13px', color: '#666', margin: 0}}>
+      <p className={styles.description}>
         {stableConfig
           ? `Config is a stable reference — React.memo skips ${String(rowCount)} rows. Watch "Work Saved" stay high.`
           : `Config is a new object every render — React.memo is defeated. All ${String(rowCount)} rows re-render (~${(rowCount * 0.3).toFixed(0)}ms wasted).`}
       </p>
 
-      <div style={{maxHeight: '300px', overflow: 'auto'}}>
+      <div className={styles.list}>
         {rows.map(row => (
           <ExpensiveRow key={row.label} label={row.label} value={row.value} config={configProp} />
         ))}

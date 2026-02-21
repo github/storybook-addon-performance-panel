@@ -1,6 +1,7 @@
 import {useCallback, useRef, useState} from 'react'
 
 import preview from '../.storybook/preview'
+import styles from './LayoutThrashing.module.css'
 
 /**
  * Demonstrates layout thrashing by reading layout properties after writing styles.
@@ -43,46 +44,25 @@ function LayoutThrashing({boxCount = 20}: {boxCount?: number}) {
 
   return (
     <div>
-      <div style={{display: 'flex', gap: '8px', marginBottom: '12px'}}>
+      <div className={styles.toolbar}>
         <button
+          className={styles.dangerButton}
+          data-active={thrashing || undefined}
           onClick={triggerThrash}
-          style={{
-            padding: '8px 16px',
-            cursor: 'pointer',
-            background: thrashing ? '#ff4444' : '#ff8800',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-          }}
         >
           ❌ Thrash Layout
         </button>
-        <button
-          onClick={triggerBatched}
-          style={{
-            padding: '8px 16px',
-            cursor: 'pointer',
-            background: '#22cc44',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-          }}
-        >
+        <button className={styles.successButton} onClick={triggerBatched}>
           ✅ Batched (Correct)
         </button>
       </div>
-      <div ref={containerRef} style={{display: 'flex', flexWrap: 'wrap', gap: '4px'}}>
+      <div ref={containerRef} className={styles.grid}>
         {Array.from({length: boxCount}, (_, i) => (
           <div
             key={i}
             data-box
-            style={{
-              width: '100px',
-              height: '50px',
-              background: `hsl(${String(i * 18)}, 70%, 80%)`,
-              borderRadius: '4px',
-              transition: 'all 0.2s',
-            }}
+            className={styles.gridBox}
+            style={{background: `hsl(${String(i * 18)}, 70%, 80%)`}}
           />
         ))}
       </div>

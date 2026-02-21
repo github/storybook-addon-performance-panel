@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useState} from 'react'
 
 import preview from '../.storybook/preview'
+import styles from './ElementTiming.module.css'
 
 /**
  * Sets the `elementtiming` attribute imperatively since React doesn't
@@ -18,16 +19,16 @@ function useElementTiming(identifier: string) {
 function TimedCard({index, src}: {index: number; src: string}) {
   const ref = useElementTiming(`card-${String(index + 1)}`)
   return (
-    <div style={{borderRadius: '8px', overflow: 'hidden', border: '1px solid #e0e0e0'}}>
+    <div className={styles.card}>
       <img
         ref={ref}
         src={src}
         alt={`Card ${String(index + 1)}`}
         width={320}
         height={240}
-        style={{width: '100%', height: 'auto', display: 'block'}}
+        className={styles.cardImage}
       />
-      <div style={{padding: '8px', fontSize: '13px', fontFamily: 'monospace'}}>card-{index + 1}</div>
+      <div className={styles.cardLabel}>card-{index + 1}</div>
     </div>
   )
 }
@@ -67,30 +68,23 @@ function ElementTimingDemo({imageCount = 6, staggerMs = 400}: {imageCount?: numb
   }
 
   return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '600px'}}>
-      <p style={{fontSize: '13px', color: '#666', margin: 0}}>
+    <div className={styles.container}>
+      <p className={styles.description}>
         Each card below is an <code>&lt;img&gt;</code> with an <code>elementtiming</code> attribute. They load one at a
         time so you can see individual render times in the Element Timing section.{' '}
         {visibleCount < imageCount && `Loading ${String(visibleCount + 1)} of ${String(imageCount)}...`}
       </p>
 
-      <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px'}}>
+      <div className={styles.grid}>
         {Array.from({length: visibleCount}, (_, i) => (
           <TimedCard key={i} index={i} src={placeholderSrc(i)} />
         ))}
       </div>
 
       <button
+        className={styles.button}
         onClick={() => {
           setVisibleCount(0)
-        }}
-        style={{
-          padding: '8px 16px',
-          cursor: 'pointer',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          alignSelf: 'flex-start',
-          fontSize: '14px',
         }}
       >
         Reset &amp; replay

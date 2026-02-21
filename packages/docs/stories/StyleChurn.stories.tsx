@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useRef, useState} from 'react'
 
 import preview from '../.storybook/preview'
+import styles from './StyleChurn.module.css'
 
 /**
  * Demonstrates heavy CSS style mutations and DOM churn.
@@ -78,76 +79,35 @@ function StyleChurn({nodeCount = 300, burstSize = 50}: {nodeCount?: number; burs
   }, [])
 
   return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '600px'}}>
-      <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
+    <div className={styles.container}>
+      <div className={styles.toolbar}>
         <button
+          className={styles.dangerButton}
+          data-active={running || undefined}
           onClick={running ? stopChurn : startChurn}
-          style={{
-            padding: '12px 20px',
-            cursor: 'pointer',
-            background: running ? '#ff4444' : '#ff8800',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '14px',
-          }}
         >
           {running ? '⏸ Stop' : '❌ Start Style Churn'}
         </button>
         <button
+          className={styles.accentButton}
           onClick={mutateBurst}
           disabled={running}
-          style={{
-            padding: '12px 20px',
-            cursor: 'pointer',
-            background: '#0969da',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '14px',
-            opacity: running ? 0.5 : 1,
-          }}
         >
           Single Burst ({burstSize} writes)
         </button>
-        <button
-          onClick={addRemoveNodes}
-          style={{
-            padding: '12px 20px',
-            cursor: 'pointer',
-            background: '#7c3aed',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '14px',
-          }}
-        >
+        <button className={styles.doneButton} onClick={addRemoveNodes}>
           🔄 DOM Churn (remove/add half)
         </button>
       </div>
 
-      <div
-        style={{
-          fontFamily: 'monospace',
-          fontSize: '13px',
-          padding: '8px 12px',
-          background: '#f5f5f5',
-          borderRadius: '4px',
-        }}
-      >
+      <div className={styles.stats}>
         Mutation bursts: {phase} · Nodes: {nodeCount} · Writes per burst: {burstSize}
       </div>
 
       <div
         ref={containerRef}
+        className={styles.grid}
         style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '2px',
-          padding: '8px',
-          border: '1px solid #e0e0e0',
-          borderRadius: '4px',
-          // CSS custom properties mutated by the churn
           ['--churn-hue' as string]: '200',
           ['--churn-scale' as string]: '1',
         }}
@@ -156,18 +116,13 @@ function StyleChurn({nodeCount = 300, burstSize = 50}: {nodeCount?: number; burs
           <div
             key={i}
             data-cell
-            style={{
-              width: '24px',
-              height: '24px',
-              background: `hsl(${String(hue)}, 70%, 80%)`,
-              borderRadius: '2px',
-              transition: 'all 0.15s',
-            }}
+            className={styles.cell}
+            style={{background: `hsl(${String(hue)}, 70%, 80%)`}}
           />
         ))}
       </div>
 
-      <p style={{fontSize: '13px', color: '#666', margin: 0}}>
+      <p className={styles.description}>
         Start the churn to trigger rapid style mutations. Watch Style Writes, CSS Var Changes, and Thrashing Score
         climb. The DOM Churn button tests the DOM mutation counter.
       </p>
