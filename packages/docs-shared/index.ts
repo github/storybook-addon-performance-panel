@@ -8,7 +8,7 @@
  * - **Addon entry:** `@github-ui/storybook-addon-performance-panel` (default)
  *   - Includes both the universal decorator (browser metrics) and the
  *     React.Profiler decorator (mount count, update duration, memoization)
- * - **Port:** 6006
+ * - **Portless URL:** `http://perf-react.localhost:1355`
  * - **Stories:** `.stories.tsx` and `.mdx` files
  *
  * ## HTML docs (`packages/docs-html`)
@@ -16,7 +16,7 @@
  * - **Addon entry:** `@github-ui/storybook-addon-performance-panel/universal`
  *   - Universal-only: browser metrics without React.Profiler
  *   - The React Performance section is automatically hidden in the panel
- * - **Port:** 6007
+ * - **Portless URL:** `http://perf-html.localhost:1355`
  * - **Stories:** `.stories.ts` files (no JSX)
  *
  * Both share the configuration helpers below (features, viteFinal, etc.).

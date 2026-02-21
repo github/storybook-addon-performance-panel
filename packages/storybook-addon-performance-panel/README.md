@@ -147,6 +147,8 @@ Metrics are color-coded based on Web Vitals standards:
 
 The addon follows [Storybook addon best practices](https://storybook.js.org/docs/addons/writing-presets) with the following entry points:
 
+### React projects (default)
+
 ```typescript
 // CSF factory entry — used in preview.ts with definePreview()
 import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel'
@@ -160,6 +162,21 @@ import '@github-ui/storybook-addon-performance-panel/preview'
 // Manager — registers the panel UI in Storybook's manager
 import '@github-ui/storybook-addon-performance-panel/manager'
 ```
+
+### Non-React projects (HTML, Vue, Svelte, Web Components, etc.)
+
+Use the `./universal` subpath — no React dependency:
+
+```typescript
+// CSF factory entry — used in preview.ts with definePreview()
+import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel/universal'
+
+// Preset — registers the manager panel (used in main.ts addons array)
+// Uses the same preset and manager as the React entry
+import '@github-ui/storybook-addon-performance-panel/preset'
+```
+
+The universal entry collects all browser-level metrics (frame timing, CLS, INP, etc.) but omits React Profiler metrics. The React Performance section is automatically hidden in the panel.
 
 ## Collectors
 

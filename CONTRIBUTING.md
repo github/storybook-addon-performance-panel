@@ -11,12 +11,14 @@ Please note that this project is released with a [Contributor Code of Conduct](C
 
 ## Project structure
 
-This is an npm workspaces monorepo with two packages:
+This is an npm workspaces monorepo with four packages:
 
 | Directory | Package | Description |
 |-----------|---------|-------------|
 | `packages/storybook-addon-performance-panel` | `@github-ui/storybook-addon-performance-panel` | The addon — collectors, panel UI, and types |
-| `packages/docs` | `@github-ui/docs` | Documentation site built with Storybook |
+| `packages/docs` | `@github-ui/docs` | React docs storybook (`@storybook/react-vite`) |
+| `packages/docs-html` | `@github-ui/docs-html` | HTML docs storybook (`@storybook/html-vite`) |
+| `packages/docs-shared` | `@github-ui/docs-shared` | Shared storybook config (theming, features, Vite helpers) |
 
 ### Useful commands
 
@@ -27,8 +29,18 @@ This is an npm workspaces monorepo with two packages:
 | `npm test` | Run tests |
 | `npm run lint` | Lint with ESLint + Prettier |
 | `npm run tsc` | Type-check the addon |
-| `npm run docs` | Build the addon and start the docs site locally |
-| `npm run docs:build` | Build the addon and the docs site for production |
+| `npm run dev` | Build + start both storybooks with [portless](https://github.com/nicolo-ribaudo/portless) |
+| `npm run docs` | Build the addon and start the React docs storybook |
+| `npm run docs:build` | Build the addon and the React docs for production |
+| `npm run docs:html` | Build the addon and start the HTML docs storybook |
+| `npm run docs:html:build` | Build the HTML docs for production |
+
+#### Portless dev URLs
+
+When using `npm run dev`, each storybook is served at a stable `.localhost` URL via [portless](https://github.com/nicolo-ribaudo/portless):
+
+- **React docs:** `http://perf-react.localhost:1355`
+- **HTML docs:** `http://perf-html.localhost:1355`
 
 ## Prerequisites for running and testing code
 
