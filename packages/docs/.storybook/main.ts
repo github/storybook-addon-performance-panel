@@ -11,6 +11,10 @@ const config: StorybookConfig = {
     sidebarOnboardingChecklist: false,
     experimentalCodeExamples: true,
   },
+  tags: {
+    // Hide auto-docs entries from the sidebar so only our explicit MDX pages show
+    autodocs: {excludeFromSidebar: true},
+  },
   viteFinal(config) {
     // Use React profiling build so the React Profiler panel works in production
     config.resolve ??= {}
