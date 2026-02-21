@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest'
 
+import {DEFAULT_METRICS, type ReactMetrics} from '../../core/performance-types'
 import {INITIAL_STATE, panelReducer, type PanelState} from '../../performance-panel'
-import {DEFAULT_METRICS, type ReactMetrics} from '../../performance-types'
 
 /** Creates minimal ReactMetrics for testing */
 function createReactMetrics(overrides: Partial<ReactMetrics> = {}): ReactMetrics {

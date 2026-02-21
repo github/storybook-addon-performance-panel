@@ -8,7 +8,7 @@ import {
   PANEL_ID,
   PERF_EVENTS,
   THRESHOLDS,
-} from '../../performance-types'
+} from '../../core/performance-types'
 
 describe('getStatusVariant', () => {
   describe('when higherIsBetter is false (default)', () => {

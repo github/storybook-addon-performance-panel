@@ -1,7 +1,7 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {CollectorManager} from '../../collectors/collector-manager'
-import type {RenderInfo} from '../../performance-types'
+import type {RenderInfo} from '../../core/performance-types'
 
 /**
  * Helper to create a RenderInfo object with sensible defaults.

@@ -6,7 +6,7 @@
  * handles orchestration and ensures consistent state across all collectors.
  */
 
-import type {PerformanceMetrics, ReactMetrics, RenderInfo} from '../performance-types'
+import type {PerformanceMetrics, ReactMetrics, RenderInfo} from '../core/performance-types'
 import {SPARKLINE_HISTORY_SIZE} from './constants'
 import {ElementTimingCollector} from './element-timing-collector'
 import {ForcedReflowCollector} from './forced-reflow-collector'

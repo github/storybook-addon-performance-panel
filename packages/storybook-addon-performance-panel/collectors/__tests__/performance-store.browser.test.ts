@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {performanceStore} from '../../performance-store'
-import {DEFAULT_METRICS, type ReactMetrics} from '../../performance-types'
+import {performanceStore} from '../../core/performance-store'
+import {DEFAULT_METRICS, type ReactMetrics} from '../../core/performance-types'
 
 /**
  * Creates a minimal ReactMetrics object for testing.

@@ -3,10 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "storybook": "storybook dev -p 6006",
+    "storybook": "portless perf-react sh -c 'storybook dev -p $PORT --ci'",
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@github-ui/docs-shared": "*",
     "@github-ui/storybook-addon-performance-panel": "*",
     "@primer/primitives": "^11.4.0",
     "@storybook/addon-docs": "^10.2.10",

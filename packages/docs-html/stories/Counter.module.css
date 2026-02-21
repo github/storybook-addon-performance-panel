@@ -1,0 +1,20 @@
+.button {
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 2px solid #0969da;
+  background: #fff;
+  color: #0969da;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.button:hover {
+  background: #ddf4ff;
+}
+
+.button[data-active] {
+  background: #0969da;
+  color: #fff;
+}

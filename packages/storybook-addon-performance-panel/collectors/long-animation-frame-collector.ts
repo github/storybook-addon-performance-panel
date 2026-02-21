@@ -8,7 +8,7 @@
  * @see https://w3c.github.io/long-animation-frames/
  */
 
-import type {LoAFScriptAttribution} from '../performance-types'
+import type {LoAFScriptAttribution} from '../core/performance-types'
 import type {MetricCollector} from './types'
 import {addToWindow, computeAverage, computeP95} from './utils'
 

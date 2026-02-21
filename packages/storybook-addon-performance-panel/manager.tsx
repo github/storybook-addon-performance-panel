@@ -10,8 +10,8 @@
 import React from 'react'
 import {addons, types} from 'storybook/manager-api'
 
+import {ADDON_ID, PANEL_ID} from './core/performance-types'
 import {PerformancePanel} from './performance-panel'
-import {ADDON_ID, PANEL_ID} from './performance-types'
 
 /**
  * Register the Performance Monitor addon with Storybook.

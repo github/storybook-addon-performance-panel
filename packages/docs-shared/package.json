@@ -1,0 +1,14 @@
+{
+  "name": "@github-ui/docs-shared",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "dependencies": {
+    "storybook": "^10"
+  },
+  "devDependencies": {
+    "lightningcss": "^1.31.1"
+  }
+}

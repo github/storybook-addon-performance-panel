@@ -4,15 +4,10 @@
  * This preset file enables automatic addon registration when the addon
  * is added to the `addons` array in `.storybook/main.ts`.
  *
- * Following Storybook addon best practices:
+ * The preset registers the addon panel in Storybook's manager UI (managerEntries).
+ * The decorator stack is auto-discovered via the `./preview` export.
+ *
  * @see https://storybook.js.org/docs/addons/writing-presets
- *
- * The preset exports:
- * - `managerEntries`: Registers the addon panel in Storybook's manager UI
- *
- * Note: previewAnnotations is NOT needed here because Storybook automatically
- * discovers the `./preview` export from package.json exports.
- *
  * @module preset
  */
 

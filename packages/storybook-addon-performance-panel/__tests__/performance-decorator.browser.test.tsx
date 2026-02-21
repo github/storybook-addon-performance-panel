@@ -3,9 +3,9 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {page, userEvent} from 'vitest/browser'
 import {render} from 'vitest-browser-react'
 
-import {PerformanceProvider, ProfiledComponent, withPerformanceMonitor} from '../performance-decorator'
-import {PERF_EVENTS} from '../performance-types'
-import {useReportReactRenderProfile} from '../ReportReactRenderProfileContext'
+import {PERF_EVENTS} from '../core/performance-types'
+import {PerformanceProvider, ProfiledComponent, withPerformanceMonitor} from '../react/performance-decorator'
+import {useReportReactRenderProfile} from '../react/ReportReactRenderProfileContext'
 
 // Mock storybook's addons API
 const mockChannel = {

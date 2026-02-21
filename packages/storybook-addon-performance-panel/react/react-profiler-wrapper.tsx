@@ -37,10 +37,10 @@
 
 import {memo, Profiler, useCallback, useEffect, useRef, useState} from 'react'
 
-import {createEmptyReactMetrics} from './collectors/react-profiler-collector'
-import {addToWindow} from './collectors/utils'
-import {performanceStore} from './performance-store'
-import type {ReactMetrics} from './performance-types'
+import {createEmptyReactMetrics} from '../collectors/react-profiler-collector'
+import {addToWindow} from '../collectors/utils'
+import {performanceStore} from '../core/performance-store'
+import type {ReactMetrics} from '../core/performance-types'
 
 // ============================================================================
 // Instance Counter for ID Deduplication

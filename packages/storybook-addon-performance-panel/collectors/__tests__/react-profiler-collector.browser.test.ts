@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it} from 'vitest'
 
 import {ReactProfilerCollector} from '../../collectors/react-profiler-collector'
-import type {RenderInfo} from '../../performance-types'
+import type {RenderInfo} from '../../core/performance-types'
 
 /**
  * Helper to create a RenderInfo object with sensible defaults.

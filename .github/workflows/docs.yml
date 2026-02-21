@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   build-docs:
-    name: Build Storybook
+    name: Build Storybooks
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -23,10 +23,16 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run docs:build
+      - run: npm run docs:html:build
+      - name: Merge into single site
+        run: |
+          mkdir -p _site
+          cp -r packages/docs/storybook-static/* _site/
+          cp -r packages/docs-html/storybook-static _site/html
       - uses: actions/upload-artifact@v6
         with:
           name: storybook-static
-          path: packages/docs/storybook-static/
+          path: _site/
 
   deploy:
     name: Deploy to Pages

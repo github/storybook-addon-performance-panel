@@ -1,6 +1,6 @@
 import {createContext, use} from 'react'
 
-import type {RenderInfo} from './performance-types'
+import type {RenderInfo} from '../core/performance-types'
 
 // ============================================================================
 // React Context
