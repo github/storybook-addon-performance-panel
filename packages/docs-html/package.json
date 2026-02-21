@@ -1,0 +1,17 @@
+{
+  "name": "@github-ui/docs-html",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "storybook": "storybook dev -p 6007",
+    "build-storybook": "storybook build"
+  },
+  "dependencies": {
+    "@github-ui/storybook-addon-performance-panel": "*",
+    "@storybook/html-vite": "^10",
+    "storybook": "^10"
+  },
+  "devDependencies": {
+    "lightningcss": "^1.31.1"
+  }
+}

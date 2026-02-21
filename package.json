@@ -13,6 +13,8 @@
     "tsc": "tsc -b packages/storybook-addon-performance-panel/tsconfig.build.json",
     "docs": "npm run build && npm run storybook -w @github-ui/docs",
     "docs:build": "npm run build && npm run build-storybook -w @github-ui/docs",
+    "docs:html": "npm run build && npm run storybook -w @github-ui/docs-html",
+    "docs:html:build": "npm run build && npm run build-storybook -w @github-ui/docs-html",
     "changeset": "changeset",
     "version-packages": "changeset version && npm install --package-lock-only"
   },
