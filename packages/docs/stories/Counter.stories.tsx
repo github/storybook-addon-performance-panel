@@ -31,6 +31,8 @@ function Counter({label = 'Click me'}: {label?: string}) {
   )
 }
 
+Counter.displayName = 'Counter'
+
 const meta = preview.meta({
   title: 'Demo/Counter',
   component: Counter,

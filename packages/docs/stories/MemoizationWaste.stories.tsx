@@ -93,6 +93,8 @@ function MemoizationWaste({rowCount = 200, stableConfig = false}: {rowCount?: nu
 
 const STABLE_CONFIG = {highlight: true} as const
 
+MemoizationWaste.displayName = 'MemoizationWaste'
+
 const meta = preview.meta({
   title: 'Examples/Memoization Waste',
   component: MemoizationWaste,

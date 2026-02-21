@@ -54,6 +54,8 @@ function RenderCascade({cascade = true}: {cascade?: boolean}) {
   )
 }
 
+RenderCascade.displayName = 'RenderCascade'
+
 const meta = preview.meta({
   title: 'Examples/Render Cascade',
   component: RenderCascade,

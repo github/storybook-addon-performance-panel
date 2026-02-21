@@ -86,6 +86,8 @@ function SlowHandler({blockMs = 200}: {blockMs?: number}) {
   )
 }
 
+SlowHandler.displayName = 'SlowHandler'
+
 const meta = preview.meta({
   title: 'Examples/Slow Handler',
   component: SlowHandler,

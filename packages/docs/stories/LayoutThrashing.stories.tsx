@@ -90,6 +90,8 @@ function LayoutThrashing({boxCount = 20}: {boxCount?: number}) {
   )
 }
 
+LayoutThrashing.displayName = 'LayoutThrashing'
+
 const meta = preview.meta({
   title: 'Examples/Layout Thrashing',
   component: LayoutThrashing,

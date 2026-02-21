@@ -52,6 +52,8 @@ function AnimatedBox({speed = 2}: {speed?: number}) {
   )
 }
 
+AnimatedBox.displayName = 'AnimatedBox'
+
 const meta = preview.meta({
   title: 'Demo/AnimatedBox',
   component: AnimatedBox,

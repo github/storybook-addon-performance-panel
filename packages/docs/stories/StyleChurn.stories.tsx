@@ -175,6 +175,8 @@ function StyleChurn({nodeCount = 300, burstSize = 50}: {nodeCount?: number; burs
   )
 }
 
+StyleChurn.displayName = 'StyleChurn'
+
 const meta = preview.meta({
   title: 'Examples/Style Churn',
   component: StyleChurn,

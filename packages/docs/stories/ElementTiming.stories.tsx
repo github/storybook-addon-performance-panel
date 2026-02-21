@@ -99,6 +99,8 @@ function ElementTimingDemo({imageCount = 6, staggerMs = 400}: {imageCount?: numb
   )
 }
 
+ElementTimingDemo.displayName = 'ElementTimingDemo'
+
 const meta = preview.meta({
   title: 'Examples/Element Timing',
   component: ElementTimingDemo,

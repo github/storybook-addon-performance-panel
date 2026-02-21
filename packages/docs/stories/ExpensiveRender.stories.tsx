@@ -39,6 +39,8 @@ function ExpensiveRender({items = 5000}: {items?: number}) {
   )
 }
 
+ExpensiveRender.displayName = 'ExpensiveRender'
+
 const expensiveRenderMeta = preview.meta({
   title: 'Examples/Expensive Render',
   component: ExpensiveRender,

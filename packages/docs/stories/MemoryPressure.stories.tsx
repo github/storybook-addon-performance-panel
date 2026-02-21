@@ -127,6 +127,8 @@ function MemoryPressure({chunkSizeKB = 512, retainChunks = true}: {chunkSizeKB?:
   )
 }
 
+MemoryPressure.displayName = 'MemoryPressure'
+
 const meta = preview.meta({
   title: 'Examples/Memory Pressure',
   component: MemoryPressure,

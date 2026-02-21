@@ -82,6 +82,8 @@ function HeavyList({itemCount = 200}: {itemCount?: number}) {
   )
 }
 
+HeavyList.displayName = 'HeavyList'
+
 const meta = preview.meta({
   title: 'Demo/HeavyList',
   component: HeavyList,

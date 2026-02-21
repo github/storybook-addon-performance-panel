@@ -85,6 +85,8 @@ function LayoutShifts({imageDelay = 1000}: {imageDelay?: number}) {
   )
 }
 
+LayoutShifts.displayName = 'LayoutShifts'
+
 const meta = preview.meta({
   title: 'Examples/Layout Shifts',
   component: LayoutShifts,
