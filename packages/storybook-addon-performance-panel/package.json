@@ -30,6 +30,18 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./react": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./universal": {
+      "types": "./dist/index-universal.d.ts",
+      "default": "./dist/index-universal.js"
+    },
+    "./components": {
+      "types": "./dist/index-react.d.ts",
+      "default": "./dist/index-react.js"
+    },
     "./manager": {
       "types": "./dist/manager.d.ts",
       "default": "./dist/manager.js"
@@ -60,7 +72,9 @@
     ],
     "previewEntries": [
       "preview.ts",
-      "index.ts"
+      "index.ts",
+      "index-universal.ts",
+      "index-react.ts"
     ],
     "nodeEntries": [
       "preset.ts"
@@ -71,6 +85,14 @@
     "@storybook/react": "^10.0.0",
     "react": "^19",
     "storybook": "^10"
+  },
+  "peerDependenciesMeta": {
+    "@storybook/react": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.2",
@@ -87,7 +109,9 @@
   "storybook": {
     "displayName": "Addon Performance Panel",
     "supportedFrameworks": [
-      "react"
+      "react",
+      "web-components",
+      "html"
     ],
     "icon": "https://github.githubassets.com/favicons/favicon.svg"
   }
