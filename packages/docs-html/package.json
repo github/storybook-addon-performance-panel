@@ -3,10 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "storybook": "storybook dev -p 6007",
+    "storybook": "portless perf-html sh -c 'storybook dev -p $PORT --ci'",
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@github-ui/docs-shared": "*",
     "@github-ui/storybook-addon-performance-panel": "*",
     "@storybook/html-vite": "^10",
     "storybook": "^10"

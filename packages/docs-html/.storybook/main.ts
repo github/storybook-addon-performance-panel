@@ -1,3 +1,4 @@
+import {SHARED_FEATURES, withLightningCSS} from '@github-ui/docs-shared'
 import type {StorybookConfig} from '@storybook/html-vite'
 
 const config: StorybookConfig = {
@@ -5,17 +6,15 @@ const config: StorybookConfig = {
   framework: '@storybook/html-vite',
   addons: ['@github-ui/storybook-addon-performance-panel/universal'],
   features: {
-    actions: false,
-    interactions: false,
-    backgrounds: false,
-    sidebarOnboardingChecklist: false,
+    ...SHARED_FEATURES,
   },
   viteFinal(config) {
-    config.css ??= {}
-    config.css.transformer = 'lightningcss'
-    config.build ??= {}
-    config.build.cssMinify = 'lightningcss'
-    return config
+    // When building for GitHub Pages, assets are served from /html/
+    if (process.env.CI) {
+      config.base = '/html/'
+    }
+
+    return withLightningCSS(config)
   },
 }
 
