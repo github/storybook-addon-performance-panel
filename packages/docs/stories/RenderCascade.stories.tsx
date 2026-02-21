@@ -25,10 +25,7 @@ function RenderCascade({cascade = true}: {cascade?: boolean}) {
 
   return (
     <div className={styles.container}>
-      <button
-        className={cascade ? styles.dangerButton : styles.successButton}
-        onClick={handleClick}
-      >
+      <button className={cascade ? styles.dangerButton : styles.successButton} onClick={handleClick}>
         {cascade ? '❌' : '✅'} Increment ({count})
       </button>
 

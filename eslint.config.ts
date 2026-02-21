@@ -38,8 +38,8 @@ export default defineConfig(
     settings: {react: {version: 'detect'}},
   },
   eslintPluginReact.configs.flat['jsx-runtime'] as Linter.Config,
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  jsxA11y.flatConfigs.strict as Linter.Config,
+
+  jsxA11y.flatConfigs.strict,
   {
     plugins: {'react-hooks': eslintPluginReactHooks as unknown as ESLint.Plugin},
     rules: eslintPluginReactHooks.configs.recommended.rules,

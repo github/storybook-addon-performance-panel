@@ -23,16 +23,10 @@ function LayoutShifts({imageDelay = 1000}: {imageDelay?: number}) {
   return (
     <div className={styles.container}>
       <h3 className={styles.title}>Article Title</h3>
-      <p className={styles.description}>
-        This demo simulates content loading that causes layout shifts.
-      </p>
+      <p className={styles.description}>This demo simulates content loading that causes layout shifts.</p>
 
       {/* Bad: no reserved space — shifts content below when it appears */}
-      {loaded && (
-        <div className={styles.banner}>
-          Late-loaded banner (shifted content below!)
-        </div>
-      )}
+      {loaded && <div className={styles.banner}>Late-loaded banner (shifted content below!)</div>}
 
       <p className={styles.text}>
         This paragraph gets pushed down when the banner loads. That movement is a layout shift.
@@ -48,9 +42,7 @@ function LayoutShifts({imageDelay = 1000}: {imageDelay?: number}) {
       </button>
 
       {extraContent && (
-        <div className={styles.alert}>
-          This injected content shifts the button position — another layout shift!
-        </div>
+        <div className={styles.alert}>This injected content shifts the button position — another layout shift!</div>
       )}
 
       <p className={styles.hint}>

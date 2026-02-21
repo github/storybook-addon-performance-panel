@@ -88,11 +88,7 @@ function StyleChurn({nodeCount = 300, burstSize = 50}: {nodeCount?: number; burs
         >
           {running ? '⏸ Stop' : '❌ Start Style Churn'}
         </button>
-        <button
-          className={styles.accentButton}
-          onClick={mutateBurst}
-          disabled={running}
-        >
+        <button className={styles.accentButton} onClick={mutateBurst} disabled={running}>
           Single Burst ({burstSize} writes)
         </button>
         <button className={styles.doneButton} onClick={addRemoveNodes}>
@@ -113,12 +109,7 @@ function StyleChurn({nodeCount = 300, burstSize = 50}: {nodeCount?: number; burs
         }}
       >
         {cellHues.map((hue, i) => (
-          <div
-            key={i}
-            data-cell
-            className={styles.cell}
-            style={{background: `hsl(${String(hue)}, 70%, 80%)`}}
-          />
+          <div key={i} data-cell className={styles.cell} style={{background: `hsl(${String(hue)}, 70%, 80%)`}} />
         ))}
       </div>
 

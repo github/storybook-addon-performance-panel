@@ -66,11 +66,7 @@ function MemoryPressure({chunkSizeKB = 512, retainChunks = true}: {chunkSizeKB?:
         >
           {running ? '⏸ Stop' : '❌ Start Allocating'}
         </button>
-        <button
-          className={styles.accentButton}
-          onClick={allocate}
-          disabled={running}
-        >
+        <button className={styles.accentButton} onClick={allocate} disabled={running}>
           Allocate Once ({chunkSizeKB} KB)
         </button>
         <button className={styles.successButton} onClick={releaseAll}>

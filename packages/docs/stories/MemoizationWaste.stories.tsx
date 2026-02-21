@@ -53,10 +53,7 @@ function MemoizationWaste({rowCount = 200, stableConfig = false}: {rowCount?: nu
 
   return (
     <div className={styles.container}>
-      <button
-        className={stableConfig ? styles.successButton : styles.dangerButton}
-        onClick={handleClick}
-      >
+      <button className={stableConfig ? styles.successButton : styles.dangerButton} onClick={handleClick}>
         {stableConfig ? '✅' : '❌'} Re-render parent ({counter})
       </button>
 

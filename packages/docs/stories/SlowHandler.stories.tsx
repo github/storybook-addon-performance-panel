@@ -35,26 +35,14 @@ function SlowHandler({blockMs = 200}: {blockMs?: number}) {
   return (
     <div className={styles.container}>
       <div className={styles.toolbar}>
-        <button
-          className={styles.dangerButton}
-          onClick={handleSlowClick}
-          disabled={processing}
-        >
+        <button className={styles.dangerButton} onClick={handleSlowClick} disabled={processing}>
           ❌ Blocking Click ({blockMs}ms)
         </button>
-        <button
-          className={styles.successButton}
-          onClick={handleFastClick}
-          disabled={processing}
-        >
+        <button className={styles.successButton} onClick={handleFastClick} disabled={processing}>
           ✅ Async Click ({blockMs}ms)
         </button>
       </div>
-      {result && (
-        <div className={styles.result}>
-          {result}
-        </div>
-      )}
+      {result && <div className={styles.result}>{result}</div>}
       <p className={styles.description}>
         Click the red button and watch INP, Long Tasks, and TBT spike. Then try the green button — same delay but
         without blocking the main thread.
