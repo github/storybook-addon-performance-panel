@@ -212,8 +212,7 @@ function RootLayout() {
             }
             const isActive = pathname === item.to || (item.to !== '/' && pathname.startsWith(item.to))
             const activeHash = isClient && isActive ? hash.replace(/^#/, '') : ''
-            const hasActiveChild =
-              isActive && item.children?.some(child => child.hash.slice(1) === activeHash)
+            const hasActiveChild = isActive && item.children?.some(child => child.hash.slice(1) === activeHash)
             return (
               <React.Fragment key={item.to}>
                 <NavList.Item
