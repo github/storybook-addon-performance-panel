@@ -115,10 +115,33 @@
 
 /* Indent sub-items under their parent page link */
 .subItem {
-  margin-left: 1rem !important;
-  border-left: 1px solid var(--borderColor-default, #d0d7de);
-  border-radius: 0 !important;
   font-size: 0.8125rem;
+}
+
+/* Top-level page links — visually distinct from sub-items */
+.pageLink {
+  --base-text-weight-normal: 600;
+  --control-medium-fontSize: 0.9375rem;
+}
+
+/* Chevron at the end of the row, only when open */
+.parentItemOpen > a {
+  display: flex !important;
+  align-items: center;
+}
+
+.parentItemOpen > a::after {
+  content: '';
+  flex-shrink: 0;
+  width: 0.75rem;
+  height: 0.75rem;
+  margin-left: auto;
+  background-color: var(--fgColor-muted, #636c76);
+  clip-path: polygon(50% 75%, 0 25%, 100% 25%);
+}
+
+.parentItemActive > a::after {
+  background-color: var(--fgColor-accent, #0969da);
 }
 
 /* ------------------------------------------------------------------ */

@@ -211,27 +211,36 @@ function RootLayout() {
               )
             }
             const isActive = pathname === item.to || (item.to !== '/' && pathname.startsWith(item.to))
+            const activeHash = isClient && isActive ? hash.replace(/^#/, '') : ''
+            const hasActiveChild =
+              isActive && item.children?.some(child => child.hash.slice(1) === activeHash)
             return (
               <React.Fragment key={item.to}>
-                <NavList.Item as={Link} to={item.to} aria-current={isActive ? 'page' : undefined}>
+                <NavList.Item
+                  as={Link}
+                  to={item.to}
+                  aria-current={isActive && !hasActiveChild ? 'page' : undefined}
+                  className={`${styles.pageLink}${isActive && item.children?.length ? ` ${styles.parentItemOpen}${hasActiveChild ? ` ${styles.parentItemActive}` : ''}` : ''}`}
+                >
                   {item.label}
                 </NavList.Item>
-                {item.children?.map(child => {
-                  const childHash = child.hash.slice(1)
-                  const isHashActive = isClient && isActive && hash.replace(/^#/, '') === childHash
-                  return (
-                    <NavList.Item
-                      key={child.hash}
-                      as={Link}
-                      to={item.to}
-                      hash={childHash}
-                      aria-current={isHashActive ? 'page' : undefined}
-                      className={styles.subItem}
-                    >
-                      {child.label}
-                    </NavList.Item>
-                  )
-                })}
+                {isActive &&
+                  item.children?.map(child => {
+                    const childHash = child.hash.slice(1)
+                    const isHashActive = activeHash === childHash
+                    return (
+                      <NavList.Item
+                        key={child.hash}
+                        as={Link}
+                        to={item.to}
+                        hash={childHash}
+                        aria-current={isHashActive ? 'page' : undefined}
+                        className={styles.subItem}
+                      >
+                        {child.label}
+                      </NavList.Item>
+                    )
+                  })}
               </React.Fragment>
             )
           })}
