@@ -1,4 +1,26 @@
 /* ------------------------------------------------------------------ */
+/* Skip-to-content link                                               */
+/* ------------------------------------------------------------------ */
+
+.skipLink {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 999;
+  padding: 0.5rem 1rem;
+  background-color: var(--bgColor-accent-emphasis, #0969da);
+  color: var(--fgColor-onEmphasis, #ffffff);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+  border-radius: 0 0 6px 0;
+}
+
+.skipLink:focus {
+  left: 0;
+}
+
+/* ------------------------------------------------------------------ */
 /* Header                                                             */
 /* ------------------------------------------------------------------ */
 

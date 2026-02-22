@@ -50,10 +50,15 @@
   text-decoration: none;
 }
 
-.content :is(h2, h3, h4) a:hover {
-  text-decoration: underline;
-  text-decoration-color: var(--fgColor-muted, #636c76);
-  text-underline-offset: 0.2em;
+.content :is(h2, h3, h4) a::after {
+  content: ' #';
+  color: var(--fgColor-muted, #636c76);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.content :is(h2, h3, h4) a:hover::after {
+  opacity: 1;
 }
 
 /* Prose ------------------------------------------------------------ */
@@ -65,11 +70,14 @@
 
 .content a:not(:is(h1, h2, h3, h4) a) {
   color: var(--fgColor-accent, #0969da);
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--fgColor-accent, #0969da) 40%, transparent);
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 1px;
 }
 
 .content a:not(:is(h1, h2, h3, h4) a):hover {
-  text-decoration: underline;
+  text-decoration-color: var(--fgColor-accent, #0969da);
 }
 
 .content ul,

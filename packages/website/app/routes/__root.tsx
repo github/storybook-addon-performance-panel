@@ -253,6 +253,9 @@ function RootLayout() {
         <HeadContent />
       </head>
       <body>
+        <a href="#main-content" className={styles.skipLink}>
+          Skip to content
+        </a>
         <PageLayout containerWidth="xlarge" padding="none">
           <PageLayout.Header divider="line" className={styles.header}>
             <div className={styles.headerBar}>
@@ -319,7 +322,9 @@ function RootLayout() {
           </PageLayout.Pane>
 
           <PageLayout.Content padding="normal">
-            <Outlet />
+            <div id="main-content">
+              <Outlet />
+            </div>
           </PageLayout.Content>
         </PageLayout>
         {/* Mobile navigation drawer */}
