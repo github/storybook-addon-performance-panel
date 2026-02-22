@@ -121,7 +121,7 @@
 /* Top-level page links — visually distinct from sub-items */
 .pageLink {
   --base-text-weight-normal: 600;
-  --control-medium-fontSize: 0.9375rem;
+  --text-body-size-medium: 1rem;
 }
 
 /* Chevron at the end of the row, only when open */
