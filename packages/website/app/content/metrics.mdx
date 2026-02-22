@@ -1,3 +1,12 @@
+import panelFrameTimingUrl from '../assets/panel-frame-timing.webp?url'
+import panelInputUrl from '../assets/panel-input.webp?url'
+import panelMainThreadUrl from '../assets/panel-main-thread.webp?url'
+import panelLoafUrl from '../assets/panel-loaf.webp?url'
+import panelReactUrl from '../assets/panel-react.webp?url'
+import panelLayoutUrl from '../assets/panel-layout.webp?url'
+import panelMemoryUrl from '../assets/panel-memory.webp?url'
+import panelElementTimingUrl from '../assets/panel-element-timing.webp?url'
+
 # Metrics reference
 
 All metrics are color-coded using [Web Vitals](https://web.dev/articles/vitals) thresholds:
@@ -31,7 +40,7 @@ Measures rendering smoothness using a `requestAnimationFrame` loop.
 
 <div data-metric>
 
-<img src="/images/panel-frame-timing.webp" width="275" height="288" loading="lazy" alt="Frame timing panel section" />
+<img src={panelFrameTimingUrl} width="275" height="288" loading="lazy" alt="Frame timing panel section" />
 
 | Metric | What it tells you |
 |--------|-------------------|
@@ -55,7 +64,7 @@ Measures interaction latency using the [Event Timing API](https://w3c.github.io/
 
 <div data-metric>
 
-<img src="/images/panel-input.webp" width="275" height="287" loading="lazy" alt="Input responsiveness panel section" />
+<img src={panelInputUrl} width="275" height="287" loading="lazy" alt="Input responsiveness panel section" />
 
 | Metric | What it tells you |
 |--------|-------------------|
@@ -92,7 +101,7 @@ Detects main thread blocking via the [Long Tasks API](https://w3c.github.io/long
 
 <div data-metric>
 
-<img src="/images/panel-main-thread.webp" width="275" height="288" loading="lazy" alt="Main thread panel section" />
+<img src={panelMainThreadUrl} width="275" height="288" loading="lazy" alt="Main thread panel section" />
 
 | Metric | What it tells you |
 |--------|-------------------|
@@ -115,7 +124,7 @@ Detailed frame attribution via the [Long Animation Frames API](https://w3c.githu
 
 <div data-metric>
 
-<img src="/images/panel-loaf.webp" width="275" height="286" loading="lazy" alt="Long animation frames panel section" />
+<img src={panelLoafUrl} width="275" height="286" loading="lazy" alt="Long animation frames panel section" />
 
 | Metric | What it tells you |
 |--------|-------------------|
@@ -138,7 +147,7 @@ Uses the [React Profiler API](https://react.dev/reference/react/Profiler).
 
 <div data-metric>
 
-<img src="/images/panel-react.webp" width="275" height="186" loading="lazy" alt="React performance panel section" />
+<img src={panelReactUrl} width="275" height="186" loading="lazy" alt="React performance panel section" />
 
 | Metric | What it tells you |
 |--------|-------------------|
@@ -161,7 +170,7 @@ CLS measurement via the [Layout Instability API](https://wicg.github.io/layout-i
 
 <div data-metric>
 
-<img src="/images/panel-layout.webp" width="275" height="185" loading="lazy" alt="Layout stability panel section" />
+<img src={panelLayoutUrl} width="275" height="185" loading="lazy" alt="Layout stability panel section" />
 
 | Metric | What it tells you |
 |--------|-------------------|
@@ -183,7 +192,7 @@ JS heap introspection via `performance.memory`. **Chrome only.**
 
 <div data-metric>
 
-<img src="/images/panel-memory.webp" width="275" height="220" loading="lazy" alt="Memory panel section" />
+<img src={panelMemoryUrl} width="275" height="220" loading="lazy" alt="Memory panel section" />
 
 | Metric | What it tells you |
 |--------|-------------------|
@@ -206,7 +215,7 @@ Tracks render timing for elements with the `elementtiming` attribute via the [El
 
 <div data-metric>
 
-<img src="/images/panel-element-timing.webp" width="275" height="186" loading="lazy" alt="Element timing panel section" />
+<img src={panelElementTimingUrl} width="275" height="186" loading="lazy" alt="Element timing panel section" />
 
 | Metric | What it tells you |
 |--------|-------------------|
