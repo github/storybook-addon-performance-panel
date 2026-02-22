@@ -366,10 +366,11 @@ export const Route = createRootRoute({
     links: [
       {
         rel: 'preload',
-        href: monaSansLatinUrl,
         as: 'font',
         type: 'font/woff2',
         crossOrigin: 'anonymous',
+        href: monaSansLatinUrl,
+        fetchPriority: 'high',
       },
       {
         rel: 'icon',
