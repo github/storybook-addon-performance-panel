@@ -61,6 +61,7 @@ const NAV: NavSection[] = [
         label: 'Metrics',
         to: '/docs/metrics',
         children: [
+          {label: 'Overview', hash: '#metrics-reference'},
           {label: 'Key thresholds', hash: '#key-thresholds'},
           {label: 'Frame timing', hash: '#frame-timing'},
           {label: 'Input responsiveness', hash: '#input-responsiveness'},
@@ -76,6 +77,7 @@ const NAV: NavSection[] = [
         label: 'Collectors',
         to: '/docs/collectors',
         children: [
+          {label: 'Overview', hash: '#collectors-reference'},
           {label: 'Collection methods', hash: '#collection-methods'},
           {label: 'ElementTimingCollector', hash: '#elementtimingcollector'},
           {label: 'ForcedReflowCollector', hash: '#forcedreflowcollector'},
