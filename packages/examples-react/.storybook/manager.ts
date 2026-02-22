@@ -6,7 +6,7 @@ setupManagerTheme(addons, {
     {
       label: '→ Documentation',
       localHref: 'http://site.localhost:1355',
-      href: '/',
+      href: '../../',
     },
     {
       label: '→ GitHub',
