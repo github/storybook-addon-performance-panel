@@ -17,4 +17,3 @@ storybook-static/
 
 # TanStack generated files
 .tanstack/
-routeTree.gen.ts
