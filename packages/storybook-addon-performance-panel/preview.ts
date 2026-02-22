@@ -1,19 +1,20 @@
 /**
  * @fileoverview Preview Entry Point for Performance Monitor Addon
  *
- * Assembles the decorator stack:
- * 1. Universal decorator — browser-level metrics (frame timing, CLS, etc.)
- * 2. React.Profiler decorator — React render profiling (mount count, update duration, etc.)
+ * This file exports the decorators and preview annotations for the addon.
+ * It is automatically loaded when the addon is added to `.storybook/main.ts`.
+ *
+ * The decorator wraps all stories with performance monitoring, collecting
+ * metrics and communicating them to the panel via Storybook's channel API.
  *
  * @module preview
  */
-import type {ProjectAnnotations, Renderer} from 'storybook/internal/types'
+import type {Preview} from '@storybook/react'
 
-import {withReactProfiler} from './decorators/react'
-import {withPerformanceMonitor} from './decorators/universal'
+import {withPerformanceMonitor} from './react/performance-decorator'
 
-const preview: ProjectAnnotations<Renderer> = {
-  decorators: [withPerformanceMonitor, withReactProfiler],
+const preview: Preview = {
+  decorators: [withPerformanceMonitor],
 }
 
 export default preview
