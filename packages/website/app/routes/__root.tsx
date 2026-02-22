@@ -219,7 +219,9 @@ function RootLayout() {
                   as={Link}
                   to={item.to}
                   aria-current={isActive && !hasActiveChild ? 'page' : undefined}
-                  className={`${styles.pageLink}${isActive && item.children?.length ? ` ${styles.parentItemOpen}${hasActiveChild ? ` ${styles.parentItemActive}` : ''}` : ''}`}
+                  className={styles.pageLink}
+                  data-open={isActive && item.children?.length ? '' : undefined}
+                  data-active-child={hasActiveChild ? '' : undefined}
                 >
                   {item.label}
                 </NavList.Item>

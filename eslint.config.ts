@@ -12,7 +12,7 @@ import tseslint from 'typescript-eslint'
 
 export default defineConfig(
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/storybook-static/**'],
+    ignores: ['**/dist/**', '**/node_modules/**', '**/storybook-static/**', '**/*.module.css.d.ts'],
   },
   {
     // ESLint 9 ignores dotfiles by default; explicitly include .storybook

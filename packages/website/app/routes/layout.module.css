@@ -125,12 +125,12 @@
 }
 
 /* Chevron at the end of the row, only when open */
-.parentItemOpen > a {
+.pageLink[data-open] > a {
   display: flex !important;
   align-items: center;
 }
 
-.parentItemOpen > a::after {
+.pageLink[data-open] > a::after {
   content: '';
   flex-shrink: 0;
   width: 0.75rem;
@@ -140,7 +140,7 @@
   clip-path: polygon(50% 75%, 0 25%, 100% 25%);
 }
 
-.parentItemActive > a::after {
+.pageLink[data-active-child] > a::after {
   background-color: var(--fgColor-accent, #0969da);
 }
 
