@@ -178,3 +178,44 @@
   max-width: 100%;
   height: auto;
 }
+
+/* Images ----------------------------------------------------------- */
+
+.content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  border: 1px solid var(--borderColor-default, #d0d7de);
+}
+
+/* Metric section grid — image beside table ------------------------- */
+
+.content [data-metric] {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 1.25rem;
+  align-items: start;
+  margin: 0.75rem 0 1rem;
+}
+
+.content [data-metric] img {
+  grid-row: 1 / -1;
+}
+
+.content [data-metric] table {
+  margin-bottom: 0;
+}
+
+/* Lead / subtitle paragraph under section headings -------------- */
+
+.content [data-lead] p {
+  margin-bottom: 0;
+  font-size: 0.9375rem;
+  color: var(--fgColor-muted, #636c76);
+}
+
+@media (max-width: 640px) {
+  .content [data-metric] {
+    grid-template-columns: 1fr;
+  }
+}

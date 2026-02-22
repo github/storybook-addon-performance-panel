@@ -1,8 +1,8 @@
 # @github-ui/storybook-addon-performance-panel
 
-A Storybook addon that provides real-time performance monitoring for stories. It displays comprehensive metrics including frame timing, input responsiveness, memory usage, React profiling, and more.
+A [Storybook](https://storybook.js.org) addon that provides real-time performance monitoring for stories. It displays comprehensive metrics including frame timing, input responsiveness, memory usage, React profiling, and more.
 
-<img width="1519" height="1039" alt="Addon panel loaded on storybook" src="https://github.com/user-attachments/assets/31c7a847-b226-45d9-a113-63b9cdd35714" />
+<img width="1276" alt="Performance panel showing all metric sections in Storybook" src="https://github.com/github/storybook-addon-performance-panel/raw/main/packages/website/public/images/panel-overview.png" />
 
 ## Quick Start
 

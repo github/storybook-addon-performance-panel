@@ -13,17 +13,43 @@ Each collector uses one of two approaches:
 
 | Collector | Browser API | Method |
 |-----------|-------------|--------|
+| `ElementTimingCollector` | Element Timing API | Direct |
+| `ForcedReflowCollector` | Property getter patching | Indirect |
 | `FrameTimingCollector` | `requestAnimationFrame` loop | Indirect |
 | `InputCollector` | Event Timing API | Direct |
-| `MainThreadCollector` | Long Tasks API | Direct |
-| `LongAnimationFrameCollector` | Long Animation Frames API | Direct |
-| `ElementTimingCollector` | Element Timing API | Direct |
 | `LayoutShiftCollector` | Layout Instability API | Direct |
+| `LongAnimationFrameCollector` | Long Animation Frames API | Direct |
+| `MainThreadCollector` | Long Tasks API | Direct |
 | `MemoryCollector` | `performance.memory` | Direct |
 | `PaintCollector` | Paint Timing API | Direct |
-| `StyleMutationCollector` | `MutationObserver` | Indirect |
-| `ForcedReflowCollector` | Property getter patching | Indirect |
 | `ReactProfilerCollector` | React Profiler API | Direct |
+| `StyleMutationCollector` | `MutationObserver` | Indirect |
+
+---
+
+## ElementTimingCollector
+
+Uses the [Element Timing API](https://wicg.github.io/element-timing/) to track render timing for elements marked with the `elementtiming` attribute.
+
+```ts
+observer.observe({ type: 'element', buffered: true })
+```
+
+Works like LCP but for elements you choose. Useful for measuring when hero images, key content, or specific UI elements become visible.
+
+**Browser support:** Chrome 77+, Edge 79+. Not available in Firefox or Safari.
+
+---
+
+## ForcedReflowCollector
+
+Patches `HTMLElement.prototype` property getters to detect layout property reads that occur after style writes.
+
+**Tracked properties:** `offsetTop`, `offsetLeft`, `offsetWidth`, `offsetHeight`, `scrollTop`, `scrollLeft`, `scrollWidth`, `scrollHeight`, `clientTop`, `clientLeft`, `clientWidth`, `clientHeight`
+
+Detection is gated by a `layoutDirty` flag set by the `StyleMutationCollector`.
+
+**Limitations:** Detects only JavaScript-triggered reflows. May produce false positives if layout was already computed before the style write.
 
 ---
 
@@ -70,18 +96,18 @@ INP is calculated as the p98 of worst interactions, matching the [Web Vitals def
 
 ---
 
-## MainThreadCollector
+## LayoutShiftCollector
 
-Uses the [Long Tasks API](https://w3c.github.io/longtasks/) to detect tasks blocking the main thread for more than 50ms.
+Uses the [Layout Instability API](https://wicg.github.io/layout-instability/) with session windowing per the [evolved CLS specification](https://web.dev/articles/evolving-cls).
 
-```ts
-observer.observe({ type: 'longtask' })
-// TBT = sum of (duration - 50ms) for all long tasks
-```
+Session window rules:
+- Gap from previous shift ≥ 1 second → start a new session
+- Session duration ≥ 5 seconds → start a new session
+- Otherwise → add to the current session
 
-The 50ms threshold follows the RAIL model and aligns with the Lighthouse TBT calculation.
+CLS equals the maximum session window value (not the sum across all sessions), matching CrUX and Lighthouse methodology.
 
-**Browser support:** Chrome 58+, Edge 79+. Not available in Firefox or Safari.
+**Browser support:** Chrome 77+, Edge 79+. Not available in Firefox or Safari.
 
 ---
 
@@ -105,32 +131,18 @@ Includes full script attribution: source URL, function name, and invoker type. E
 
 ---
 
-## ElementTimingCollector
+## MainThreadCollector
 
-Uses the [Element Timing API](https://wicg.github.io/element-timing/) to track render timing for elements marked with the `elementtiming` attribute.
+Uses the [Long Tasks API](https://w3c.github.io/longtasks/) to detect tasks blocking the main thread for more than 50ms.
 
 ```ts
-observer.observe({ type: 'element', buffered: true })
+observer.observe({ type: 'longtask' })
+// TBT = sum of (duration - 50ms) for all long tasks
 ```
 
-Works like LCP but for elements you choose. Useful for measuring when hero images, key content, or specific UI elements become visible.
+The 50ms threshold follows the RAIL model and aligns with the Lighthouse TBT calculation.
 
-**Browser support:** Chrome 77+, Edge 79+. Not available in Firefox or Safari.
-
----
-
-## LayoutShiftCollector
-
-Uses the [Layout Instability API](https://wicg.github.io/layout-instability/) with session windowing per the [evolved CLS specification](https://web.dev/articles/evolving-cls).
-
-Session window rules:
-- Gap from previous shift ≥ 1 second → start a new session
-- Session duration ≥ 5 seconds → start a new session
-- Otherwise → add to the current session
-
-CLS equals the maximum session window value (not the sum across all sessions), matching CrUX and Lighthouse methodology.
-
-**Browser support:** Chrome 77+, Edge 79+. Not available in Firefox or Safari.
+**Browser support:** Chrome 58+, Edge 79+. Not available in Firefox or Safari.
 
 ---
 
@@ -152,28 +164,6 @@ Combines the Paint Timing API for paint events and Resource Timing for script ev
 
 ---
 
-## StyleMutationCollector
-
-Uses `MutationObserver` to track inline style attribute changes and CSS variable mutations.
-
-**Produces:** `styleWrites`, `cssVarChanges`, `domMutationFrames[]`, `thrashingScore`
-
-**Limitations:** Detects only inline style changes. Does not observe stylesheet modifications or CSSOM manipulations.
-
----
-
-## ForcedReflowCollector
-
-Patches `HTMLElement.prototype` property getters to detect layout property reads that occur after style writes.
-
-**Tracked properties:** `offsetTop`, `offsetLeft`, `offsetWidth`, `offsetHeight`, `scrollTop`, `scrollLeft`, `scrollWidth`, `scrollHeight`, `clientTop`, `clientLeft`, `clientWidth`, `clientHeight`
-
-Detection is gated by a `layoutDirty` flag set by the `StyleMutationCollector`.
-
-**Limitations:** Detects only JavaScript-triggered reflows. May produce false positives if layout was already computed before the style write.
-
----
-
 ## ReactProfilerCollector
 
 Uses the [React Profiler API](https://react.dev/reference/react/Profiler) via a `<Profiler>` wrapper component.
@@ -184,6 +174,16 @@ Detects three phases:
 - **nested-update** — `setState` during the commit phase (render cascades — very expensive)
 
 **Availability:** Only included with the default React addon entry. Omitted when using `./universal`.
+
+---
+
+## StyleMutationCollector
+
+Uses `MutationObserver` to track inline style attribute changes and CSS variable mutations.
+
+**Produces:** `styleWrites`, `cssVarChanges`, `domMutationFrames[]`, `thrashingScore`
+
+**Limitations:** Detects only inline style changes. Does not observe stylesheet modifications or CSSOM manipulations.
 
 ---
 

@@ -68,15 +68,22 @@ export function withLightningCSS(config: InlineConfig): InlineConfig {
 // ============================================================================
 
 /**
+ * A sidebar link with environment-aware URLs.
+ */
+interface SidebarLink {
+  label: string
+  /** Href used in local dev (portless hostnames). Falls back to `href`. */
+  localHref?: string
+  /** Href used everywhere else (deployed or non-portless). */
+  href: string
+}
+
+/**
  * Options for {@link setupManagerTheme}.
  */
 interface ManagerThemeOptions {
-  /** Label for a navigation link to the peer storybook (e.g. "→ HTML Docs") */
-  peerLabel?: string
-  /** Href for the peer storybook in local dev (e.g. "http://examples-html.localhost:1355") */
-  peerLocalHref?: string
-  /** Href for the peer storybook when deployed (e.g. "/examples/universal/") */
-  peerDeployedHref?: string
+  /** Links injected at the bottom of the Storybook sidebar. */
+  sidebarLinks?: SidebarLink[]
 }
 
 /**
@@ -107,46 +114,63 @@ export function setupManagerTheme(
     apply(e.matches)
   })
 
-  // Inject a small navigation link at the bottom of the sidebar
-  if (options?.peerLabel && options.peerLocalHref && options.peerDeployedHref) {
+  // Inject sidebar links
+  if (options?.sidebarLinks?.length) {
     const isLocal = window.location.hostname.endsWith('.localhost')
-    addPeerLink(options.peerLabel, isLocal ? options.peerLocalHref : options.peerDeployedHref)
+    addSidebarLinks(
+      options.sidebarLinks.map(l => ({
+        label: l.label,
+        href: isLocal && l.localHref ? l.localHref : l.href,
+      })),
+    )
   }
 }
 
-/** Injects a navigation link to the peer storybook at the bottom of the sidebar. */
-function addPeerLink(label: string, href: string): void {
-  // Wait for the sidebar to render
+/** Injects navigation links at the bottom of the Storybook sidebar. */
+function addSidebarLinks(links: {label: string; href: string}[]): void {
   const observer = new MutationObserver(() => {
     const sidebar = document.getElementById('storybook-explorer-menu')?.parentElement
-    if (!sidebar || document.getElementById('peer-storybook-link')) return
+    if (!sidebar || document.getElementById('sidebar-links')) return
 
     observer.disconnect()
 
-    const link = document.createElement('a')
-    link.id = 'peer-storybook-link'
-    link.href = href
-    link.textContent = label
-    Object.assign(link.style, {
-      display: 'block',
-      padding: '8px 16px',
-      fontSize: '13px',
-      color: 'inherit',
-      opacity: '0.7',
-      textDecoration: 'none',
-      borderTop: '1px solid var(--sb-sidebar-borderColor, rgba(128,128,128,0.2))',
+    const container = document.createElement('nav')
+    container.id = 'sidebar-links'
+    Object.assign(container.style, {
       marginTop: 'auto',
+      borderTop: '1px solid var(--sb-sidebar-borderColor, rgba(128,128,128,0.2))',
+      padding: '4px 0',
     })
-    link.addEventListener('mouseenter', () => {
-      link.style.opacity = '1'
-    })
-    link.addEventListener('mouseleave', () => {
-      link.style.opacity = '0.7'
-    })
+
+    for (const {label, href} of links) {
+      const isExternal = href.startsWith('http')
+      const link = document.createElement('a')
+      link.href = href
+      link.textContent = label
+      if (isExternal) {
+        link.target = '_blank'
+        link.rel = 'noopener noreferrer'
+      }
+      Object.assign(link.style, {
+        display: 'block',
+        padding: '6px 16px',
+        fontSize: '13px',
+        color: 'inherit',
+        opacity: '0.7',
+        textDecoration: 'none',
+      })
+      link.addEventListener('mouseenter', () => {
+        link.style.opacity = '1'
+      })
+      link.addEventListener('mouseleave', () => {
+        link.style.opacity = '0.7'
+      })
+      container.appendChild(link)
+    }
 
     sidebar.style.display = 'flex'
     sidebar.style.flexDirection = 'column'
-    sidebar.appendChild(link)
+    sidebar.appendChild(container)
   })
 
   observer.observe(document.body, {childList: true, subtree: true})
