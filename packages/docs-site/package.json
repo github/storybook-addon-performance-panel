@@ -1,0 +1,33 @@
+{
+  "name": "@github-ui/docs-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "portless perf-docs sh -c 'vite dev --port $PORT'",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource-variable/mona-sans": "^5.2.8",
+    "@github-ui/docs-shared": "*",
+    "@primer/primitives": "^11.4.0",
+    "@primer/react": "^38.13.0",
+    "@tanstack/react-router": "^1.162.1",
+    "@tanstack/react-start": "^1.162.1",
+    "mermaid": "^11.12.3",
+    "react": "^19",
+    "react-dom": "^19",
+    "rehype-autolink-headings": "^7.1.0",
+    "rehype-slug": "^6.0.0"
+  },
+  "devDependencies": {
+    "@mdx-js/rollup": "^3.1.1",
+    "@shikijs/rehype": "^3.22.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "lightningcss": "^1.31.1",
+    "remark-gfm": "^4.0.1",
+    "shiki": "^3.22.0",
+    "vite": "^7.3.1"
+  }
+}

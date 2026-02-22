@@ -1,0 +1,168 @@
+# Getting started
+
+<div className="page-toc">
+  <div className="page-toc-title">On this page</div>
+  <ul>
+    <li><a href="#installation">Installation</a></li>
+    <li><a href="#react-projects">React projects</a></li>
+    <li><a href="#other-frameworks">Other frameworks</a></li>
+    <li><a href="#writing-stories">Writing stories</a></li>
+    <li><a href="#react-profiling-in-production">React profiling in production</a></li>
+    <li><a href="#element-timing">Element timing</a></li>
+    <li><a href="#view-mode-behavior">View mode behavior</a></li>
+  </ul>
+</div>
+
+## Installation
+
+```bash
+npm install @github-ui/storybook-addon-performance-panel
+```
+
+## React projects
+
+Two files need to be updated: `main.ts` to register the panel and `preview.ts` to compose the decorator.
+
+### Register the addon
+
+Add the addon to the `addons` array. This loads the panel in Storybook's manager UI.
+
+```ts
+// .storybook/main.ts
+import type { StorybookConfig } from '@storybook/react-vite'
+
+const config: StorybookConfig = {
+  stories: ['../src/**/*.stories.@(ts|tsx)'],
+  framework: '@storybook/react-vite',
+  addons: ['@github-ui/storybook-addon-performance-panel'],
+}
+
+export default config
+```
+
+### Compose in preview
+
+Use `definePreview` to compose the addon's decorator. This also enables the CSF factory API: `preview.meta()` and `meta.story()`.
+
+```ts
+// .storybook/preview.ts
+import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel'
+import { definePreview } from '@storybook/react-vite'
+
+const preview = definePreview({
+  addons: [addonPerformancePanel()],
+})
+
+export default preview
+```
+
+## Other frameworks
+
+Use the `./universal` subpath for HTML, Vue, Svelte, Web Components, or any non-React framework. It collects all browser-level metrics and hides the React Performance section automatically.
+
+### Register the addon
+
+```ts
+// .storybook/main.ts
+import type { StorybookConfig } from '@storybook/html-vite'
+
+const config: StorybookConfig = {
+  stories: ['../src/**/*.stories.@(ts|tsx)'],
+  framework: '@storybook/html-vite',
+  addons: ['@github-ui/storybook-addon-performance-panel/universal'],
+}
+
+export default config
+```
+
+### Compose in preview
+
+```ts
+// .storybook/preview.ts
+import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel/universal'
+import { definePreview } from '@storybook/html-vite'
+
+const preview = definePreview({
+  addons: [addonPerformancePanel()],
+})
+
+export default preview
+```
+
+## Writing stories
+
+Use the CSF factory API to write stories. The performance decorator wraps every story automatically.
+
+### React example
+
+```tsx
+// Button.stories.tsx
+import preview from '../.storybook/preview'
+
+function Button({ label = 'Click me' }: { label?: string }) {
+  return <button>{label}</button>
+}
+
+const meta = preview.meta({
+  title: 'Components/Button',
+  component: Button,
+})
+export default meta
+
+export const Default = meta.story({})
+export const WithLabel = meta.story({ args: { label: 'Submit' } })
+```
+
+### HTML example
+
+```ts
+// Button.stories.ts
+import preview from '../.storybook/preview'
+
+const meta = preview.meta({ title: 'Components/Button' })
+export default meta
+
+export const Default = meta.story({
+  render: () => {
+    const btn = document.createElement('button')
+    btn.textContent = 'Click me'
+    return btn
+  },
+})
+```
+
+## React profiling in production
+
+By default, production React builds strip the Profiler API. To keep it working in deployed Storybook builds, alias `react-dom/client` to `react-dom/profiling`:
+
+```ts
+// .storybook/main.ts
+const config: StorybookConfig = {
+  // ...
+  viteFinal(config) {
+    config.resolve ??= {}
+    config.resolve.alias ??= {}
+    ;(config.resolve.alias as Record<string, string>)['react-dom/client'] =
+      'react-dom/profiling'
+    return config
+  },
+}
+```
+
+This uses the profiling build of React DOM, which includes Profiler API support with minimal overhead.
+
+## Element timing
+
+Track specific elements by adding the `elementtiming` attribute. The Element Timing collector reports when each element renders.
+
+```html
+<img src="/hero.jpg" elementtiming="hero-image" />
+<div elementtiming="main-content">Important content</div>
+```
+
+Each tracked element appears in the **Element Timing** section of the panel with its render time.
+
+## View mode behavior
+
+- **Story (Canvas) view** — full performance metrics are collected and displayed.
+- **Docs view** — a message explains that metrics are optimized for Canvas view. Docs mode renders stories in iframes, which affects timing accuracy.

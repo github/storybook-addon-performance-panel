@@ -1,0 +1,173 @@
+# Troubleshooting
+
+<div className="page-toc">
+  <div className="page-toc-title">On this page</div>
+  <ul>
+    <li><a href="#quick-health-check">Quick health check</a></li>
+    <li><a href="#debugging-workflow">Debugging workflow</a></li>
+    <li><a href="#slow-initial-load">Slow initial load</a></li>
+    <li><a href="#janky-scrolling-or-animations">Janky scrolling or animations</a></li>
+    <li><a href="#slow-click-or-keyboard-response">Slow click or keyboard response</a></li>
+    <li><a href="#layout-shifts">Layout shifts</a></li>
+    <li><a href="#react-re-render-issues">React re-render issues</a></li>
+    <li><a href="#forced-reflows">Forced reflows</a></li>
+    <li><a href="#memory-issues">Memory issues</a></li>
+    <li><a href="#metric-correlations">Metric correlations</a></li>
+    <li><a href="#browser-specific-notes">Browser-specific notes</a></li>
+  </ul>
+</div>
+
+## Quick health check
+
+Scan these indicators first:
+
+| Check | What to look for |
+|-------|------------------|
+| **FPS** | 55–60. Sustained drops indicate rendering issues. |
+| **INP** | Below 200ms. Higher values mean slow interactions. |
+| **Long tasks** | 0–1. More than 5 indicates main thread blocking. |
+| **CLS** | 0. Any value suggests layout instability. |
+| **Slow updates** | 0. Non-zero means React renders are exceeding the frame budget. |
+
+---
+
+## Debugging workflow
+
+### 1. Establish a baseline
+
+Open the story in Canvas view. Click the reset button to clear metrics. Wait two to three seconds for values to stabilize. Note the baseline FPS, memory, and any issues that appear immediately.
+
+### 2. Interact
+
+Perform the problematic interaction slowly. Watch the metrics change in real time. Note which values spike or degrade.
+
+### 3. Identify the cause
+
+Check the worst metric indicator. For input issues, review the timing breakdown. Click **Inspect** to highlight slow interaction targets.
+
+### 4. Fix and verify
+
+Make your change. Reset the metrics. Repeat the interaction. Confirm the metrics improved.
+
+---
+
+## Slow initial load
+
+**Symptoms:** High mount duration (above 100ms), long task spike on story change, high TBT during load.
+
+**What to do:**
+- Lazy-load heavy dependencies with `React.lazy()`
+- Defer non-critical initialization
+- Memoize expensive computations
+
+---
+
+## Janky scrolling or animations
+
+**Symptoms:** FPS below 55, high frame time, dropped frames increasing, frame jitter spikes.
+
+**What to do:**
+- Use `transform` and `opacity` for animations — these are GPU-accelerated
+- Debounce or throttle scroll handlers
+- Use `will-change` sparingly on animation targets
+- Batch DOM reads before writes
+
+---
+
+## Slow click or keyboard response
+
+**Symptoms:** INP above 200ms, input latency spikes, slow interaction in the panel details.
+
+The timing breakdown tells you where time is being spent:
+
+| Phase | If high | Common causes |
+|-------|---------|---------------|
+| Wait | Main thread was blocked | Long tasks, heavy computation |
+| JS | Expensive handler logic | Complex state updates, synchronous operations |
+| Paint | Expensive render | Large DOM changes, layout recalculation |
+
+**What to do:**
+- Break up long tasks with `scheduler.yield()` or `setTimeout`
+- Move expensive work to Web Workers
+- Virtualize long lists
+
+---
+
+## Layout shifts
+
+**Symptoms:** CLS above 0, elements jumping around.
+
+**What to do:**
+- Set explicit `width` and `height` or `aspect-ratio` on images and videos
+- Reserve space for dynamic content with `min-height`
+- Use `font-display: optional` or preload fonts
+- Prefer transforms over layout-affecting properties for animations
+
+---
+
+## React re-render issues
+
+**Symptoms:** High slow updates count, P95 duration above 16ms, render cascades above 0.
+
+**What to do:**
+- Add `React.memo()` to pure components
+- Memoize context values and callbacks
+- Split contexts to reduce subscriber scope
+- Avoid `setState` in `useLayoutEffect` — this causes render cascades
+
+---
+
+## Forced reflows
+
+**Symptoms:** Forced reflows above 0, thrashing increases, FPS drops during interactions.
+
+Forced reflows happen when you read layout properties after writing styles:
+
+```js
+// Causes a forced reflow
+element.style.width = '100px'
+const height = element.offsetHeight  // Forces layout recalculation
+
+// Better: batch all reads, then all writes
+const height = element.offsetHeight  // Read first
+element.style.width = '100px'        // Write after
+```
+
+**Layout-triggering properties:** `offsetTop`, `offsetLeft`, `offsetWidth`, `offsetHeight`, `scrollTop`, `scrollLeft`, `scrollWidth`, `scrollHeight`, `clientTop`, `clientLeft`, `clientWidth`, `clientHeight`, `getComputedStyle()`, `getBoundingClientRect()`
+
+---
+
+## Memory issues
+
+**Symptoms:** Memory delta growing steadily, GC pressure above 1 MB/s, peak memory keeps increasing.
+
+**What to do:**
+- Clean up event listeners in React `useEffect` cleanup functions
+- Implement LRU caches with size limits
+- Use `WeakMap` and `WeakSet` for object references
+
+---
+
+## Metric correlations
+
+Use these relationships to narrow down root causes:
+
+| Observation | Also check | Likely cause |
+|-------------|------------|--------------|
+| Low FPS and high long tasks | TBT, longest task | Heavy JavaScript execution |
+| Low FPS and high style writes | Thrashing, forced reflows | Layout thrashing |
+| High INP and high wait phase | Long tasks | Blocked main thread |
+| High INP and high JS phase | Slow updates, P95 | Expensive event handlers |
+| High INP and high paint phase | CLS, DOM churn | Expensive rendering |
+| Rising memory and high DOM elements | DOM churn | DOM leak |
+| Render cascades above 0 | Slow updates | `useLayoutEffect` issues |
+
+---
+
+## Browser-specific notes
+
+**Chrome and Edge** — full metric support including memory, INP, and long animation frames. Recommended for initial investigation.
+
+**Firefox** — no memory metrics. Event Timing API was added in Firefox 144. No long animation frames support.
+
+**Safari** — no memory, INP, or long animation frames support. Use for cross-browser validation after debugging in Chrome.

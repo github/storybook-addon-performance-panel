@@ -9,9 +9,9 @@ const config: StorybookConfig = {
     ...SHARED_FEATURES,
   },
   viteFinal(config) {
-    // When building for GitHub Pages, assets are served from /html/
+    // When building for Pages, assets are served from /storybooks/universal/
     if (process.env.CI) {
-      config.base = '/html/'
+      config.base = '/storybooks/universal/'
     }
 
     return withLightningCSS(config)

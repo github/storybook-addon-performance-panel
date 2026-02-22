@@ -8,9 +8,10 @@
   "scripts": {
     "build": "npm run build -w @github-ui/storybook-addon-performance-panel",
     "build:watch": "npm run build:watch -w @github-ui/storybook-addon-performance-panel",
-    "dev": "npm run build && concurrently -k --kill-signal SIGINT --kill-timeout 3000 -n watch,react,html -c blue,green,magenta \"npm:build:watch\" \"npm:docs:dev\" \"npm:docs:html:dev\"",
+    "dev": "npm run build && concurrently -k --kill-signal SIGINT --kill-timeout 3000 -n watch,react,html,site -c blue,green,magenta,cyan \"npm:build:watch\" \"npm:docs:dev\" \"npm:docs:html:dev\" \"npm:site:dev\"",
     "docs:dev": "npm run storybook -w @github-ui/docs",
     "docs:html:dev": "npm run storybook -w @github-ui/docs-html",
+    "site:dev": "npm run dev -w @github-ui/docs-site",
     "lint": "eslint . --cache",
     "test": "npm test -w @github-ui/storybook-addon-performance-panel",
     "tsc": "tsc -b packages/storybook-addon-performance-panel/tsconfig.build.json",
@@ -18,6 +19,8 @@
     "docs:build": "npm run build && npm run build-storybook -w @github-ui/docs",
     "docs:html": "npm run build && npm run storybook -w @github-ui/docs-html",
     "docs:html:build": "npm run build && npm run build-storybook -w @github-ui/docs-html",
+    "site": "npm run build && npm run dev -w @github-ui/docs-site",
+    "site:build": "npm run build -w @github-ui/docs-site",
     "changeset": "changeset",
     "version-packages": "changeset version && npm install --package-lock-only"
   },

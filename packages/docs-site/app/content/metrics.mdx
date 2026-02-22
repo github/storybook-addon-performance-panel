@@ -1,0 +1,161 @@
+# Metrics reference
+
+All metrics are color-coded using Web Vitals thresholds:
+
+| Status | Meaning |
+|--------|---------|
+| 🟢 Green | Good — meets targets |
+| 🟡 Yellow | Needs improvement — may cause issues |
+| 🔴 Red | Poor — likely causing issues |
+
+<div className="page-toc">
+  <div className="page-toc-title">Metric categories</div>
+  <ul>
+    <li><a href="#key-thresholds">Key thresholds</a></li>
+    <li><a href="#frame-timing">Frame timing</a></li>
+    <li><a href="#input-responsiveness">Input responsiveness</a></li>
+    <li><a href="#main-thread-health">Main thread health</a></li>
+    <li><a href="#long-animation-frames">Long animation frames</a></li>
+    <li><a href="#element-timing">Element timing</a></li>
+    <li><a href="#layout-stability">Layout stability</a></li>
+    <li><a href="#react-performance">React performance</a></li>
+    <li><a href="#memory-and-resources">Memory and resources</a></li>
+  </ul>
+</div>
+
+## Key thresholds
+
+| Metric | 🟢 Good | 🟡 Needs work | 🔴 Poor |
+|--------|---------|---------------|---------|
+| FPS | ≥55 | 30–55 | &lt;30 |
+| Frame time | ≤16.67ms | 16.67–32ms | &gt;32ms |
+| Input latency | ≤16ms | 16–50ms | &gt;50ms |
+| INP | ≤200ms | 200–500ms | &gt;500ms |
+| CLS | &lt;0.1 | 0.1–0.25 | &gt;0.25 |
+| TBT | &lt;200ms | 200–600ms | &gt;600ms |
+
+---
+
+## Frame timing
+
+Measures rendering smoothness using a `requestAnimationFrame` loop.
+
+| Metric | What it tells you |
+|--------|-------------------|
+| **FPS** | Frames per second. Target: 60. |
+| **Frame time** | Average milliseconds per frame. Target: ≤16.67ms. |
+| **Dropped frames** | Frames exceeding twice the expected frame time. |
+| **Frame jitter** | Sudden spikes in frame time compared to the baseline. |
+| **Frame stability** | A percentage indicating how consistent frame times are. |
+
+---
+
+## Input responsiveness
+
+Measures interaction latency using the [Event Timing API](https://w3c.github.io/event-timing/).
+
+| Metric | What it tells you |
+|--------|-------------------|
+| **INP** | Interaction to Next Paint — the p98 of worst interactions. A Core Web Vital. |
+| **Input latency** | Time from pointer event to next animation frame. |
+| **FID** | First Input Delay — latency of the very first interaction. |
+| **Paint time** | Browser rendering time measured via a double-`requestAnimationFrame` technique. |
+| **Last interaction** | Real-time details of the most recent interaction. Click **Inspect** to highlight the target. |
+| **Slowest interaction** | The worst interaction recorded, for debugging. Click **Inspect** to highlight the target. |
+
+### INP breakdown
+
+Each interaction includes a timing breakdown:
+
+```
+[wait Xms] → [js Xms] → [paint Xms]
+```
+
+- **Wait (input delay)** — time before JavaScript starts processing. High values mean the main thread was blocked.
+- **JS (processing time)** — time spent in event handlers. High values mean expensive handler logic.
+- **Paint (presentation delay)** — time from handler completion to the visual update. High values mean expensive rendering.
+
+---
+
+## Main thread health
+
+Detects main thread blocking via the [Long Tasks API](https://w3c.github.io/longtasks/).
+
+| Metric | What it tells you |
+|--------|-------------------|
+| **Long tasks** | Tasks blocking the main thread for more than 50ms. |
+| **Total blocking time** | Sum of `(duration − 50ms)` for all long tasks. Aligns with the Lighthouse TBT metric. |
+| **Thrashing** | Style writes followed by long frames, indicating forced synchronous layout. |
+| **DOM churn** | Rate of DOM mutations per measurement period. |
+
+---
+
+## Long animation frames
+
+Detailed frame attribution via the [Long Animation Frames API](https://w3c.github.io/long-animation-frames/). Available in **Chrome 123+** and **Edge 123+**.
+
+| Metric | What it tells you |
+|--------|-------------------|
+| **LoAF count** | Number of animation frames exceeding 50ms. |
+| **Blocking duration** | Total and longest blocking time from long animation frames. |
+| **P95 duration** | 95th percentile LoAF duration. |
+| **Script attribution** | Which scripts caused slow frames — including source URL, function name, and invoker type. |
+
+Script attribution helps you pinpoint exactly which code is responsible for slow frames: event listeners, user callbacks, promise handlers, and more.
+
+---
+
+## Element timing
+
+Tracks render timing for elements marked with the `elementtiming` attribute via the [Element Timing API](https://wicg.github.io/element-timing/).
+
+| Metric | What it tells you |
+|--------|-------------------|
+| **Element count** | Number of tracked elements on the page. |
+| **Largest render time** | The slowest element to render. Similar to LCP, but for your chosen elements. |
+| **Individual elements** | Render time for each tracked element. |
+
+### Usage
+
+```html
+<img src="/hero.jpg" elementtiming="hero-image" />
+<div elementtiming="main-content">Key content</div>
+```
+
+---
+
+## Layout stability
+
+CLS measurement via the [Layout Instability API](https://wicg.github.io/layout-instability/) with session windowing per the Web Vitals specification.
+
+| Metric | What it tells you |
+|--------|-------------------|
+| **CLS** | Cumulative Layout Shift score. A Core Web Vital. |
+| **Forced reflows** | Layout property reads that occurred after style writes, forcing synchronous layout. |
+| **Style writes** | Inline style mutations observed via `MutationObserver`. |
+
+---
+
+## React performance
+
+React-specific metrics from the [React Profiler API](https://react.dev/reference/react/Profiler). Only available when using the default (React) addon entry — hidden when using `./universal`.
+
+| Metric | What it tells you |
+|--------|-------------------|
+| **Mount count and duration** | How many times components mounted and how long each mount took. |
+| **Slow updates** | React updates that exceeded the 16ms frame budget. Even one is worth investigating. |
+| **P95 duration** | 95th percentile React update time. Represents worst-case user experience. |
+| **Render cascades** | Nested updates during the commit phase — typically `setState` inside `useLayoutEffect`. Very expensive. |
+
+---
+
+## Memory and resources
+
+JS heap introspection via `performance.memory`. **Chrome only.**
+
+| Metric | What it tells you |
+|--------|-------------------|
+| **Heap usage** | Current JS heap size. |
+| **Memory delta** | Change from baseline since the last reset. |
+| **GC pressure** | Memory allocation rate in MB/s. High values mean frequent garbage collection. |
+| **Compositor layers** | Elements promoted to GPU layers. |

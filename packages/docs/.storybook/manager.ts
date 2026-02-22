@@ -2,7 +2,7 @@ import {setupManagerTheme} from '@github-ui/docs-shared'
 import {addons} from 'storybook/manager-api'
 
 setupManagerTheme(addons, {
-  peerLabel: '→ HTML Docs',
+  peerLabel: '→ Universal Docs',
   peerLocalHref: 'http://perf-html.localhost:1355',
-  peerDeployedHref: '/html/',
+  peerDeployedHref: '/storybooks/universal/',
 })

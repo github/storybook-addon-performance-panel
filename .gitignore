@@ -14,3 +14,7 @@ node_modules/
 
 # Storybook build output
 storybook-static/
+
+# TanStack generated files
+.tanstack/
+routeTree.gen.ts

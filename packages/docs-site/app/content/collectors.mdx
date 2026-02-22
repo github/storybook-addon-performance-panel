@@ -1,0 +1,228 @@
+# Collectors reference
+
+The addon uses modular collector classes for metrics gathering. Each collector implements the `MetricCollector<T>` interface and uses the most accurate available API.
+
+<div className="page-toc">
+  <div className="page-toc-title">On this page</div>
+  <ul>
+    <li><a href="#collection-methods">Collection methods</a></li>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#frametimingcollector">FrameTimingCollector</a></li>
+    <li><a href="#inputcollector">InputCollector</a></li>
+    <li><a href="#mainthreadcollector">MainThreadCollector</a></li>
+    <li><a href="#longanimationframecollector">LongAnimationFrameCollector</a></li>
+    <li><a href="#elementtimingcollector">ElementTimingCollector</a></li>
+    <li><a href="#layoutshiftcollector">LayoutShiftCollector</a></li>
+    <li><a href="#memorycollector">MemoryCollector</a></li>
+    <li><a href="#paintcollector">PaintCollector</a></li>
+    <li><a href="#stylemutationcollector">StyleMutationCollector</a></li>
+    <li><a href="#forcedreflowcollector">ForcedReflowCollector</a></li>
+    <li><a href="#reactprofilercollector">ReactProfilerCollector</a></li>
+    <li><a href="#adding-a-collector">Adding a collector</a></li>
+  </ul>
+</div>
+
+## Collection methods
+
+Each collector uses one of two approaches:
+
+- **Direct measurement** — reads from a browser API that was designed specifically for the metric being measured. These produce definitive numbers. Examples: Event Timing API for INP, Layout Instability API for CLS, `performance.memory` for heap size.
+- **Indirect measurement** — infers metrics from general-purpose APIs when no dedicated API exists. These are useful approximations, but accuracy can vary. Examples: `requestAnimationFrame` deltas for FPS, `MutationObserver` for style write detection, property getter patching for forced reflow detection.
+
+## Overview
+
+| Collector | Browser API | Method |
+|-----------|-------------|--------|
+| `FrameTimingCollector` | `requestAnimationFrame` loop | Indirect |
+| `InputCollector` | Event Timing API | Direct |
+| `MainThreadCollector` | Long Tasks API | Direct |
+| `LongAnimationFrameCollector` | Long Animation Frames API | Direct |
+| `ElementTimingCollector` | Element Timing API | Direct |
+| `LayoutShiftCollector` | Layout Instability API | Direct |
+| `MemoryCollector` | `performance.memory` | Direct |
+| `PaintCollector` | Paint Timing API | Direct |
+| `StyleMutationCollector` | `MutationObserver` | Indirect |
+| `ForcedReflowCollector` | Property getter patching | Indirect |
+| `ReactProfilerCollector` | React Profiler API | Direct |
+
+---
+
+## FrameTimingCollector
+
+Measures frame-level timing using a `requestAnimationFrame` loop. No dedicated browser API exists for frame-by-frame metrics, so RAF timestamp deltas are the standard approach.
+
+```ts
+const now = performance.now()
+const delta = now - lastTime
+lastTime = now
+processFrame(delta)
+requestAnimationFrame(measure)
+```
+
+**Produces:** `frameTimes[]`, `maxFrameTime`, `droppedFrames`, `frameJitter`, `frameStability`
+
+**Limitations:** Cannot detect frames where RAF was not called. Background tabs may throttle RAF callbacks.
+
+---
+
+## InputCollector
+
+Uses the [Event Timing API](https://w3c.github.io/event-timing/) — the W3C standard for interaction latency measurement.
+
+```ts
+observer.observe({ type: 'event', buffered: true, durationThreshold: 16 })
+```
+
+Each event entry provides:
+
+| Property | What it means |
+|----------|---------------|
+| `duration` | Total time from input to next paint (8ms granularity) |
+| `startTime` | When the user input occurred |
+| `processingStart` | When event handlers started |
+| `processingEnd` | When event handlers finished |
+| `interactionId` | Groups events from the same logical interaction |
+| `targetSelector` | CSS selector for the target element |
+
+INP is calculated as the p98 of worst interactions, matching the [Web Vitals definition](https://web.dev/articles/inp).
+
+**Browser support:** Chrome 96+, Edge 96+, Firefox 144+. Not available in Safari.
+
+---
+
+## MainThreadCollector
+
+Uses the [Long Tasks API](https://w3c.github.io/longtasks/) to detect tasks blocking the main thread for more than 50ms.
+
+```ts
+observer.observe({ type: 'longtask' })
+// TBT = sum of (duration - 50ms) for all long tasks
+```
+
+The 50ms threshold follows the RAIL model and aligns with the Lighthouse TBT calculation.
+
+**Browser support:** Chrome 58+, Edge 79+. Not available in Firefox or Safari.
+
+---
+
+## LongAnimationFrameCollector
+
+Uses the [Long Animation Frames API](https://w3c.github.io/long-animation-frames/) for detailed frame attribution — more granular than Long Tasks.
+
+```ts
+observer.observe({ type: 'long-animation-frame', buffered: true })
+```
+
+Includes full script attribution: source URL, function name, and invoker type. Essential for diagnosing INP issues.
+
+| Aspect | Long Tasks | Long Animation Frames |
+|--------|------------|----------------------|
+| Scope | Any main thread work | Animation frame callbacks |
+| Attribution | None | Full script attribution |
+| Timing breakdown | Duration only | Render, style, and layout phases |
+
+**Browser support:** Chrome 123+, Edge 123+. Not available in Firefox or Safari.
+
+---
+
+## ElementTimingCollector
+
+Uses the [Element Timing API](https://wicg.github.io/element-timing/) to track render timing for elements marked with the `elementtiming` attribute.
+
+```ts
+observer.observe({ type: 'element', buffered: true })
+```
+
+Works like LCP but for elements you choose. Useful for measuring when hero images, key content, or specific UI elements become visible.
+
+**Browser support:** Chrome 77+, Edge 79+. Not available in Firefox or Safari.
+
+---
+
+## LayoutShiftCollector
+
+Uses the [Layout Instability API](https://wicg.github.io/layout-instability/) with session windowing per the [evolved CLS specification](https://web.dev/articles/evolving-cls).
+
+Session window rules:
+- Gap from previous shift ≥ 1 second → start a new session
+- Session duration ≥ 5 seconds → start a new session
+- Otherwise → add to the current session
+
+CLS equals the maximum session window value (not the sum across all sessions), matching CrUX and Lighthouse methodology.
+
+**Browser support:** Chrome 77+, Edge 79+. Not available in Firefox or Safari.
+
+---
+
+## MemoryCollector
+
+Uses `performance.memory` — the only JavaScript API for JS heap introspection.
+
+**Produces:** `baselineMemoryMB`, `peakMemoryMB`, `lastMemoryMB`, `gcPressure` (allocation rate in MB/s)
+
+**Limitations:** Chrome only. Values may be quantized for security.
+
+---
+
+## PaintCollector
+
+Combines the Paint Timing API for paint events and Resource Timing for script evaluation metrics. Compositor layer detection uses an indirect technique based on computed styles (`will-change`, `transform`).
+
+**Browser support:** All modern browsers support paint timing. Compositor layer detection is a Chrome-only approximation.
+
+---
+
+## StyleMutationCollector
+
+Uses `MutationObserver` to track inline style attribute changes and CSS variable mutations.
+
+**Produces:** `styleWrites`, `cssVarChanges`, `domMutationFrames[]`, `thrashingScore`
+
+**Limitations:** Detects only inline style changes. Does not observe stylesheet modifications or CSSOM manipulations.
+
+---
+
+## ForcedReflowCollector
+
+Patches `HTMLElement.prototype` property getters to detect layout property reads that occur after style writes.
+
+**Tracked properties:** `offsetTop`, `offsetLeft`, `offsetWidth`, `offsetHeight`, `scrollTop`, `scrollLeft`, `scrollWidth`, `scrollHeight`, `clientTop`, `clientLeft`, `clientWidth`, `clientHeight`
+
+Detection is gated by a `layoutDirty` flag set by the `StyleMutationCollector`.
+
+**Limitations:** Detects only JavaScript-triggered reflows. May produce false positives if layout was already computed before the style write.
+
+---
+
+## ReactProfilerCollector
+
+Uses the [React Profiler API](https://react.dev/reference/react/Profiler) via a `<Profiler>` wrapper component.
+
+Detects three phases:
+- **mount** — initial renders
+- **update** — re-renders after mount
+- **nested-update** — `setState` during the commit phase (render cascades — very expensive)
+
+**Availability:** Only included with the default React addon entry. Omitted when using `./universal`.
+
+---
+
+## Adding a collector
+
+Implement the `MetricCollector<T>` interface:
+
+```ts
+export interface MetricCollector<T> {
+  start(): void
+  stop(): void
+  reset(): void
+  getMetrics(): T
+}
+```
+
+1. Create a new file in `collectors/`
+2. Define a metrics interface for the data you want to collect
+3. Add threshold constants to `constants.ts`
+4. Integrate the collector in `performance-decorator.tsx`
+5. Add the metrics type to `PerformanceMetrics` in `performance-types.ts`
+6. Add a UI section in `performance-panel.tsx`

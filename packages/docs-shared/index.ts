@@ -75,7 +75,7 @@ interface ManagerThemeOptions {
   peerLabel?: string
   /** Href for the peer storybook in local dev (e.g. "http://perf-html.localhost:1355") */
   peerLocalHref?: string
-  /** Href for the peer storybook when deployed (e.g. "/html/") */
+  /** Href for the peer storybook when deployed (e.g. "/storybooks/universal/") */
   peerDeployedHref?: string
 }
 
