@@ -1,21 +1,35 @@
 /**
  * @fileoverview Shared Storybook configuration for docs packages
  *
- * This repo has a docs storybook that demonstrates the performance panel addon:
+ * This repo has two docs storybooks that demonstrate the performance panel addon:
  *
  * ## React docs (`packages/examples-react`)
  * - **Framework:** `@storybook/react-vite` — renders React components
  * - **Addon entry:** `@github-ui/storybook-addon-performance-panel` (default)
- *   - Includes both the base decorator (browser metrics) and the
+ *   - Includes both the universal decorator (browser metrics) and the
  *     React.Profiler decorator (mount count, update duration, memoization)
  * - **Portless URL:** `http://examples-react.localhost:1355`
  * - **Stories:** `.stories.tsx` and `.mdx` files
  *
- * The configuration helpers below (features, viteFinal, etc.) are shared.
+ * ## HTML docs (`packages/examples-html`)
+ * - **Framework:** `@storybook/html-vite` — renders raw DOM nodes / Web Components
+ * - **Addon entry:** `@github-ui/storybook-addon-performance-panel/universal`
+ *   - Universal-only: browser metrics without React.Profiler
+ *   - The React Performance section is automatically hidden in the panel
+ * - **Portless URL:** `http://examples-html.localhost:1355`
+ * - **Stories:** `.stories.ts` files (no JSX)
+ *
+ * Both share the configuration helpers below (features, viteFinal, etc.).
  */
 import type {InlineConfig} from 'vite'
 
 import {githubDarkTheme, githubLightTheme} from './githubTheme.ts'
+
+// ============================================================================
+// Re-export GitHub Storybook themes
+// ============================================================================
+
+export {githubDarkTheme, githubLightTheme}
 
 // ============================================================================
 // Shared Storybook features

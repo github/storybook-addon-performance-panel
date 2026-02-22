@@ -35,6 +35,35 @@ const preview = definePreview({
 export default preview
 ```
 
+## Other frameworks
+
+Use the `./universal` subpath for HTML, Vue, Svelte, Web Components, or any non-React framework. It collects all browser-level metrics and hides the React Performance section.
+
+```ts
+// .storybook/main.ts
+import type { StorybookConfig } from '@storybook/html-vite'
+
+const config: StorybookConfig = {
+  stories: ['../src/**/*.stories.@(ts|tsx)'],
+  framework: '@storybook/html-vite',
+  addons: ['@github-ui/storybook-addon-performance-panel/universal'],
+}
+
+export default config
+```
+
+```ts
+// .storybook/preview.ts
+import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel/universal'
+import { definePreview } from '@storybook/html-vite'
+
+const preview = definePreview({
+  addons: [addonPerformancePanel()],
+})
+
+export default preview
+```
+
 ## Writing stories
 
 The performance decorator wraps every story automatically — no changes needed to your [stories](https://storybook.js.org/docs/writing-stories). Here's an example using the [CSF factory API](https://storybook.js.org/docs/api/csf):
