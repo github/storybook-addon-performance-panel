@@ -30,14 +30,6 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./react": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./components": {
-      "types": "./dist/index-react.d.ts",
-      "default": "./dist/index-react.js"
-    },
     "./manager": {
       "types": "./dist/manager.d.ts",
       "default": "./dist/manager.js"
@@ -68,8 +60,7 @@
     ],
     "previewEntries": [
       "preview.ts",
-      "index.ts",
-      "index-react.ts"
+      "index.ts"
     ],
     "nodeEntries": [
       "preset.ts"
