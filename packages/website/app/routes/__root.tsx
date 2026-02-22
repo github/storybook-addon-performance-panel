@@ -7,7 +7,9 @@ import {useCallback, useEffect, useRef, useSyncExternalStore} from 'react'
 
 import styles from './layout.module.css'
 
-const emptySubscribe = () => () => { /* empty */}
+const emptySubscribe = () => () => {
+  /* empty */
+}
 const returnTrue = () => true
 const returnFalse = () => false
 
@@ -132,6 +134,24 @@ function RootLayout() {
   const closeMobileNav = useCallback(() => {
     dialogRef.current?.close()
   }, [])
+
+  // Close mobile nav when clicking the backdrop
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+    function onClickBackdrop(e: MouseEvent) {
+      if (e.target === dialog) dialogRef.current?.close()
+    }
+    dialog.addEventListener('click', onClickBackdrop)
+    return () => {
+      dialog.removeEventListener('click', onClickBackdrop)
+    }
+  }, [])
+
+  // Close mobile nav on route change
+  useEffect(() => {
+    dialogRef.current?.close()
+  }, [pathname, hash])
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -263,13 +283,7 @@ function RootLayout() {
           </PageLayout.Content>
         </PageLayout>
         {/* Mobile navigation drawer */}
-        <dialog
-          ref={dialogRef}
-          className={styles.mobileNav}
-          onClick={e => {
-            if (e.target === e.currentTarget) closeMobileNav()
-          }}
-        >
+        <dialog ref={dialogRef} className={styles.mobileNav}>
           <div className={styles.mobileNavHeader}>
             <span className={styles.mobileNavTitle}>Navigation</span>
             <IconButton

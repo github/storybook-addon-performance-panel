@@ -17,6 +17,12 @@
   padding: 0 !important;
 }
 
+/* Override inline --spacing on the horizontal divider inside the header */
+.header > :last-child {
+  --spacing: 0 !important;
+  margin-top: 0 !important;
+}
+
 .headerBar {
   display: flex;
   align-items: center;

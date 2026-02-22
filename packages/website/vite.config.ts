@@ -1,6 +1,7 @@
 import mdx from '@mdx-js/rollup'
 import rehypeShiki from '@shikijs/rehype'
 import {tanstackStart} from '@tanstack/react-start/plugin/vite'
+import react from '@vitejs/plugin-react'
 import rehypeAutolink from 'rehype-autolink-headings'
 import rehypeMermaid from 'rehype-mermaid'
 import rehypeSlug from 'rehype-slug'
@@ -47,6 +48,7 @@ export default defineConfig({
         filter: (page: {path: string}) => !page.path.startsWith('/examples/') && !page.path.includes('#'),
       },
     }),
+    react({babel: {plugins: [['babel-plugin-react-compiler']]}}),
   ],
   server: {
     // Listen on all interfaces so portless can proxy to the Vite dev server

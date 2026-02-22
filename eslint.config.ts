@@ -42,7 +42,7 @@ export default defineConfig(
   jsxA11y.flatConfigs.strict,
   {
     plugins: {'react-hooks': eslintPluginReactHooks as unknown as ESLint.Plugin},
-    rules: eslintPluginReactHooks.configs.recommended.rules,
+    rules: eslintPluginReactHooks.configs['recommended-latest'].rules,
   },
   {
     plugins: {
