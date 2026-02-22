@@ -356,12 +356,23 @@ export const Route = createRootRoute({
     meta: [
       {charSet: 'utf-8'},
       {name: 'viewport', content: 'width=device-width, initial-scale=1'},
-      {title: 'storybook-addon-performance-panel'},
+      {title: 'Performance Panel – Storybook Addon'},
       {
         name: 'description',
         content:
           'Real-time performance monitoring for Storybook stories. Frame timing, input latency, layout shifts, React profiling, and more.',
       },
+      {name: 'theme-color', content: '#ffffff', media: '(prefers-color-scheme: light)'},
+      {name: 'theme-color', content: '#0d1117', media: '(prefers-color-scheme: dark)'},
+      {property: 'og:type', content: 'website'},
+      {property: 'og:site_name', content: 'storybook-addon-performance-panel'},
+      {property: 'og:title', content: 'Performance Panel – Storybook Addon'},
+      {
+        property: 'og:description',
+        content:
+          'Real-time performance monitoring for Storybook stories. Frame timing, input latency, layout shifts, React profiling, and more.',
+      },
+      {name: 'twitter:card', content: 'summary'},
     ],
     links: [
       {
@@ -370,7 +381,6 @@ export const Route = createRootRoute({
         type: 'font/woff2',
         crossOrigin: 'anonymous',
         href: monaSansLatinUrl,
-        fetchPriority: 'high',
       },
       {
         rel: 'icon',
