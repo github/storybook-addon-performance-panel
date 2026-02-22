@@ -1,5 +1,6 @@
 import '../global.css'
 
+import monaSansLatinUrl from '@fontsource-variable/mona-sans/files/mona-sans-latin-wght-normal.woff2?url'
 import {MarkGithubIcon, PackageIcon, ThreeBarsIcon, XIcon} from '@primer/octicons-react'
 import {IconButton, NavList, PageLayout} from '@primer/react'
 import {createRootRoute, HeadContent, Link, Outlet, Scripts, useRouterState} from '@tanstack/react-router'
@@ -150,7 +151,7 @@ const PORTLESS_HREFS: Record<string, string> = {
 }
 
 function resolveHref(href: string, isLocal: boolean): string {
-  return isLocal ? PORTLESS_HREFS[href] ?? href : href
+  return isLocal ? (PORTLESS_HREFS[href] ?? href) : href
 }
 
 function RootLayout() {
@@ -363,6 +364,13 @@ export const Route = createRootRoute({
       },
     ],
     links: [
+      {
+        rel: 'preload',
+        href: monaSansLatinUrl,
+        as: 'font',
+        type: 'font/woff2',
+        crossOrigin: 'anonymous',
+      },
       {
         rel: 'icon',
         href: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">⚡</text></svg>',
