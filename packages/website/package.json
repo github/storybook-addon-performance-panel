@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "portless perf-docs sh -c 'vite dev --port $PORT'",
+    "dev": "portless site sh -c 'vite dev --port $PORT'",
     "build": "vite build",
     "preview": "vite preview"
   },

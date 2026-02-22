@@ -22,15 +22,16 @@ jobs:
           node-version-file: '.nvmrc'
           cache: npm
       - run: npm ci
+      - run: npm run build
       - run: npm run site:build
-      - run: npm run docs:build
-      - run: npm run docs:html:build
+      - run: npm run build-storybook -w @github-ui/examples-react
+      - run: npm run build-storybook -w @github-ui/examples-html
       - name: Merge into single site
         run: |
           mkdir -p _site
           cp -r packages/website/dist/client/* _site/
-          cp -r packages/examples-react/storybook-static _site/storybooks/react
-          cp -r packages/examples-html/storybook-static _site/storybooks/universal
+          cp -r packages/examples-react/storybook-static _site/examples/react
+          cp -r packages/examples-html/storybook-static _site/examples/universal
       - uses: actions/upload-artifact@v6
         with:
           name: site

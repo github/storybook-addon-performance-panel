@@ -3,11 +3,11 @@ import '../global.css'
 import {MarkGithubIcon, PackageIcon, ThreeBarsIcon, XIcon} from '@primer/octicons-react'
 import {IconButton, NavList, PageLayout} from '@primer/react'
 import {createRootRoute, HeadContent, Link, Outlet, Scripts, useRouterState} from '@tanstack/react-router'
-import {useCallback, useEffect, useRef, useState, useSyncExternalStore} from 'react'
+import {useCallback, useEffect, useRef, useSyncExternalStore} from 'react'
 
 import styles from './layout.module.css'
 
-const emptySubscribe = () => () => {}
+const emptySubscribe = () => () => { /* empty */}
 const returnTrue = () => true
 const returnFalse = () => false
 
@@ -114,8 +114,8 @@ const NAV: NavSection[] = [
   {
     section: 'Demos',
     items: [
-      {label: 'React Storybook', href: '/storybooks/react/'},
-      {label: 'Universal Storybook', href: '/storybooks/universal/'},
+      {label: 'React Storybook', href: '/examples/react/'},
+      {label: 'Universal Storybook', href: '/examples/universal/'},
     ],
   },
 ]
@@ -127,18 +127,11 @@ function RootLayout() {
   const pathname = useRouterState({select: s => s.location.pathname})
   const hash = useRouterState({select: s => s.location.hash})
   const isClient = useSyncExternalStore(emptySubscribe, returnTrue, returnFalse)
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
 
   const closeMobileNav = useCallback(() => {
-    setMobileNavOpen(false)
     dialogRef.current?.close()
   }, [])
-
-  // Close mobile nav on route change
-  useEffect(() => {
-    closeMobileNav()
-  }, [pathname, hash, closeMobileNav])
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -220,7 +213,6 @@ function RootLayout() {
                 variant="invisible"
                 size="medium"
                 onClick={() => {
-                  setMobileNavOpen(true)
                   dialogRef.current?.showModal()
                 }}
               />

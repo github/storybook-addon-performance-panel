@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "storybook": "portless perf-html sh -c 'storybook dev -p $PORT --ci'",
+    "storybook": "portless examples-html sh -c 'storybook dev -p $PORT --ci'",
     "build-storybook": "storybook build"
   },
   "dependencies": {

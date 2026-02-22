@@ -86,9 +86,10 @@ npm run build        # Build the addon
 npm test             # Run tests
 npm run lint         # Lint
 npm run tsc          # Type check
-npm run dev          # Build + start both storybooks with portless
-                     # → http://perf-react.localhost:1355 (React)
-                     # → http://perf-html.localhost:1355 (HTML)
+npm run dev          # Build + start storybooks and site with portless
+                     # → http://examples-react.localhost:1355 (React)
+                     # → http://examples-html.localhost:1355 (HTML)
+                     # → http://site.localhost:1355 (Docs site)
 npm run docs         # Start just the React docs storybook
 npm run docs:html    # Start just the HTML docs storybook
 ```

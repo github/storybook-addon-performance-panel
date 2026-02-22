@@ -4,15 +4,15 @@
   "forwardPorts": [4173, 6006, 6007],
   "portsAttributes": {
     "4173": {
-      "label": "perf-docs",
+      "label": "site",
       "onAutoForward": "notify"
     },
     "6006": {
-      "label": "storybook-react",
+      "label": "examples-react",
       "onAutoForward": "ignore"
     },
     "6007": {
-      "label": "storybook-universal",
+      "label": "examples-html",
       "onAutoForward": "ignore"
     }
   },

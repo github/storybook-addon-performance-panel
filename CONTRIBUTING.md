@@ -39,8 +39,8 @@ This is an npm workspaces monorepo with multiple packages:
 
 When using `npm run dev`, each storybook is served at a stable `.localhost` URL via [portless](https://github.com/nicolo-ribaudo/portless):
 
-- **React docs:** `http://perf-react.localhost:1355`
-- **HTML docs:** `http://perf-html.localhost:1355`
+- **React docs:** `http://examples-react.localhost:1355`
+- **HTML docs:** `http://examples-html.localhost:1355`
 
 ## Prerequisites for running and testing code
 

@@ -8,7 +8,7 @@
  * - **Addon entry:** `@github-ui/storybook-addon-performance-panel` (default)
  *   - Includes both the universal decorator (browser metrics) and the
  *     React.Profiler decorator (mount count, update duration, memoization)
- * - **Portless URL:** `http://perf-react.localhost:1355`
+ * - **Portless URL:** `http://examples-react.localhost:1355`
  * - **Stories:** `.stories.tsx` and `.mdx` files
  *
  * ## HTML docs (`packages/examples-html`)
@@ -16,7 +16,7 @@
  * - **Addon entry:** `@github-ui/storybook-addon-performance-panel/universal`
  *   - Universal-only: browser metrics without React.Profiler
  *   - The React Performance section is automatically hidden in the panel
- * - **Portless URL:** `http://perf-html.localhost:1355`
+ * - **Portless URL:** `http://examples-html.localhost:1355`
  * - **Stories:** `.stories.ts` files (no JSX)
  *
  * Both share the configuration helpers below (features, viteFinal, etc.).
@@ -73,9 +73,9 @@ export function withLightningCSS(config: InlineConfig): InlineConfig {
 interface ManagerThemeOptions {
   /** Label for a navigation link to the peer storybook (e.g. "→ HTML Docs") */
   peerLabel?: string
-  /** Href for the peer storybook in local dev (e.g. "http://perf-html.localhost:1355") */
+  /** Href for the peer storybook in local dev (e.g. "http://examples-html.localhost:1355") */
   peerLocalHref?: string
-  /** Href for the peer storybook when deployed (e.g. "/storybooks/universal/") */
+  /** Href for the peer storybook when deployed (e.g. "/examples/universal/") */
   peerDeployedHref?: string
 }
 

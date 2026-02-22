@@ -44,10 +44,14 @@ export default defineConfig({
       prerender: {
         enabled: true,
         crawlLinks: true,
-        filter: (page: {path: string}) => !page.path.startsWith('/storybooks/') && !page.path.includes('#'),
+        filter: (page: {path: string}) => !page.path.startsWith('/examples/') && !page.path.includes('#'),
       },
     }),
   ],
+  server: {
+    // Listen on all interfaces so portless can proxy to the Vite dev server
+    host: true,
+  },
   css: {
     transformer: 'lightningcss',
   },
