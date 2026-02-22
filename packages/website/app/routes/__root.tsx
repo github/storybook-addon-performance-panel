@@ -46,7 +46,6 @@ const NAV: NavSection[] = [
         children: [
           {label: 'Installation', hash: '#installation'},
           {label: 'React projects', hash: '#react-projects'},
-          {label: 'Other frameworks', hash: '#other-frameworks'},
           {label: 'Writing stories', hash: '#writing-stories'},
           {label: 'React profiling in production', hash: '#react-profiling-in-production'},
           {label: 'Element timing', hash: '#element-timing'},
@@ -116,10 +115,7 @@ const NAV: NavSection[] = [
   },
   {
     section: 'Demos',
-    items: [
-      {label: 'React Storybook', href: '/examples/react/'},
-      {label: 'Universal Storybook', href: '/examples/universal/'},
-    ],
+    items: [{label: 'React Storybook', href: '/examples/react/'}],
   },
 ]
 
@@ -147,7 +143,6 @@ function StorybookIcon({size, ...props}: {size?: number | string} & Omit<React.S
 /** Resolve portless URLs for demo links on .localhost dev hostnames. */
 const PORTLESS_HREFS: Record<string, string> = {
   '/examples/react/': 'http://examples-react.localhost:1355',
-  '/examples/universal/': 'http://examples-html.localhost:1355',
 }
 
 function resolveHref(href: string, isLocal: boolean): string {

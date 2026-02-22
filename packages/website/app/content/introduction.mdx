@@ -23,12 +23,7 @@ Performance regressions are hard to catch in code review. This addon gives you a
 
 ## Framework support
 
-| Entry point | Frameworks | React Profiler |
-|-------------|-----------|----------------|
-| Default | React | Included |
-| `./universal` | HTML, Vue, Svelte, Web Components | Hidden |
-
-The **universal** entry collects all browser-level metrics but omits React Profiler data. The React Performance section hides itself automatically.
+The addon is designed for **React** projects using `@storybook/react-vite`. It collects all browser-level metrics plus React Profiler data.
 
 ## Architecture
 
@@ -85,4 +80,4 @@ const preview = definePreview({
 export default preview
 ```
 
-For non-React frameworks, use `./universal` instead — see [Getting Started](/docs/setup) for full setup options.
+For full setup options, see [Getting Started](/docs/setup).

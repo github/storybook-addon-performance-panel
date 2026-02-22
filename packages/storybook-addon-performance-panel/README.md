@@ -31,27 +31,6 @@ export default definePreview({
 })
 ```
 
-### Other frameworks
-
-Use the `./universal` subpath for HTML, Vue, Svelte, Web Components, or any non-React framework. It collects all browser-level metrics and hides the React Performance section automatically.
-
-```ts
-// .storybook/main.ts
-const config = {
-  addons: ['@github-ui/storybook-addon-performance-panel/universal'],
-}
-```
-
-```ts
-// .storybook/preview.ts
-import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel/universal'
-import { definePreview } from '@storybook/html-vite'
-
-export default definePreview({
-  addons: [addonPerformancePanel()],
-})
-```
-
 ## What it measures
 
 | Category | Key metrics |

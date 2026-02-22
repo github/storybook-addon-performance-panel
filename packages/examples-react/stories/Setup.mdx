@@ -65,58 +65,6 @@ export const Default = meta.story({})
 export const WithLabel = meta.story({args: {label: 'Submit'}})
 ```
 
-## Non-React Projects (HTML, Vue, Svelte, Web Components, etc.)
-
-Use the `./universal` subpath — it collects all browser-level metrics without a React dependency.
-The React Performance section is automatically hidden in the panel.
-
-### 1. Register the addon (main.ts)
-
-```ts
-// .storybook/main.ts
-import type {StorybookConfig} from '@storybook/html-vite' // or vue-vite, svelte-vite, etc.
-
-const config: StorybookConfig = {
-  stories: ['../src/**/*.stories.@(ts|tsx)'],
-  framework: '@storybook/html-vite',
-  addons: ['@github-ui/storybook-addon-performance-panel/universal'],
-}
-
-export default config
-```
-
-### 2. Compose in preview (preview.ts)
-
-```ts
-// .storybook/preview.ts
-import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel/universal'
-import {definePreview} from '@storybook/html-vite'
-
-const preview = definePreview({
-  addons: [addonPerformancePanel()],
-})
-
-export default preview
-```
-
-### 3. Write stories
-
-```ts
-// Button.stories.ts
-import preview from '../.storybook/preview'
-
-const meta = preview.meta({title: 'Components/Button'})
-export default meta
-
-export const Default = meta.story({
-  render: () => {
-    const btn = document.createElement('button')
-    btn.textContent = 'Click me'
-    return btn
-  },
-})
-```
-
 ## React Profiling in Production Builds
 
 To keep the React Profiler panel working in production Storybook builds (e.g., deployed to GitHub Pages), alias `react-dom/client` to `react-dom/profiling`:
