@@ -1,8 +1,6 @@
-import {Mermaid} from '../components/Mermaid'
-
 # storybook-addon-performance-panel
 
-A Storybook addon for **real-time performance monitoring**. It surfaces frame timing, input responsiveness, layout stability, React profiling, memory pressure, and more — directly inside Storybook.
+A [Storybook](https://storybook.js.org) addon for **real-time performance monitoring**. It surfaces frame timing, input responsiveness, layout stability, React profiling, memory pressure, and more — directly inside Storybook.
 
 The panel appears as **⚡ Performance** at the bottom of Storybook when viewing any story.
 
@@ -32,7 +30,7 @@ The **universal** entry collects all browser-level metrics but omits React Profi
 
 ## Architecture
 
-<Mermaid chart={`
+```mermaid
 graph TB
     subgraph Preview["Preview iframe"]
         Decorator["Performance decorator"]
@@ -53,7 +51,7 @@ graph TB
         Panel --> Sections
     end
     Collectors -- "channel.emit(METRICS_UPDATE)" --> Panel
-`} />
+```
 
 The decorator wraps each story in the preview iframe. Collectors gather metrics through browser APIs and send them to the panel through Storybook's channel.
 
@@ -71,42 +69,39 @@ Use **Chrome or Edge** for the most complete view while debugging.
 
 ## Quick start
 
-### React
+Install the addon:
+
+```bash
+npm install @github-ui/storybook-addon-performance-panel
+```
+
+Register it in your [Storybook config](https://storybook.js.org/docs/configure):
 
 ```ts
 // .storybook/main.ts
-const config = {
+import type { StorybookConfig } from '@storybook/react-vite'
+
+const config: StorybookConfig = {
+  stories: ['../src/**/*.stories.@(ts|tsx)'],
+  framework: '@storybook/react-vite',
   addons: ['@github-ui/storybook-addon-performance-panel'],
 }
+
+export default config
 ```
+
+Compose the decorator in preview:
 
 ```ts
 // .storybook/preview.ts
 import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel'
 import { definePreview } from '@storybook/react-vite'
 
-export default definePreview({
+const preview = definePreview({
   addons: [addonPerformancePanel()],
 })
+
+export default preview
 ```
 
-### Other frameworks
-
-```ts
-// .storybook/main.ts
-const config = {
-  addons: ['@github-ui/storybook-addon-performance-panel/universal'],
-}
-```
-
-```ts
-// .storybook/preview.ts
-import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel/universal'
-import { definePreview } from '@storybook/html-vite'
-
-export default definePreview({
-  addons: [addonPerformancePanel()],
-})
-```
-
-Head to [Getting Started](/docs/setup) for full setup instructions.
+For non-React frameworks, use `./universal` instead — see [Getting Started](/docs/setup) for full setup options.

@@ -1,0 +1,20 @@
+{
+  "name": "storybook-addon-performance-panel",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "forwardPorts": [4173, 6006, 6007],
+  "portsAttributes": {
+    "4173": {
+      "label": "perf-docs",
+      "onAutoForward": "notify"
+    },
+    "6006": {
+      "label": "storybook-react",
+      "onAutoForward": "ignore"
+    },
+    "6007": {
+      "label": "storybook-universal",
+      "onAutoForward": "ignore"
+    }
+  },
+  "postCreateCommand": "npm install"
+}

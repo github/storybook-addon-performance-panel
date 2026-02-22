@@ -1,6 +1,7 @@
 import {createFileRoute} from '@tanstack/react-router'
 
 import Content from '../../content/metrics.mdx'
+import styles from '../../content/content.module.css'
 
 export const Route = createFileRoute('/docs/metrics')({
   component: MetricsPage,
@@ -8,7 +9,7 @@ export const Route = createFileRoute('/docs/metrics')({
 
 function MetricsPage() {
   return (
-    <div className="mdx-content">
+    <div className={styles.content}>
       <Content />
     </div>
   )

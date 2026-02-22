@@ -6,6 +6,7 @@ function createRouter() {
   return createTanStackRouter({
     routeTree,
     scrollRestoration: true,
+    defaultHashScrollIntoView: {behavior: 'smooth'},
   })
 }
 

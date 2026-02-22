@@ -1,6 +1,7 @@
 import {createFileRoute} from '@tanstack/react-router'
 
 import Content from '../../content/collectors.mdx'
+import styles from '../../content/content.module.css'
 
 export const Route = createFileRoute('/docs/collectors')({
   component: CollectorsPage,
@@ -8,7 +9,7 @@ export const Route = createFileRoute('/docs/collectors')({
 
 function CollectorsPage() {
   return (
-    <div className="mdx-content">
+    <div className={styles.content}>
       <Content />
     </div>
   )

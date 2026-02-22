@@ -66,6 +66,7 @@ This is an npm workspaces monorepo:
 | [packages/examples-react](./packages/examples-react) | React docs storybook (`@storybook/react-vite`) |
 | [packages/examples-html](./packages/examples-html) | HTML docs storybook (`@storybook/html-vite`) |
 | [packages/storybook-config](./packages/storybook-config) | Shared storybook config (theming, features, Vite helpers) |
+| [packages/website](./packages/website) | Documentation site (TanStack Start + MDX) |
 
 ## Documentation
 

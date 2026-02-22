@@ -1,0 +1,139 @@
+/* ------------------------------------------------------------------ */
+/* Header                                                             */
+/* ------------------------------------------------------------------ */
+
+/* Strip all Primer spacing from the header slot */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--bgColor-default, #ffffff);
+  --spacing: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Override padding on the inner content wrapper */
+.header > :first-child {
+  padding: 0 !important;
+}
+
+.headerBar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: 3.25rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.headerBar a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.headerBar a:hover {
+  color: var(--fgColor-accent, #0969da);
+}
+
+.menuButton {
+  display: none !important;
+}
+
+@media (max-width: 767px) {
+  .menuButton {
+    display: inline-flex !important;
+  }
+}
+
+.headerHome {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: inherit;
+  text-decoration: none;
+}
+
+.headerHome:hover {
+  color: var(--fgColor-accent, #0969da);
+}
+
+.headerNav {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Sidebar pane — offset sticky top below the fixed header            */
+/* ------------------------------------------------------------------ */
+
+.pane {
+  top: calc(3.25rem + 1px) !important;
+  max-height: calc(100vh - 3.25rem - 1px);
+  overflow-y: auto;
+}
+
+/* Remove top padding inside the pane so "Overview" aligns with content h1 */
+.pane > div {
+  padding-top: 0 !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Mobile navigation drawer                                           */
+/* ------------------------------------------------------------------ */
+
+.mobileNav {
+  position: fixed;
+  inset: 0;
+  width: 80vw;
+  max-width: 320px;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-right: 1px solid var(--borderColor-default, #d0d7de);
+  background-color: var(--bgColor-default, #ffffff);
+  color: var(--fgColor-default, #1f2328);
+  z-index: 200;
+  overflow: hidden;
+}
+
+.mobileNav::backdrop {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.mobileNavHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 3.25rem;
+  padding: 0 0.75rem;
+  border-bottom: 1px solid var(--borderColor-default, #d0d7de);
+}
+
+.mobileNavTitle {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.mobileNavBody {
+  overflow-y: auto;
+  max-height: calc(100vh - 3.25rem);
+  padding: 0.5rem 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* 404                                                                */
+/* ------------------------------------------------------------------ */
+
+.notFound {
+  padding: 3rem;
+  text-align: center;
+}
