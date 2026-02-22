@@ -6,7 +6,17 @@
 @import '@primer/primitives/dist/css/functional/size/radius.css';
 @import '@primer/primitives/dist/css/functional/size/size.css';
 @import '@primer/primitives/dist/css/functional/typography/typography.css';
-@import '@fontsource-variable/mona-sans';
+
+/* Custom @font-face instead of @fontsource's default, so we can use
+   font-display: optional to avoid the layout-shift on swap. The woff2
+   file is already preloaded via <link rel="preload"> in __root.tsx. */
+@font-face {
+  font-family: 'Mona Sans';
+  font-style: normal;
+  font-display: optional;
+  font-weight: 200 900;
+  src: url('@fontsource-variable/mona-sans/files/mona-sans-latin-wght-normal.woff2') format('woff2-variations');
+}
 
 /* ------------------------------------------------------------------ */
 /* Reset                                                              */
