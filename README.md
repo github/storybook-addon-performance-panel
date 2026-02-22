@@ -63,9 +63,9 @@ This is an npm workspaces monorepo:
 | Package | Description |
 |---------|-------------|
 | [packages/storybook-addon-performance-panel](./packages/storybook-addon-performance-panel) | The addon — collectors, panel UI, and types |
-| [packages/docs](./packages/docs) | React docs storybook (`@storybook/react-vite`) |
-| [packages/docs-html](./packages/docs-html) | HTML docs storybook (`@storybook/html-vite`) |
-| [packages/docs-shared](./packages/docs-shared) | Shared storybook config (theming, features, Vite helpers) |
+| [packages/examples-react](./packages/examples-react) | React docs storybook (`@storybook/react-vite`) |
+| [packages/examples-html](./packages/examples-html) | HTML docs storybook (`@storybook/html-vite`) |
+| [packages/storybook-config](./packages/storybook-config) | Shared storybook config (theming, features, Vite helpers) |
 
 ## Documentation
 

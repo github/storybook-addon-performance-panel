@@ -28,9 +28,9 @@ jobs:
       - name: Merge into single site
         run: |
           mkdir -p _site
-          cp -r packages/docs-site/dist/client/* _site/
-          cp -r packages/docs/storybook-static _site/storybooks/react
-          cp -r packages/docs-html/storybook-static _site/storybooks/universal
+          cp -r packages/website/dist/client/* _site/
+          cp -r packages/examples-react/storybook-static _site/storybooks/react
+          cp -r packages/examples-html/storybook-static _site/storybooks/universal
       - uses: actions/upload-artifact@v6
         with:
           name: site

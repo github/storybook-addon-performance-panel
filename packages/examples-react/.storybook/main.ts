@@ -1,4 +1,4 @@
-import {SHARED_FEATURES, withLightningCSS} from '@github-ui/docs-shared'
+import {SHARED_FEATURES, withLightningCSS} from '@github-ui/storybook-config'
 import type {StorybookConfig} from '@storybook/react-vite'
 
 const config: StorybookConfig = {

@@ -11,14 +11,14 @@ Please note that this project is released with a [Contributor Code of Conduct](C
 
 ## Project structure
 
-This is an npm workspaces monorepo with four packages:
+This is an npm workspaces monorepo with multiple packages:
 
 | Directory | Package | Description |
 |-----------|---------|-------------|
 | `packages/storybook-addon-performance-panel` | `@github-ui/storybook-addon-performance-panel` | The addon — collectors, panel UI, and types |
-| `packages/docs` | `@github-ui/docs` | React docs storybook (`@storybook/react-vite`) |
-| `packages/docs-html` | `@github-ui/docs-html` | HTML docs storybook (`@storybook/html-vite`) |
-| `packages/docs-shared` | `@github-ui/docs-shared` | Shared storybook config (theming, features, Vite helpers) |
+| `packages/examples-react` | `@github-ui/examples-react` | React docs storybook (`@storybook/react-vite`) |
+| `packages/examples-html` | `@github-ui/examples-html` | HTML docs storybook (`@storybook/html-vite`) |
+| `packages/storybook-config` | `@github-ui/storybook-config` | Shared storybook config (theming, features, Vite helpers) |
 
 ### Useful commands
 

@@ -110,6 +110,7 @@ const NAV: NavSection[] = [
 
 function RootLayout() {
   const pathname = useRouterState({select: s => s.location.pathname})
+  const hash = useRouterState({select: s => s.location.hash})
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -186,7 +187,11 @@ function RootLayout() {
                         {item.label}
                         <NavList.SubNav>
                           {item.children.map(child => (
-                            <NavList.Item key={child.hash} href={`${item.to}${child.hash}`}>
+                            <NavList.Item
+                              key={child.hash}
+                              href={`${item.to}${child.hash}`}
+                              aria-current={isActive && hash === child.hash ? 'page' : undefined}
+                            >
                               {child.label}
                             </NavList.Item>
                           ))}

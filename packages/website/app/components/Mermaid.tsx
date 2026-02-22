@@ -1,6 +1,6 @@
-import {useEffect, useRef, useState} from 'react'
+import {useEffect, useId, useRef, useState} from 'react'
 
-let nextId = 0
+const nextId = 0
 
 /**
  * Renders a Mermaid diagram. Loads the mermaid library lazily on the client
@@ -8,8 +8,7 @@ let nextId = 0
  */
 export function Mermaid({chart}: {chart: string}) {
   const [svg, setSvg] = useState<string | null>(null)
-  const idRef = useRef<number | null>(null)
-  if (idRef.current === null) idRef.current = nextId++
+  const id = useId()
 
   useEffect(() => {
     let cancelled = false
@@ -22,7 +21,7 @@ export function Mermaid({chart}: {chart: string}) {
           theme: document.documentElement.getAttribute('data-color-mode') === 'dark' ? 'dark' : 'default',
           fontFamily: "'Mona Sans', sans-serif",
         })
-        const {svg: rendered} = await mermaid.render(`mermaid-${idRef.current}`, chart.trim())
+        const {svg: rendered} = await mermaid.render(`mermaid-${id}`, chart.trim())
         if (!cancelled) setSvg(rendered)
       })
       .catch(err => {
@@ -31,8 +30,8 @@ export function Mermaid({chart}: {chart: string}) {
     return () => {
       cancelled = true
     }
-  }, [chart])
-console.log('Rendering Mermaid diagram with chart:', chart)
+  }, [chart, id])
+
   return (
     <div
       className="mermaid-diagram"

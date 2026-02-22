@@ -1,0 +1,32 @@
+[04:32:26.033] [INFO] storybook v10.2.10
+[04:32:26.684] [ERROR] [38;2;241;97;97mSB_CORE-SERVER_0007 (MainFileEvaluationError): Storybook couldn't evaluate your [33m.storybook/main.ts[39m file.
+
+Original error:
+[37mError [ERR_MODULE_NOT_FOUND]: Cannot find package '@github-ui/storybook-config' imported from /.storybook/main.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:769:81)
+    at moduleResolve (node:internal/modules/esm/resolve:860:18)
+    at defaultResolve (node:internal/modules/esm/resolve:992:11)
+    at nextResolve (node:internal/modules/esm/hooks:785:28)
+    at AsyncLoaderHooksOnLoaderHookWorker.resolve (node:internal/modules/esm/hooks:269:30)
+    at MessagePort.handleMessage (node:internal/modules/esm/worker:251:24)
+    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)
+    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28)[39m[39m
+    at loadMainConfig (file:///workspaces/storybook-addon-performance-panel/node_modules/storybook/dist/_node-chunks/chunk-URMZXQZT.js:11709:11)
+    at async buildDevStandalone (file:///workspaces/storybook-addon-performance-panel/node_modules/storybook/dist/core-server/index.js:7552:16)
+    at async withTelemetry (file:///workspaces/storybook-addon-performance-panel/node_modules/storybook/dist/_node-chunks/chunk-S3MWHNYJ.js:218:12)
+    at async dev (file:///workspaces/storybook-addon-performance-panel/node_modules/storybook/dist/bin/core.js:2734:3)
+    at async _Command.<anonymous> (file:///workspaces/storybook-addon-performance-panel/node_modules/storybook/dist/bin/core.js:2803:92)
+[04:32:26.698] [WARN] Broken build, fix the error above.
+You may need to refresh the browser.
+[04:32:26.731] [WARN]   Failed to load preset: "/workspaces/storybook-addon-performance-panel/packages/examples-react/.storybook/main.ts"
+[04:32:26.732] [ERROR] Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@github-ui/storybook-config' imported from ./.storybook/main.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:769:81)
+    at moduleResolve (node:internal/modules/esm/resolve:860:18)
+    at defaultResolve (node:internal/modules/esm/resolve:992:11)
+    at nextResolve (node:internal/modules/esm/hooks:785:28)
+    at AsyncLoaderHooksOnLoaderHookWorker.resolve (node:internal/modules/esm/hooks:269:30)
+    at handleMessage (node:internal/modules/esm/worker:251:24)
+    at Immediate.checkForMessages (node:internal/modules/esm/worker:193:28)
+    at process.processImmediate (node:internal/timers:504:21)

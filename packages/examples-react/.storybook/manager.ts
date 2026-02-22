@@ -1,4 +1,4 @@
-import {setupManagerTheme} from '@github-ui/docs-shared'
+import {setupManagerTheme} from '@github-ui/storybook-config'
 import {addons} from 'storybook/manager-api'
 
 setupManagerTheme(addons, {

@@ -1,5 +1,5 @@
 {
-  "name": "@github-ui/docs-html",
+  "name": "@github-ui/examples-html",
   "private": true,
   "type": "module",
   "scripts": {
@@ -7,7 +7,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@github-ui/docs-shared": "*",
+    "@github-ui/storybook-config": "*",
     "@github-ui/storybook-addon-performance-panel": "*",
     "@storybook/html-vite": "^10",
     "storybook": "^10"

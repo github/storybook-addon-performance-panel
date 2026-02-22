@@ -7,7 +7,6 @@ export const Route = createFileRoute('/')({
 })
 
 function IndexPage() {
-  console.log('Rendering IndexPage component')
   return (
     <div className="mdx-content">
       <Content />
