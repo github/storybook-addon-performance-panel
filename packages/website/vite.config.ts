@@ -6,9 +6,11 @@ import rehypeAutolink from 'rehype-autolink-headings'
 import rehypeSlug from 'rehype-slug'
 import remarkGfm from 'remark-gfm'
 import {defineConfig} from 'vite'
+import typedCssModules from 'vite-plugin-typed-css-modules'
 
 export default defineConfig({
   plugins: [
+    typedCssModules(),
     mdx({
       remarkPlugins: [remarkGfm],
       rehypePlugins: [
@@ -32,6 +34,7 @@ export default defineConfig({
         generatedRouteTree: 'routeTree.gen.ts',
         quoteStyle: 'single',
         semicolons: false,
+        routeFileIgnorePattern: '\\.d\\.ts$',
       },
       prerender: {
         enabled: true,

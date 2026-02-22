@@ -17,3 +17,6 @@ storybook-static/
 
 # TanStack generated files
 .tanstack/
+
+# Generated CSS module type declarations
+*.module.css.d.ts
