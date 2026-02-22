@@ -1697,7 +1697,7 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
  * @private
  */
 function PanelContent({active}: {active: boolean}) {
-  const {storyId, previewInitialized, viewMode, refId} = useStorybookState()
+  const {storyId, previewInitialized, viewMode} = useStorybookState()
 
   if (!active) return null
 
@@ -1734,12 +1734,9 @@ function PanelContent({active}: {active: boolean}) {
     )
   }
 
-  // Key by refId to ensure full isolation between composed storybooks (refs).
-  // Each ref is a separate Storybook instance with its own preview iframe and
-  // channel — reusing panel state across refs would show stale/mixed metrics.
-  // Don't key by storyId — we manage profiler cleanup internally to avoid
-  // losing mount data during story transitions within the same ref.
-  return <ConnectedPanelContent key={refId ?? 'local'} storyId={storyId} />
+  // Don't key by storyId - we manage profiler cleanup internally to avoid
+  // losing mount data during story transitions
+  return <ConnectedPanelContent storyId={storyId} />
 }
 
 // ============================================================================
