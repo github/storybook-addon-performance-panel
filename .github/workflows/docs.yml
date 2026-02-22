@@ -24,6 +24,8 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm run site:build
+        env:
+          BASE_PATH: ${{ github.event_name != 'pull_request' && '/storybook-addon-performance-panel/' || '' }}
       - run: npm run build-storybook -w @github-ui/examples-react
       - name: Merge into single site
         run: |
