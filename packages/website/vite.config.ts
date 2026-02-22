@@ -3,7 +3,6 @@ import rehypeShiki from '@shikijs/rehype'
 import {tanstackStart} from '@tanstack/react-start/plugin/vite'
 import react from '@vitejs/plugin-react'
 import rehypeAutolink from 'rehype-autolink-headings'
-import rehypeMermaid from 'rehype-mermaid'
 import rehypeSlug from 'rehype-slug'
 import remarkGfm from 'remark-gfm'
 import {defineConfig} from 'vite'
@@ -15,14 +14,6 @@ export default defineConfig({
       rehypePlugins: [
         rehypeSlug,
         [rehypeAutolink, {behavior: 'wrap'}],
-        [
-          rehypeMermaid,
-          {
-            strategy: 'img-svg',
-            dark: true,
-            mermaidConfig: {fontFamily: "'Mona Sans', sans-serif"},
-          },
-        ],
         [
           rehypeShiki,
           {
