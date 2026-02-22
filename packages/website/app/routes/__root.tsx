@@ -4,7 +4,7 @@ import monaSansLatinUrl from '@fontsource-variable/mona-sans/files/mona-sans-lat
 import {MarkGithubIcon, PackageIcon, ThreeBarsIcon, XIcon} from '@primer/octicons-react'
 import {IconButton, NavList, PageLayout} from '@primer/react'
 import {createRootRoute, HeadContent, Link, Outlet, Scripts, useRouterState} from '@tanstack/react-router'
-import {useCallback, useEffect, useRef, useSyncExternalStore} from 'react'
+import React, {useCallback, useEffect, useRef, useSyncExternalStore} from 'react'
 
 import styles from './layout.module.css'
 
@@ -61,7 +61,6 @@ const NAV: NavSection[] = [
         label: 'Metrics',
         to: '/docs/metrics',
         children: [
-          {label: 'Overview', hash: '#metrics-reference'},
           {label: 'Key thresholds', hash: '#key-thresholds'},
           {label: 'Frame timing', hash: '#frame-timing'},
           {label: 'Input responsiveness', hash: '#input-responsiveness'},
@@ -77,7 +76,6 @@ const NAV: NavSection[] = [
         label: 'Collectors',
         to: '/docs/collectors',
         children: [
-          {label: 'Overview', hash: '#collectors-reference'},
           {label: 'Collection methods', hash: '#collection-methods'},
           {label: 'ElementTimingCollector', hash: '#elementtimingcollector'},
           {label: 'ForcedReflowCollector', hash: '#forcedreflowcollector'},
@@ -213,34 +211,28 @@ function RootLayout() {
               )
             }
             const isActive = pathname === item.to || (item.to !== '/' && pathname.startsWith(item.to))
-            if (!item.children?.length) {
-              return (
-                <NavList.Item key={item.to} as={Link} to={item.to} aria-current={isActive ? 'page' : undefined}>
+            return (
+              <React.Fragment key={item.to}>
+                <NavList.Item as={Link} to={item.to} aria-current={isActive ? 'page' : undefined}>
                   {item.label}
                 </NavList.Item>
-              )
-            }
-            return (
-              <NavList.Item key={item.to} defaultOpen={isActive}>
-                {item.label}
-                <NavList.SubNav>
-                  {item.children.map(child => {
-                    const childHash = child.hash.slice(1)
-                    const isHashActive = isClient && isActive && hash.replace(/^#/, '') === childHash
-                    return (
-                      <NavList.Item
-                        key={child.hash}
-                        as={Link}
-                        to={item.to}
-                        hash={childHash}
-                        aria-current={isHashActive ? 'page' : undefined}
-                      >
-                        {child.label}
-                      </NavList.Item>
-                    )
-                  })}
-                </NavList.SubNav>
-              </NavList.Item>
+                {item.children?.map(child => {
+                  const childHash = child.hash.slice(1)
+                  const isHashActive = isClient && isActive && hash.replace(/^#/, '') === childHash
+                  return (
+                    <NavList.Item
+                      key={child.hash}
+                      as={Link}
+                      to={item.to}
+                      hash={childHash}
+                      aria-current={isHashActive ? 'page' : undefined}
+                      className={styles.subItem}
+                    >
+                      {child.label}
+                    </NavList.Item>
+                  )
+                })}
+              </React.Fragment>
             )
           })}
         </NavList.Group>

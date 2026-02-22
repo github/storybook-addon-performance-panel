@@ -113,6 +113,14 @@
   padding-top: 0 !important;
 }
 
+/* Indent sub-items under their parent page link */
+.subItem {
+  margin-left: 1rem !important;
+  border-left: 1px solid var(--borderColor-default, #d0d7de);
+  border-radius: 0 !important;
+  font-size: 0.8125rem;
+}
+
 /* ------------------------------------------------------------------ */
 /* Mobile navigation drawer                                           */
 /* ------------------------------------------------------------------ */
