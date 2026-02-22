@@ -1,6 +1,6 @@
+import {page, userEvent} from '@vitest/browser/context'
 import React, {useEffect} from 'react'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {page, userEvent} from 'vitest/browser'
 import {render} from 'vitest-browser-react'
 
 import {PERF_EVENTS} from '../core/performance-types'

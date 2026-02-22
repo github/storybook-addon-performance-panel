@@ -9,7 +9,7 @@ import {defineConfig} from 'vite'
 import typedCssModules from 'vite-plugin-typed-css-modules'
 
 export default defineConfig({
-  base: process.env.BASE_PATH || '/',
+  base: process.env.BASE_PATH ?? '/',
   plugins: [
     typedCssModules(),
     mdx({
