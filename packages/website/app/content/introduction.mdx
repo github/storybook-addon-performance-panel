@@ -1,8 +1,11 @@
+import panelOverviewUrl from '../assets/panel-overview.webp?url'
+import architectureUrl from '../assets/architecture.svg?url'
+
 # storybook-addon-performance-panel
 
 A [Storybook](https://storybook.js.org) addon for **real-time performance monitoring**. It surfaces frame timing, input responsiveness, layout stability, React profiling, memory pressure, and more — directly inside Storybook.
 
-<img src="/images/panel-overview.webp" width="1276" height="1039" alt="Performance panel showing all metric sections in Storybook" fetchpriority="high" />
+<img src={panelOverviewUrl} width="1276" height="1039" alt="Performance panel showing all metric sections in Storybook" fetchpriority="high" />
 
 The panel appears as **⚡ Performance** at the bottom of Storybook when viewing any story.
 
@@ -27,7 +30,7 @@ The addon is designed for **React** projects using `@storybook/react-vite`. It c
 
 ## Architecture
 
-<img src="/images/architecture.svg" width="1509" height="530" loading="lazy" alt="Architecture diagram showing the Preview iframe with Performance decorator, Metric collectors, and browser APIs (requestAnimationFrame, PerformanceObservers, MutationObservers, React Profiler) sending metrics via channel.emit to the Performance panel in the Manager UI" />
+<img src={architectureUrl} width="1509" height="530" loading="lazy" alt="Architecture diagram showing the Preview iframe with Performance decorator, Metric collectors, and browser APIs (requestAnimationFrame, PerformanceObservers, MutationObservers, React Profiler) sending metrics via channel.emit to the Performance panel in the Manager UI" />
 
 The decorator wraps each story in the preview iframe. Collectors gather metrics through browser APIs and send them to the panel through Storybook's channel.
 
