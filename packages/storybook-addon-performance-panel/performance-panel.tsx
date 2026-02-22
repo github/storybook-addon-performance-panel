@@ -1197,21 +1197,10 @@ interface ReactSectionProps {
 const EMPTY_PROFILERS: ProfilerInfo[] = []
 
 const ReactSection = React.memo(function ReactSection({profilers = EMPTY_PROFILERS}: ReactSectionProps) {
+  // Don't render the React section at all when no profiler decorator is active
+  // (e.g. HTML/Vue/Svelte storybooks using the universal-only addon entry)
   if (profilers.length === 0) {
-    return (
-      <Section>
-        <SectionHeader>
-          <SectionIcon>⚛️</SectionIcon>
-          <SectionTitle>React Performance</SectionTitle>
-        </SectionHeader>
-        <EmptyState>
-          <EmptyStateTitle>Awaiting profiler data</EmptyStateTitle>
-          <EmptyStateSubtitle>
-            Wrap components with <Code>ProfiledComponent</Code> or interact with the story to trigger renders.
-          </EmptyStateSubtitle>
-        </EmptyState>
-      </Section>
-    )
+    return null
   }
 
   return (
@@ -1372,6 +1361,8 @@ export interface PanelState {
   metrics: PerformanceMetrics
   /** Map of storyId → array of profilers for that story */
   profilersByStory: Record<string, ProfilerInfo[]>
+  /** Whether a React profiler decorator is active for the current story */
+  hasReactProfiler: boolean
   errorMessage: string | null
 }
 
@@ -1387,6 +1378,7 @@ export const INITIAL_STATE: PanelState = {
   status: 'loading',
   metrics: DEFAULT_METRICS,
   profilersByStory: {},
+  hasReactProfiler: false,
   errorMessage: null,
 }
 
@@ -1420,6 +1412,7 @@ export function panelReducer(state: PanelState, action: PanelAction): PanelState
 
       return {
         ...state,
+        hasReactProfiler: true,
         profilersByStory: {
           ...state.profilersByStory,
           [storyId]: updatedProfilers,
@@ -1432,6 +1425,8 @@ export function panelReducer(state: PanelState, action: PanelAction): PanelState
       const currentProfilers = state.profilersByStory[action.currentStoryId]
       return {
         ...state,
+        // Reset hasReactProfiler on story change — it will be set again if a PROFILER_UPDATE arrives
+        hasReactProfiler: currentProfilers ? state.hasReactProfiler : false,
         profilersByStory: currentProfilers ? {[action.currentStoryId]: currentProfilers} : {},
       }
     }
@@ -1645,7 +1640,7 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
             lastLoaf={metrics.lastLoaf}
             worstLoaf={metrics.worstLoaf}
           />
-          <ReactSection profilers={currentProfilers} />
+          {state.hasReactProfiler && <ReactSection profilers={currentProfilers} />}
           <LayoutAndInternalsSection
             layoutShiftScore={metrics.layoutShiftScore}
             layoutShiftCount={metrics.layoutShiftCount}
@@ -1697,7 +1692,7 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
  * @private
  */
 function PanelContent({active}: {active: boolean}) {
-  const {storyId, previewInitialized, viewMode} = useStorybookState()
+  const {storyId, previewInitialized, viewMode, refId} = useStorybookState()
 
   if (!active) return null
 
@@ -1734,9 +1729,12 @@ function PanelContent({active}: {active: boolean}) {
     )
   }
 
-  // Don't key by storyId - we manage profiler cleanup internally to avoid
-  // losing mount data during story transitions
-  return <ConnectedPanelContent storyId={storyId} />
+  // Key by refId to ensure full isolation between composed storybooks (refs).
+  // Each ref is a separate Storybook instance with its own preview iframe and
+  // channel — reusing panel state across refs would show stale/mixed metrics.
+  // Don't key by storyId — we manage profiler cleanup internally to avoid
+  // losing mount data during story transitions within the same ref.
+  return <ConnectedPanelContent key={refId ?? 'local'} storyId={storyId} />
 }
 
 // ============================================================================
