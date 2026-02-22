@@ -1,0 +1,92 @@
+# Getting started
+
+## Installation
+
+```bash
+npm install @github-ui/storybook-addon-performance-panel
+```
+
+## React projects
+
+Register the addon in [`main.ts`](https://storybook.js.org/docs/configure) and compose the decorator in [`preview.ts`](https://storybook.js.org/docs/writing-stories/decorators).
+
+```ts
+// .storybook/main.ts
+import type { StorybookConfig } from '@storybook/react-vite'
+
+const config: StorybookConfig = {
+  stories: ['../src/**/*.stories.@(ts|tsx)'],
+  framework: '@storybook/react-vite',
+  addons: ['@github-ui/storybook-addon-performance-panel'],
+}
+
+export default config
+```
+
+```ts
+// .storybook/preview.ts
+import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel'
+import { definePreview } from '@storybook/react-vite'
+
+const preview = definePreview({
+  addons: [addonPerformancePanel()],
+})
+
+export default preview
+```
+
+## Writing stories
+
+The performance decorator wraps every story automatically — no changes needed to your [stories](https://storybook.js.org/docs/writing-stories). Here's an example using the [CSF factory API](https://storybook.js.org/docs/api/csf):
+
+```tsx
+// Button.stories.tsx
+import preview from '../.storybook/preview'
+
+function Button({ label = 'Click me' }: { label?: string }) {
+  return <button>{label}</button>
+}
+
+const meta = preview.meta({
+  title: 'Components/Button',
+  component: Button,
+})
+export default meta
+
+export const Default = meta.story({})
+export const WithLabel = meta.story({ args: { label: 'Submit' } })
+```
+
+## React profiling in production
+
+Production React builds strip the Profiler API by default. To keep it in deployed [Storybook](https://storybook.js.org) builds, alias `react-dom/client` to `react-dom/profiling`:
+
+```ts
+// .storybook/main.ts
+const config: StorybookConfig = {
+  // ...
+  viteFinal(config) {
+    config.resolve ??= {}
+    config.resolve.alias ??= {}
+    ;(config.resolve.alias as Record<string, string>)['react-dom/client'] =
+      'react-dom/profiling'
+    return config
+  },
+}
+```
+
+## Element timing
+
+Track specific elements by adding the `elementtiming` attribute:
+
+```html
+<img src="/hero.jpg" elementtiming="hero-image" />
+<div elementtiming="main-content">Important content</div>
+```
+
+Each tracked element appears in the **Element Timing** panel section with its render time.
+
+## View mode behavior
+
+- **Story (Canvas) view** — full performance metrics are collected and displayed.
+- **Docs view** — a message explains that metrics are optimized for Canvas view. Docs mode renders stories in iframes, which affects timing accuracy.

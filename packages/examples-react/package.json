@@ -1,12 +1,13 @@
 {
-  "name": "@github-ui/docs",
+  "name": "@github-ui/examples-react",
   "private": true,
   "type": "module",
   "scripts": {
-    "storybook": "storybook dev -p 6006",
+    "storybook": "portless examples-react sh -c 'storybook dev -p $PORT --ci'",
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@github-ui/storybook-config": "*",
     "@github-ui/storybook-addon-performance-panel": "*",
     "@primer/primitives": "^11.4.0",
     "@storybook/addon-docs": "^10.2.10",

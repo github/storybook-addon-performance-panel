@@ -1,10 +1,12 @@
 # @github-ui/storybook-addon-performance-panel
 
-A Storybook addon that provides real-time performance monitoring for stories. It displays comprehensive metrics including frame timing, input responsiveness, memory usage, React profiling, and more.
+A [Storybook](https://storybook.js.org) addon that provides real-time performance monitoring for stories. It displays comprehensive metrics including frame timing, input responsiveness, memory usage, React profiling, and more.
 
-<img width="1519" height="1039" alt="Addon panel loaded on storybook" src="https://github.com/user-attachments/assets/31c7a847-b226-45d9-a113-63b9cdd35714" />
+<img width="1276" alt="Performance panel showing all metric sections in Storybook" src="https://github.com/github/storybook-addon-performance-panel/raw/main/packages/website/public/images/panel-overview.webp" />
 
 ## Quick Start
+
+### React projects
 
 Add the addon to your Storybook configuration:
 
@@ -12,15 +14,15 @@ Add the addon to your Storybook configuration:
 // .storybook/main.ts
 const config = {
   addons: [
-    '@github-ui/storybook-addon-performance-panel/preset',
+    '@github-ui/storybook-addon-performance-panel',
   ],
 }
 ```
 
 ```ts
 // .storybook/preview.ts
-import {definePreview} from 'storybook/preview-api'
 import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel'
+import {definePreview} from '@storybook/react-vite'
 
 export default definePreview({
   addons: [addonPerformancePanel()],
@@ -36,7 +38,9 @@ This is an npm workspaces monorepo:
 | Package | Description |
 |---------|-------------|
 | [packages/storybook-addon-performance-panel](./packages/storybook-addon-performance-panel) | The addon — collectors, panel UI, and types |
-| [packages/docs](./packages/docs) | Documentation site built with Storybook |
+| [packages/examples-react](./packages/examples-react) | React docs storybook (`@storybook/react-vite`) |
+| [packages/storybook-config](./packages/storybook-config) | Shared storybook config (theming, features, Vite helpers) |
+| [packages/website](./packages/website) | Documentation site (TanStack Start + MDX) |
 
 ## Documentation
 
@@ -56,7 +60,10 @@ npm run build        # Build the addon
 npm test             # Run tests
 npm run lint         # Lint
 npm run tsc          # Type check
-npm run docs         # Start the docs site locally
+npm run dev          # Build + start storybook and site with portless
+                     # → http://examples-react.localhost:1355 (React)
+                     # → http://site.localhost:1355 (Docs site)
+npm run docs         # Start just the React docs storybook
 ```
 
 ## Contributing

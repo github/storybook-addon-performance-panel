@@ -3,7 +3,7 @@
  * @module collectors/ReactProfilerCollector
  */
 
-import type {ReactMetrics, RenderInfo} from '../performance-types'
+import type {ReactMetrics, RenderInfo} from '../core/performance-types'
 import type {MetricCollector} from './types'
 import {addToWindow} from './utils'
 

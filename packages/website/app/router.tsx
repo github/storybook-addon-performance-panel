@@ -1,0 +1,21 @@
+import {createRouter as createTanStackRouter} from '@tanstack/react-router'
+
+import {routeTree} from './routeTree.gen'
+
+function createRouter() {
+  return createTanStackRouter({
+    routeTree,
+    scrollRestoration: true,
+    defaultHashScrollIntoView: {behavior: 'smooth'},
+  })
+}
+
+export function getRouter() {
+  return createRouter()
+}
+
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: ReturnType<typeof createRouter>
+  }
+}

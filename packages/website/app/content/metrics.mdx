@@ -1,0 +1,224 @@
+# Metrics reference
+
+All metrics are color-coded using [Web Vitals](https://web.dev/articles/vitals) thresholds:
+
+| Status | Meaning |
+|--------|---------|
+| 🟢 Green | Good — meets targets |
+| 🟡 Yellow | Needs improvement — may cause issues |
+| 🔴 Red | Poor — likely causing issues |
+
+## Key thresholds
+
+| Metric | 🟢 Good | 🟡 Needs work | 🔴 Poor |
+|--------|---------|---------------|---------|
+| FPS | ≥55 | 30–55 | &lt;30 |
+| Frame time | ≤16.67ms | 16.67–32ms | &gt;32ms |
+| Input latency | ≤16ms | 16–50ms | &gt;50ms |
+| INP | ≤200ms | 200–500ms | &gt;500ms |
+| CLS | &lt;0.1 | 0.1–0.25 | &gt;0.25 |
+| TBT | &lt;200ms | 200–600ms | &gt;600ms |
+
+---
+
+## Frame timing
+
+<div data-lead>
+
+Measures rendering smoothness using a `requestAnimationFrame` loop.
+
+</div>
+
+<div data-metric>
+
+<img src="/images/panel-frame-timing.webp" width="275" height="288" loading="lazy" alt="Frame timing panel section" />
+
+| Metric | What it tells you |
+|--------|-------------------|
+| **FPS** | Frames per second. Target: 60. |
+| **Frame time** | Average ms per frame. Target: ≤16.67ms. |
+| **Dropped frames** | Frames exceeding 2× the expected frame time. |
+| **Frame jitter** | Sudden spikes in frame time vs. baseline. |
+| **Frame stability** | How consistent frame times are (percentage). |
+
+</div>
+
+---
+
+## Input responsiveness
+
+<div data-lead>
+
+Measures interaction latency using the [Event Timing API](https://w3c.github.io/event-timing/).
+
+</div>
+
+<div data-metric>
+
+<img src="/images/panel-input.webp" width="275" height="287" loading="lazy" alt="Input responsiveness panel section" />
+
+| Metric | What it tells you |
+|--------|-------------------|
+| **INP** | Interaction to Next Paint — p98 of worst interactions. A Core Web Vital. |
+| **Input latency** | Time from pointer event to next animation frame. |
+| **FID** | First Input Delay — latency of the very first interaction. |
+| **Paint time** | Rendering time via double-`requestAnimationFrame`. |
+| **Last interaction** | Most recent interaction details. Click **Inspect** to highlight. |
+| **Slowest interaction** | Worst interaction recorded. Click **Inspect** to highlight. |
+
+</div>
+
+### INP breakdown
+
+Each interaction includes a timing breakdown:
+
+```
+[wait Xms] → [js Xms] → [paint Xms]
+```
+
+- **Wait (input delay)** — time before JS starts processing. High values mean the main thread was blocked.
+- **JS (processing time)** — time in event handlers. High values mean expensive handler logic.
+- **Paint (presentation delay)** — time from handler completion to visual update. High values mean expensive rendering.
+
+---
+
+## Main thread health
+
+<div data-lead>
+
+Detects main thread blocking via the [Long Tasks API](https://w3c.github.io/longtasks/).
+
+</div>
+
+<div data-metric>
+
+<img src="/images/panel-main-thread.webp" width="275" height="288" loading="lazy" alt="Main thread panel section" />
+
+| Metric | What it tells you |
+|--------|-------------------|
+| **Long tasks** | Tasks blocking the main thread for &gt;50ms. |
+| **Total blocking time** | Sum of `(duration − 50ms)` for all long tasks. Matches Lighthouse TBT. |
+| **Thrashing** | Style writes followed by long frames (forced synchronous layout). |
+| **DOM churn** | Rate of DOM mutations per measurement period. |
+
+</div>
+
+---
+
+## Long animation frames
+
+<div data-lead>
+
+Detailed frame attribution via the [Long Animation Frames API](https://w3c.github.io/long-animation-frames/). Chrome 123+ and Edge 123+ only.
+
+</div>
+
+<div data-metric>
+
+<img src="/images/panel-loaf.webp" width="275" height="286" loading="lazy" alt="Long animation frames panel section" />
+
+| Metric | What it tells you |
+|--------|-------------------|
+| **LoAF count** | Animation frames exceeding 50ms. |
+| **Blocking duration** | Total and longest blocking time from LoAFs. |
+| **P95 duration** | 95th percentile LoAF duration. |
+| **Script attribution** | Which scripts caused slow frames — source URL, function name, invoker type. |
+
+</div>
+
+---
+
+## React performance
+
+<div data-lead>
+
+Uses the [React Profiler API](https://react.dev/reference/react/Profiler).
+
+</div>
+
+<div data-metric>
+
+<img src="/images/panel-react.webp" width="275" height="186" loading="lazy" alt="React performance panel section" />
+
+| Metric | What it tells you |
+|--------|-------------------|
+| **Mount count and duration** | How many times components mounted and how long each took. |
+| **Slow updates** | React updates exceeding the 16ms frame budget. |
+| **P95 duration** | 95th percentile update time — worst-case experience. |
+| **Render cascades** | `setState` during the commit phase (`useLayoutEffect`). Very expensive. |
+
+</div>
+
+---
+
+## Layout stability
+
+<div data-lead>
+
+CLS measurement via the [Layout Instability API](https://wicg.github.io/layout-instability/) with session windowing per the Web Vitals specification.
+
+</div>
+
+<div data-metric>
+
+<img src="/images/panel-layout.webp" width="275" height="185" loading="lazy" alt="Layout stability panel section" />
+
+| Metric | What it tells you |
+|--------|-------------------|
+| **CLS** | Cumulative Layout Shift score. A Core Web Vital. |
+| **Forced reflows** | Layout reads after style writes, forcing synchronous layout. |
+| **Style writes** | Inline style mutations observed via `MutationObserver`. |
+
+</div>
+
+---
+
+## Memory and resources
+
+<div data-lead>
+
+JS heap introspection via `performance.memory`. **Chrome only.**
+
+</div>
+
+<div data-metric>
+
+<img src="/images/panel-memory.webp" width="275" height="220" loading="lazy" alt="Memory panel section" />
+
+| Metric | What it tells you |
+|--------|-------------------|
+| **Heap usage** | Current JS heap size. |
+| **Memory delta** | Change from baseline since last reset. |
+| **GC pressure** | Allocation rate in MB/s. High = frequent garbage collection. |
+| **Compositor layers** | Elements promoted to GPU layers. |
+
+</div>
+
+---
+
+## Element timing
+
+<div data-lead>
+
+Tracks render timing for elements with the `elementtiming` attribute via the [Element Timing API](https://wicg.github.io/element-timing/).
+
+</div>
+
+<div data-metric>
+
+<img src="/images/panel-element-timing.webp" width="275" height="186" loading="lazy" alt="Element timing panel section" />
+
+| Metric | What it tells you |
+|--------|-------------------|
+| **Element count** | Number of tracked elements on the page. |
+| **Largest render time** | Slowest element to render (similar to LCP). |
+| **Individual elements** | Render time for each tracked element. |
+
+</div>
+
+### Usage
+
+```html
+<img src="/hero.jpg" elementtiming="hero-image" />
+<div elementtiming="main-content">Key content</div>
+```

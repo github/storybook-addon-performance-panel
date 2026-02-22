@@ -11,7 +11,7 @@
  */
 import type {Preview} from '@storybook/react'
 
-import {withPerformanceMonitor} from './performance-decorator'
+import {withPerformanceMonitor} from './react/performance-decorator'
 
 const preview: Preview = {
   decorators: [withPerformanceMonitor],

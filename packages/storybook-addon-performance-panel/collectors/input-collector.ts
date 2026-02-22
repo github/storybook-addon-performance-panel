@@ -16,7 +16,7 @@
  * @see https://w3c.github.io/event-timing/
  */
 
-import type {InteractionInfo} from '../performance-types'
+import type {InteractionInfo} from '../core/performance-types'
 import {
   INPUT_LATENCIES_WINDOW,
   INTERACTION_LATENCIES_WINDOW,

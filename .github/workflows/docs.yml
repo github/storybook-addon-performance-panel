@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   build-docs:
-    name: Build Storybook
+    name: Build docs site and storybooks
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -22,11 +22,18 @@ jobs:
           node-version-file: '.nvmrc'
           cache: npm
       - run: npm ci
-      - run: npm run docs:build
+      - run: npm run build
+      - run: npm run site:build
+      - run: npm run build-storybook -w @github-ui/examples-react
+      - name: Merge into single site
+        run: |
+          mkdir -p _site/examples
+          cp -r packages/website/dist/client/* _site/
+          cp -r packages/examples-react/storybook-static _site/examples/react
       - uses: actions/upload-artifact@v6
         with:
-          name: storybook-static
-          path: packages/docs/storybook-static/
+          name: site
+          path: _site/
 
   deploy:
     name: Deploy to Pages
@@ -42,12 +49,12 @@ jobs:
     steps:
       - uses: actions/download-artifact@v7
         with:
-          name: storybook-static
-          path: storybook-static
+          name: site
+          path: site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: storybook-static
+          path: site
       - name: Deploy to GitHub Pages
         id: deploy
         uses: actions/deploy-pages@v4

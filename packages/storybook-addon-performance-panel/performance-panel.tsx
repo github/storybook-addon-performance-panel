@@ -52,6 +52,17 @@ import {useTheme} from 'storybook/theming'
 
 import {computeP95} from './collectors/utils'
 import {
+  DEFAULT_METRICS,
+  getStatusVariant,
+  getZeroIsGoodStatus,
+  type InteractionInfo,
+  PERF_EVENTS,
+  type PerformanceMetrics,
+  type ReactMetrics,
+  type StatusVariant,
+  THRESHOLDS,
+} from './core/performance-types'
+import {
   ContentArea,
   DetailValue,
   EmptyState,
@@ -82,17 +93,6 @@ import {
   WebVitalBadge,
 } from './panel/components'
 import {formatMb, formatMs, formatNumber, formatPercent, formatRate, formatScore} from './panel/formatters'
-import {
-  DEFAULT_METRICS,
-  getStatusVariant,
-  getZeroIsGoodStatus,
-  type InteractionInfo,
-  PERF_EVENTS,
-  type PerformanceMetrics,
-  type ReactMetrics,
-  type StatusVariant,
-  THRESHOLDS,
-} from './performance-types'
 
 // ============================================================================
 // Profiler Types

@@ -88,9 +88,9 @@ import type {Decorator} from '@storybook/react'
 import {memo, Profiler, useCallback, useLayoutEffect, useRef} from 'react'
 import {addons} from 'storybook/preview-api'
 
-import {CollectorManager} from './collectors/collector-manager'
-import {performanceStore} from './performance-store'
-import {PERF_EVENTS} from './performance-types'
+import {CollectorManager} from '../collectors/collector-manager'
+import {performanceStore} from '../core/performance-store'
+import {PERF_EVENTS} from '../core/performance-types'
 import {
   ReportReactRenderProfileContext,
   type ReportReactRenderProfileContextValue,

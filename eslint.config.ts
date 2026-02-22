@@ -12,7 +12,7 @@ import tseslint from 'typescript-eslint'
 
 export default defineConfig(
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/storybook-static/**'],
+    ignores: ['**/dist/**', '**/node_modules/**', '**/storybook-static/**', '**/*.module.css.d.ts'],
   },
   {
     // ESLint 9 ignores dotfiles by default; explicitly include .storybook
@@ -42,7 +42,7 @@ export default defineConfig(
   jsxA11y.flatConfigs.strict,
   {
     plugins: {'react-hooks': eslintPluginReactHooks as unknown as ESLint.Plugin},
-    rules: eslintPluginReactHooks.configs.recommended.rules,
+    rules: eslintPluginReactHooks.configs['recommended-latest'].rules,
   },
   {
     plugins: {

@@ -1,0 +1,16 @@
+{
+  "name": "storybook-addon-performance-panel",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "hostRequirements": {
+    "cpus": 16,
+    "memory": "64gb"
+  },
+  "forwardPorts": [1355],
+  "portsAttributes": {
+    "1355": {
+      "label": "portless",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "npm install"
+}

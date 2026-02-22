@@ -1,0 +1,229 @@
+/* ------------------------------------------------------------------ */
+/* MDX content wrapper                                                */
+/* ------------------------------------------------------------------ */
+
+.content {
+  max-width: 48rem;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+/* Headings --------------------------------------------------------- */
+
+.content h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--borderColor-default, #d0d7de);
+}
+
+.content h2 {
+  font-size: 1.5rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  margin-top: 2.5rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--borderColor-default, #d0d7de);
+}
+
+.content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.content h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Anchor links on headings ----------------------------------------- */
+
+.content :is(h1, h2, h3, h4) a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.content :is(h2, h3, h4) a::after {
+  content: ' #';
+  color: var(--fgColor-muted, #636c76);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.content :is(h2, h3, h4) a:hover::after {
+  opacity: 1;
+}
+
+/* Prose ------------------------------------------------------------ */
+
+.content p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.content a:not(:is(h1, h2, h3, h4) a) {
+  color: var(--fgColor-accent, #0969da);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--fgColor-accent, #0969da) 40%, transparent);
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 1px;
+}
+
+.content a:not(:is(h1, h2, h3, h4) a):hover {
+  text-decoration-color: var(--fgColor-accent, #0969da);
+}
+
+.content ul,
+.content ol {
+  padding-left: 2em;
+  margin-bottom: 1rem;
+}
+
+.content li + li {
+  margin-top: 0.25rem;
+}
+
+.content strong {
+  font-weight: 600;
+}
+
+.content hr {
+  border: none;
+  border-top: 1px solid var(--borderColor-default, #d0d7de);
+  margin: 2rem 0;
+}
+
+.content blockquote {
+  padding: 0 1em;
+  color: var(--fgColor-muted, #636c76);
+  border-left: 0.25em solid var(--borderColor-default, #d0d7de);
+  margin-bottom: 1rem;
+}
+
+/* Inline code ------------------------------------------------------ */
+
+.content code {
+  font-family: var(
+    --fontStack-monospace,
+    'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace
+  );
+  font-size: 0.85em;
+  background-color: var(--bgColor-neutral-muted, rgba(175, 184, 193, 0.2));
+  border-radius: 6px;
+  padding: 0.2em 0.4em;
+}
+
+/* Code blocks ------------------------------------------------------ */
+
+.content pre {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  border: 1px solid var(--borderColor-default, #d0d7de);
+}
+
+.content pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+}
+
+/* Shiki multi-theme code blocks ------------------------------------ */
+/* rehype-shiki with `themes` renders a single <pre> using CSS        */
+/* variables: inline styles carry the light values while              */
+/* --shiki-dark / --shiki-dark-bg hold the dark values.               */
+
+:global([data-color-mode='dark']) .content pre:global(.shiki),
+:global([data-color-mode='dark']) .content pre:global(.shiki) span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+
+/* Tables ----------------------------------------------------------- */
+
+.content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.content th,
+.content td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--borderColor-default, #d0d7de);
+  text-align: left;
+}
+
+.content th {
+  font-weight: 600;
+  background-color: var(--bgColor-muted, #f6f8fa);
+}
+
+/* Mermaid diagrams ------------------------------------------------- */
+
+.content picture {
+  display: block;
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.content picture img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Images ----------------------------------------------------------- */
+
+.content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  border: 1px solid var(--borderColor-default, #d0d7de);
+}
+
+/* Metric section grid — image beside table ------------------------- */
+
+.content [data-metric] {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 1.25rem;
+  align-items: start;
+  margin: 0.75rem 0 1rem;
+}
+
+.content [data-metric] img {
+  grid-row: 1 / -1;
+}
+
+.content [data-metric] table {
+  margin-bottom: 0;
+}
+
+/* Lead / subtitle paragraph under section headings -------------- */
+
+.content [data-lead] p {
+  margin-bottom: 0;
+  font-size: 0.9375rem;
+  color: var(--fgColor-muted, #636c76);
+}
+
+@media (max-width: 640px) {
+  .content [data-metric] {
+    grid-template-columns: 1fr;
+  }
+}

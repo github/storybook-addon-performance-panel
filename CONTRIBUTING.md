@@ -11,12 +11,13 @@ Please note that this project is released with a [Contributor Code of Conduct](C
 
 ## Project structure
 
-This is an npm workspaces monorepo with two packages:
+This is an npm workspaces monorepo with multiple packages:
 
 | Directory | Package | Description |
 |-----------|---------|-------------|
 | `packages/storybook-addon-performance-panel` | `@github-ui/storybook-addon-performance-panel` | The addon — collectors, panel UI, and types |
-| `packages/docs` | `@github-ui/docs` | Documentation site built with Storybook |
+| `packages/examples-react` | `@github-ui/examples-react` | React docs storybook (`@storybook/react-vite`) |
+| `packages/storybook-config` | `@github-ui/storybook-config` | Shared storybook config (theming, features, Vite helpers) |
 
 ### Useful commands
 
@@ -27,8 +28,15 @@ This is an npm workspaces monorepo with two packages:
 | `npm test` | Run tests |
 | `npm run lint` | Lint with ESLint + Prettier |
 | `npm run tsc` | Type-check the addon |
-| `npm run docs` | Build the addon and start the docs site locally |
-| `npm run docs:build` | Build the addon and the docs site for production |
+| `npm run dev` | Build + start both storybooks with [portless](https://github.com/nicolo-ribaudo/portless) |
+| `npm run docs` | Build the addon and start the React docs storybook |
+| `npm run docs:build` | Build the addon and the React docs for production |
+
+#### Portless dev URLs
+
+When using `npm run dev`, each storybook is served at a stable `.localhost` URL via [portless](https://github.com/nicolo-ribaudo/portless):
+
+- **React docs:** `http://examples-react.localhost:1355`
 
 ## Prerequisites for running and testing code
 
