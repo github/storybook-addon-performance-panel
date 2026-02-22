@@ -40,7 +40,7 @@ export default defineConfig({
       prerender: {
         enabled: true,
         crawlLinks: true,
-        filter: (page: {path: string}) => !page.path.startsWith('/examples/') && !page.path.includes('#'),
+        filter: (page: {path: string}) => !page.path.includes('/examples/') && !page.path.includes('#'),
       },
     }),
     react({babel: {plugins: [['babel-plugin-react-compiler']]}}),
