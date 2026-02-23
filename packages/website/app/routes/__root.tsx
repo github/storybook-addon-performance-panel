@@ -146,7 +146,9 @@ const PORTLESS_HREFS: Record<string, string> = {
 }
 
 function resolveHref(href: string, isLocal: boolean): string {
-  return isLocal ? (PORTLESS_HREFS[href] ?? href) : href
+  if (isLocal) return PORTLESS_HREFS[href] ?? href
+  const base = import.meta.env.BASE_URL
+  return href.startsWith('/') && base !== '/' ? base.replace(/\/$/, '') + href : href
 }
 
 function RootLayout() {
