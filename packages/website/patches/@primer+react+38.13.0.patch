@@ -1,0 +1,18 @@
+diff --git a/node_modules/@primer/react/dist/PageLayout/usePaneWidth.js b/node_modules/@primer/react/dist/PageLayout/usePaneWidth.js
+index 1234567..abcdefg 100644
+--- a/node_modules/@primer/react/dist/PageLayout/usePaneWidth.js
++++ b/node_modules/@primer/react/dist/PageLayout/usePaneWidth.js
+@@ -73,11 +73,8 @@
+  * Note: This calls getComputedStyle which forces layout - cache the result when possible.
+  */
+ function getPaneMaxWidthDiff(paneElement, isSidebar = false) {
+-  const defaultValue = isSidebar ? DEFAULT_SIDEBAR_MAX_WIDTH_DIFF : DEFAULT_MAX_WIDTH_DIFF;
+-  const cssVar = isSidebar ? '--sidebar-max-width-diff' : '--pane-max-width-diff';
+-  if (!paneElement) return defaultValue;
+-  const value = parseInt(getComputedStyle(paneElement).getPropertyValue(cssVar), 10);
+-  return value > 0 ? value : defaultValue;
++  // Return the JS-imported default directly to avoid getComputedStyle / layout queries.
++  return isSidebar ? DEFAULT_SIDEBAR_MAX_WIDTH_DIFF : DEFAULT_MAX_WIDTH_DIFF;
+ }
+ 
+ // Helper to update ARIA slider attributes via direct DOM manipulation
