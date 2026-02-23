@@ -3,8 +3,9 @@ name: Release
 on:
   push:
     branches: [main]
-
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled]
 
 permissions:
   contents: write
@@ -15,8 +16,12 @@ permissions:
 jobs:
   release:
     name: Release
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: production
+    concurrency:
+      group: release-production
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -49,3 +54,87 @@ jobs:
             -f state=success \
             -f context=CI \
             -f description="Skipped for version-only PR (code validated on main)"
+
+  canary:
+    name: Canary Release
+    if: >-
+      github.event_name == 'pull_request' &&
+      contains(github.event.pull_request.labels.*.name, 'canary')
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: canary-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm ci
+      - run: npm run build
+
+      - name: Set canary version
+        id: version
+        working-directory: packages/storybook-addon-performance-panel
+        run: |
+          base_version=$(node -p "require('./package.json').version")
+          short_sha=$(echo "${{ github.event.pull_request.head.sha }}" | cut -c1-7)
+          canary_version="${base_version}-canary.${short_sha}"
+          npm version "$canary_version" --no-git-tag-version
+          echo "version=$canary_version" >> "$GITHUB_OUTPUT"
+
+      - name: Publish canary
+        working-directory: packages/storybook-addon-performance-panel
+        run: npm publish --tag canary --provenance --access public
+        env:
+          NPM_TOKEN: ''
+          NPM_CONFIG_PROVENANCE: true
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        env:
+          CANARY_VERSION: ${{ steps.version.outputs.version }}
+        with:
+          script: |
+            const pkg = '@github-ui/storybook-addon-performance-panel';
+            const version = process.env.CANARY_VERSION;
+            const marker = '<!-- canary-release-comment -->';
+            const body = [
+              marker,
+              `### 📦 Canary Release`,
+              '',
+              '| Package | Version |',
+              '| --- | --- |',
+              `| \`${pkg}\` | [\`${version}\`](https://www.npmjs.com/package/${pkg}/v/${version}) |`,
+              '',
+              '```sh',
+              `npm install ${pkg}@${version}`,
+              '```',
+              '',
+              `_Published from ${context.sha.slice(0, 7)}_`,
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
