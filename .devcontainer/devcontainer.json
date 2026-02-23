@@ -12,5 +12,6 @@
       "onAutoForward": "notify"
     }
   },
-  "postCreateCommand": "npm install"
+  "onCreateCommand": "npm install && npx playwright install --with-deps",
+  "updateContentCommand": "npm install"
 }
