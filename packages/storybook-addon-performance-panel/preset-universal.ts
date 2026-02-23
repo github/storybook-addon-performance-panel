@@ -25,15 +25,3 @@ function getAddonDir(): string {
 export function managerEntries(entry: string[] = []): string[] {
   return [...entry, join(getAddonDir(), 'manager.js')]
 }
-
-/**
- * Preview annotations for the universal preset.
- *
- * Ensures the universal decorator is auto-applied even when consumers
- * only add the addon to `main.ts` without using `definePreview` in
- * their `preview.ts`. This provides backward-compatible behavior
- * matching the React preset's auto-discovery.
- */
-export function previewAnnotations(entry: string[] = []): string[] {
-  return [...entry, join(getAddonDir(), 'preview-universal.js')]
-}
