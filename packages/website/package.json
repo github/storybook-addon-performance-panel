@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "postinstall": "patch-package --patch-dir patches",
     "dev": "portless site sh -c 'vite dev --port $PORT'",
     "build": "vite build",
     "preview": "vite preview"
@@ -25,6 +26,7 @@
     "@vitejs/plugin-react": "^5.1.4",
     "babel-plugin-react-compiler": "^1.0.0",
     "lightningcss": "^1.31.1",
+    "patch-package": "^8.0.1",
     "rehype-autolink-headings": "^7.1.0",
     "rehype-slug": "^6.0.0",
     "remark-gfm": "^4.0.1",
