@@ -106,6 +106,7 @@
   top: calc(3.25rem + 1px) !important;
   max-height: calc(100vh - 3.25rem - 1px);
   overflow-y: auto;
+  contain: layout style;
 }
 
 /* Remove top padding inside the pane so "Overview" aligns with content h1 */
@@ -186,6 +187,14 @@
   overflow-y: auto;
   max-height: calc(100vh - 3.25rem);
   padding: 0.5rem 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Main content area — isolate layout from sidebar & header           */
+/* ------------------------------------------------------------------ */
+
+.mainContent {
+  contain: layout style;
 }
 
 /* ------------------------------------------------------------------ */

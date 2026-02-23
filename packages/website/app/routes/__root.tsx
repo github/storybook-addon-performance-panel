@@ -321,7 +321,7 @@ function RootLayout() {
           </PageLayout.Pane>
 
           <PageLayout.Content padding="normal">
-            <div id="main-content">
+            <div id="main-content" className={styles.mainContent}>
               <Outlet />
             </div>
           </PageLayout.Content>
