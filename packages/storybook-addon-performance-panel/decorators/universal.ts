@@ -19,9 +19,53 @@
  * @see {@link ./performance-decorator.tsx} - React-specific decorator with Profiler support
  */
 
-import type {DecoratorFunction} from 'storybook/internal/types'
+import type {DecoratorFunction, Renderer} from 'storybook/internal/types'
 
 import {getActiveCore, PerformanceMonitorCore, setActiveCore} from '../core/preview-core'
+
+// ============================================================================
+// Root Element Discovery
+// ============================================================================
+
+/** Maximum time (ms) to wait for #storybook-root to appear in the DOM. */
+const ROOT_DISCOVERY_TIMEOUT_MS = 5_000
+
+/**
+ * Wait for `#storybook-root` to appear in the DOM, then call `onFound`.
+ *
+ * Uses a MutationObserver on `document.body` to catch async-mounting
+ * frameworks (Vue, Svelte, Web Components) where the root element may
+ * not exist by the next animation frame.
+ */
+function waitForStorybookRoot(core: PerformanceMonitorCore, onFound: (root: HTMLElement) => void): void {
+  // Fast path — already in the DOM
+  const existing = document.getElementById('storybook-root')
+  if (existing) {
+    onFound(existing)
+    return
+  }
+
+  const observer = new MutationObserver(() => {
+    // Guard: if a different story started while we were waiting, bail out
+    if (getActiveCore() !== core) {
+      observer.disconnect()
+      return
+    }
+
+    const root = document.getElementById('storybook-root')
+    if (root) {
+      observer.disconnect()
+      onFound(root)
+    }
+  })
+
+  observer.observe(document.body, {childList: true, subtree: true})
+
+  // Safety timeout — don't leak the observer indefinitely
+  setTimeout(() => {
+    observer.disconnect()
+  }, ROOT_DISCOVERY_TIMEOUT_MS)
+}
 
 // ============================================================================
 // Universal Decorator
@@ -47,15 +91,15 @@ import {getActiveCore, PerformanceMonitorCore, setActiveCore} from '../core/prev
  * }
  * export default preview
  */
-export const withPerformanceMonitor: DecoratorFunction = (storyFn, ctx) => {
+export const withPerformanceMonitor: DecoratorFunction = (storyFn, ctx): Renderer['storyResult'] => {
   const params = ctx.parameters.performancePanel as {disable?: boolean} | undefined
   if (params?.disable) {
     setActiveCore(null)
-    return storyFn() as unknown
+    return storyFn()
   }
 
   // Reuse the existing core if the story hasn't changed.
-  // The decorator runs on every React render — creating a new core each time
+  // The decorator runs on every render — creating a new core each time
   // would stop/restart metrics collection and lose all accumulated data.
   let core = getActiveCore()
   if (core?.storyId !== ctx.id) {
@@ -63,18 +107,15 @@ export const withPerformanceMonitor: DecoratorFunction = (storyFn, ctx) => {
     setActiveCore(core)
     core.start()
 
-    // Observe story root after the framework renders the story into the DOM.
-    // Only needed once per story (core change), not on every re-render.
+    // Observe story root once the framework has mounted into the DOM.
+    // Uses a MutationObserver to handle async-rendering frameworks
+    // (Vue, Svelte, Web Components) where #storybook-root may not be
+    // populated by the next animation frame.
     const createdCore = core
-    requestAnimationFrame(() => {
-      if (getActiveCore() !== createdCore) return
-
-      const root = document.getElementById('storybook-root')
-      if (root) {
-        createdCore.observeContainer(root)
-      }
+    waitForStorybookRoot(createdCore, root => {
+      createdCore.observeContainer(root)
     })
   }
 
-  return storyFn() as unknown
+  return storyFn()
 }

@@ -15,15 +15,10 @@
  * @module universal
  */
 import {definePreviewAddon} from 'storybook/internal/csf'
-import type {ProjectAnnotations, Renderer} from 'storybook/internal/types'
 
-import {withPerformanceMonitor} from './decorators/universal'
+import addonAnnotations from './preview-universal'
 
-const annotations: ProjectAnnotations<Renderer> = {
-  decorators: [withPerformanceMonitor],
-}
-
-const start = () => definePreviewAddon(annotations)
+const start = () => definePreviewAddon(addonAnnotations)
 export default start
 
 export type {PerformancePanelParameters} from './core/performance-types'

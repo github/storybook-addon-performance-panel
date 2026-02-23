@@ -9,11 +9,6 @@ const config: StorybookConfig = {
     ...SHARED_FEATURES,
   },
   viteFinal(config) {
-    // When building for Pages, assets are served from /examples/universal/
-    if (process.env.CI) {
-      config.base = '/examples/universal/'
-    }
-
     return withLightningCSS(config)
   },
 }
