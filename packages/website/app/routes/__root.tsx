@@ -146,9 +146,7 @@ const PORTLESS_HREFS: Record<string, string> = {
 }
 
 function resolveHref(href: string, isLocal: boolean): string {
-  if (isLocal) return PORTLESS_HREFS[href] ?? href
-  const base = import.meta.env.BASE_URL
-  return href.startsWith('/') && base !== '/' ? base.replace(/\/$/, '') + href : href
+  return isLocal ? (PORTLESS_HREFS[href] ?? href) : href
 }
 
 function RootLayout() {
@@ -195,7 +193,7 @@ function RootLayout() {
   }, [])
 
   const navContent = (
-    <NavList aria-label="Documentation" key={pathname}>
+    <NavList aria-label="Documentation">
       {NAV.map(group => (
         <NavList.Group key={group.section}>
           <NavList.GroupHeading>{group.section}</NavList.GroupHeading>
@@ -323,7 +321,7 @@ function RootLayout() {
           </PageLayout.Pane>
 
           <PageLayout.Content padding="normal">
-            <div id="main-content">
+            <div id="main-content" className={styles.mainContent}>
               <Outlet />
             </div>
           </PageLayout.Content>
