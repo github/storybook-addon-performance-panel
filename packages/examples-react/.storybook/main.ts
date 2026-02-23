@@ -14,11 +14,6 @@ const config: StorybookConfig = {
     autodocs: {excludeFromSidebar: true},
   },
   viteFinal(config) {
-    // When building for Pages, assets are served from /examples/react/
-    if (process.env.CI) {
-      config.base = '/examples/react/'
-    }
-
     // Use React profiling build so the React Profiler panel works in production
     config.resolve ??= {}
     config.resolve.alias ??= {}
