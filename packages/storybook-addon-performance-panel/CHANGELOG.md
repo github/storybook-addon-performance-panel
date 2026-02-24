@@ -1,5 +1,27 @@
 # @github-ui/storybook-addon-performance-panel
 
+## 1.1.0
+
+### Minor Changes
+
+- [#41](https://github.com/github/storybook-addon-performance-panel/pull/41) [`6d3e5eb`](https://github.com/github/storybook-addon-performance-panel/commit/6d3e5eb4e29c1ab31e2542d2038f28091852bb06) Thanks [@mattcosta7](https://github.com/mattcosta7)! - Add framework-agnostic support via new universal entry points and split decorator architecture.
+
+  New entry points:
+  - `./universal` — non-React public API (universal decorator + core)
+  - `./react` — React-specific API with Profiler support
+
+  New files:
+  - `core/preview-core.ts` — shared `PerformanceMonitorCore` class
+  - `decorators/universal.ts` — framework-agnostic decorator
+  - `decorators/react.tsx` — React.Profiler bridge decorator
+  - `preset-universal.ts` / `preview-universal.ts` — Storybook preset for non-React frameworks
+
+  The React decorator stack is now `[withPerformanceMonitor, withReactProfiler]`, where the universal layer handles browser-level metrics and the React layer adds Profiler integration.
+
+### Patch Changes
+
+- [#39](https://github.com/github/storybook-addon-performance-panel/pull/39) [`1f8f843`](https://github.com/github/storybook-addon-performance-panel/commit/1f8f843f0a66cb58a828ee853dfa82da1df7a817) Thanks [@mattcosta7](https://github.com/mattcosta7)! - Reorganize internal file structure: move `performance-store` and `performance-types` into `core/`, move `performance-decorator`, `react-profiler-wrapper`, and `ReportReactRenderProfileContext` into `react/`. Remove unused `./react` and `./components` subpath exports. No public API or behavioral changes.
+
 ## 1.0.1
 
 ### Patch Changes
