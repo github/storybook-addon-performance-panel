@@ -203,9 +203,10 @@ export class PerformanceMonitorCore {
    * Observe a DOM container for element counting and mutation tracking.
    * Replaces any previously observed container.
    */
-  observeContainer(element: HTMLElement): void {
+  observeContainer(element: HTMLElement): () => void {
     this.containerCleanup?.()
     this.containerCleanup = this.manager.observeContainer(element)
+    return this.containerCleanup
   }
 }
 

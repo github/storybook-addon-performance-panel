@@ -171,7 +171,7 @@ export const PerformanceProvider = memo(function PerformanceProvider({
   useLayoutEffect(() => {
     const core = coreRef.current
     if (!enabled || !contentRef.current || !core) return
-    core.observeContainer(contentRef.current)
+    return core.observeContainer(contentRef.current)
   }, [enabled])
 
   // Memoize context value to avoid unnecessary re-renders
