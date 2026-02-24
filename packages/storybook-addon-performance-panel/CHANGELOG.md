@@ -1,5 +1,11 @@
 # @github-ui/storybook-addon-performance-panel
 
+## 1.1.1
+
+### Patch Changes
+
+- [#54](https://github.com/github/storybook-addon-performance-panel/pull/54) [`a80cfd7`](https://github.com/github/storybook-addon-performance-panel/commit/a80cfd73566ba9591cdcd06f8d5d2bd26538be57) Thanks [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent)! - Add `storybook-addons` keyword as the first keyword in package.json so the addon is discoverable by the Storybook integration catalog.
+
 ## 1.1.0
 
 ### Minor Changes
