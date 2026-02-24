@@ -16,9 +16,10 @@
     "registry": "https://registry.npmjs.org/"
   },
   "keywords": [
+    "storybook-addons",
+    "performance",
     "storybook",
     "storybook-addon",
-    "performance",
     "profiling",
     "react",
     "web-vitals",
