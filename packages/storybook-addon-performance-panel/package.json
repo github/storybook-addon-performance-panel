@@ -120,6 +120,11 @@
     "displayName": "Addon Performance Panel",
     "supportedFrameworks": [
       "react",
+      "vue",
+      "svelte",
+      "angular",
+      "lit",
+      "preact",
       "web-components",
       "html"
     ],
