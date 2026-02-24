@@ -30,6 +30,26 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./react": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./universal": {
+      "types": "./dist/index-universal.d.ts",
+      "default": "./dist/index-universal.js"
+    },
+    "./universal/preset": {
+      "types": "./dist/preset-universal.d.ts",
+      "default": "./dist/preset-universal.js"
+    },
+    "./universal/preview": {
+      "types": "./dist/preview-universal.d.ts",
+      "default": "./dist/preview-universal.js"
+    },
+    "./components": {
+      "types": "./dist/index-react.d.ts",
+      "default": "./dist/index-react.js"
+    },
     "./manager": {
       "types": "./dist/manager.d.ts",
       "default": "./dist/manager.js"
@@ -60,10 +80,14 @@
     ],
     "previewEntries": [
       "preview.ts",
-      "index.ts"
+      "preview-universal.ts",
+      "index.ts",
+      "index-universal.ts",
+      "index-react.ts"
     ],
     "nodeEntries": [
-      "preset.ts"
+      "preset.ts",
+      "preset-universal.ts"
     ]
   },
   "peerDependencies": {
@@ -71,6 +95,14 @@
     "@storybook/react": "^10.0.0",
     "react": "^19",
     "storybook": "^10"
+  },
+  "peerDependenciesMeta": {
+    "@storybook/react": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.2",
@@ -87,7 +119,14 @@
   "storybook": {
     "displayName": "Addon Performance Panel",
     "supportedFrameworks": [
-      "react"
+      "react",
+      "vue",
+      "svelte",
+      "angular",
+      "lit",
+      "preact",
+      "web-components",
+      "html"
     ],
     "icon": "https://github.githubassets.com/favicons/favicon.svg"
   }

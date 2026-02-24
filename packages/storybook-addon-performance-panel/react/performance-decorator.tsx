@@ -86,30 +86,13 @@
 
 import type {Decorator} from '@storybook/react'
 import {memo, Profiler, useCallback, useLayoutEffect, useRef} from 'react'
-import {addons} from 'storybook/preview-api'
 
-import {CollectorManager} from '../collectors/collector-manager'
-import {performanceStore} from '../core/performance-store'
-import {PERF_EVENTS} from '../core/performance-types'
+import {PerformanceMonitorCore} from '../core/preview-core'
 import {
   ReportReactRenderProfileContext,
   type ReportReactRenderProfileContextValue,
   useReportReactRenderProfile,
 } from './ReportReactRenderProfileContext'
-
-// ============================================================================
-// Timing Constants (decorator-specific)
-// ============================================================================
-
-/** How often to emit metrics to the panel (ms) */
-const UPDATE_INTERVAL_MS = 50
-
-/** How often to sample sparkline data points (ms) */
-const SPARKLINE_SAMPLE_INTERVAL_MS = 200
-
-// ============================================================================
-// Metrics State (Internal)
-// ============================================================================
 
 // ============================================================================
 // Performance Provider
@@ -162,85 +145,38 @@ export const PerformanceProvider = memo(function PerformanceProvider({
 }: PerformanceProviderProps) {
   const contentRef = useRef<HTMLDivElement>(null)
 
-  const managerRef = useRef<CollectorManager>(null)
-  managerRef.current ??= new CollectorManager({
-    onProfilerUpdate: (profilerStoryId, id, metrics) => {
-      performanceStore.updateProfiler(id, metrics)
-      // Include storyId so panel can group profilers by story
-      addons.getChannel().emit(PERF_EVENTS.PROFILER_UPDATE, {id, metrics, storyId: profilerStoryId})
-    },
-  })
+  const coreRef = useRef<PerformanceMonitorCore>(null)
+  coreRef.current ??= new PerformanceMonitorCore(storyId)
 
-  // Main measurement loop - collector manager already created in useRef
+  // Main measurement loop - core already created in useRef
   useLayoutEffect(() => {
-    const manager = managerRef.current
-    if (!enabled || !manager) return
+    const core = coreRef.current
+    if (!enabled || !core) return
 
-    const channel = addons.getChannel()
+    // Update storyId in case it changed (re-render with different story)
+    core.storyId = storyId
 
-    // Start all collectors
-    manager.start()
-
-    // Handle channel events
-    const handleRequestMetrics = () => {
-      // Always compute fresh metrics to ensure we have the latest data
-      channel.emit(PERF_EVENTS.METRICS_UPDATE, manager.computeMetrics())
-      // Also emit current profiler metrics so the panel has the full state
-      for (const id of manager.getProfilerIds()) {
-        const metrics = manager.getProfilerMetrics(id)
-        if (metrics) {
-          channel.emit(PERF_EVENTS.PROFILER_UPDATE, {id, metrics, storyId})
-        }
-      }
-    }
-
-    const handleReset = () => {
-      manager.reset()
-      performanceStore.resetAll()
-    }
-
-    channel.on(PERF_EVENTS.REQUEST_METRICS, handleRequestMetrics)
-    channel.on(PERF_EVENTS.RESET, handleReset)
-    channel.on(PERF_EVENTS.INSPECT_ELEMENT, handleInspectElement)
-
-    // Use setInterval instead of RAF for periodic polling.
-    // A RAF callback runs every frame (~60/s) but only does work every 50-200ms,
-    // wasting ~55 callbacks/s and adding unnecessary per-frame overhead.
-    const metricsIntervalId = setInterval(() => {
-      const computed = manager.computeMetrics()
-      channel.emit(PERF_EVENTS.METRICS_UPDATE, computed)
-      performanceStore.setGlobalMetrics(computed)
-    }, UPDATE_INTERVAL_MS)
-
-    const sparklineIntervalId = setInterval(() => {
-      manager.updateSparklineData()
-    }, SPARKLINE_SAMPLE_INTERVAL_MS)
+    core.start()
 
     return () => {
       // Stop all collectors (story is unmounting)
       // Note: We do NOT clear profilers here because:
       // 1. React StrictMode re-runs effects, and we'd lose mount data
       // 2. Profilers are cleared when a NEW story starts (different storyId)
-      manager.stop()
-
-      clearInterval(metricsIntervalId)
-      clearInterval(sparklineIntervalId)
-      channel.off(PERF_EVENTS.REQUEST_METRICS, handleRequestMetrics)
-      channel.off(PERF_EVENTS.RESET, handleReset)
-      channel.off(PERF_EVENTS.INSPECT_ELEMENT, handleInspectElement)
+      core.stop()
     }
   }, [enabled, storyId])
 
   // DOM element counting - observe container for mutations
   useLayoutEffect(() => {
-    const manager = managerRef.current
-    if (!enabled || !contentRef.current || !manager) return
-    return manager.observeContainer(contentRef.current)
+    const core = coreRef.current
+    if (!enabled || !contentRef.current || !core) return
+    return core.observeContainer(contentRef.current)
   }, [enabled])
 
   // Memoize context value to avoid unnecessary re-renders
   const contextValue: ReportReactRenderProfileContextValue = useCallback(
-    args => managerRef.current?.reportRender({...args, storyId}),
+    args => coreRef.current?.manager.reportRender({...args, storyId}),
     [storyId],
   )
 
@@ -381,57 +317,4 @@ export const withPerformanceMonitor: Decorator = (Story, ctx) => {
       </ProfiledComponent>
     </PerformanceProvider>
   )
-}
-
-// Inject CSS rule for inspect highlight (avoids inline style writes that corrupt metrics)
-let inspectStyleInjected = false
-function ensureInspectStyle() {
-  if (inspectStyleInjected) return
-  inspectStyleInjected = true
-  const style = document.createElement('style')
-  style.textContent = `
-    @keyframes perf-inspect-flash {
-      0%, 100% { outline-color: #f06; }
-      33% { outline-color: #06f; }
-      66% { outline-color: #f06; }
-    }
-    [data-perf-inspect] {
-      outline: 3px solid #f06 !important;
-      outline-offset: 2px !important;
-      animation: perf-inspect-flash 0.6s ease-out !important;
-    }
-  `
-  document.head.appendChild(style)
-}
-
-// Handle inspect element request from panel
-function handleInspectElement(selector: string) {
-  if (!selector || selector === 'unknown') return
-  try {
-    const element = document.querySelector(selector)
-    if (element instanceof HTMLElement) {
-      ensureInspectStyle()
-
-      // Scroll element into view
-      element.scrollIntoView({behavior: 'smooth', block: 'center'})
-
-      // Use data attribute + CSS rule instead of inline styles
-      // to avoid triggering StyleMutationCollector
-      element.dataset.perfInspect = ''
-      setTimeout(() => {
-        delete element.dataset.perfInspect
-      }, 600)
-
-      // Log to console for DevTools inspection
-
-      console.log(
-        '%c[Performance Panel] Inspecting element:',
-        'color: #f06; font-weight: bold',
-        element,
-        `\nSelector: ${selector}`,
-      )
-    }
-  } catch {
-    // Invalid selector - ignore
-  }
 }

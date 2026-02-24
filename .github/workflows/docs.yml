@@ -27,11 +27,13 @@ jobs:
         env:
           BASE_PATH: ${{ github.event_name != 'pull_request' && '/storybook-addon-performance-panel/' || '' }}
       - run: npm run build-storybook -w @github-ui/examples-react
+      - run: npm run build-storybook -w @github-ui/examples-html
       - name: Merge into single site
         run: |
           mkdir -p _site/examples
           cp -r packages/website/dist/client/* _site/
           cp -r packages/examples-react/storybook-static _site/examples/react
+          cp -r packages/examples-html/storybook-static _site/examples/universal
       - uses: actions/upload-artifact@v6
         with:
           name: site

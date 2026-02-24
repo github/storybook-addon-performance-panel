@@ -4,14 +4,14 @@ import {addons} from 'storybook/manager-api'
 setupManagerTheme(addons, {
   sidebarLinks: [
     {
-      label: '→ Universal Storybook',
-      localHref: 'http://examples-html.localhost:1355',
-      href: '/examples/universal/',
+      label: '→ React Storybook',
+      localHref: 'http://examples-react.localhost:1355',
+      href: '/examples/react/',
     },
     {
       label: '→ Documentation',
       localHref: 'http://site.localhost:1355',
-      href: '../../',
+      href: '/',
     },
     {
       label: '→ GitHub',
