@@ -48,10 +48,11 @@ function createLayoutThrashing(args: {boxCount: number}) {
   thrashBtn.addEventListener('click', () => {
     const boxes = grid.querySelectorAll<HTMLElement>('[data-box]')
 
-    // Intentional layout thrashing: interleaved reads and writes
+    // Intentional layout thrashing: interleaved reads and writes.
+    // The forced reflow below also provides `h`, which is used in the height calculation.
     for (const box of boxes) {
+      const h = box.offsetHeight // forced reflow + read current height
       box.style.width = `${String(80 + Math.round(Math.random() * 120))}px`
-      const h = box.offsetHeight // forced reflow
       box.style.height = `${String(Math.max(30, h + Math.round(Math.random() * 20 - 10)))}px`
       void box.offsetWidth // another forced reflow
     }
