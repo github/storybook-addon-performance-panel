@@ -1,5 +1,11 @@
 # @github-ui/storybook-addon-performance-panel
 
+## 1.1.2
+
+### Patch Changes
+
+- [#57](https://github.com/github/storybook-addon-performance-panel/pull/57) [`378088c`](https://github.com/github/storybook-addon-performance-panel/commit/378088c3f7a49bbe29df9491af79f518d49f0e70) Thanks [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent)! - Update keywords in package.json to improve discoverability.
+
 ## 1.1.1
 
 ### Patch Changes
