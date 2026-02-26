@@ -1,5 +1,11 @@
 # @github-ui/storybook-addon-performance-panel
 
+## 1.1.4
+
+### Patch Changes
+
+- [#61](https://github.com/github/storybook-addon-performance-panel/pull/61) [`def57fd`](https://github.com/github/storybook-addon-performance-panel/commit/def57fd46bbac63f37896978fb1b54ba689f2c68) Thanks [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent)! - Add root-level `preset.js` shim for Storybook integration catalog compatibility
+
 ## 1.1.3
 
 ### Patch Changes
