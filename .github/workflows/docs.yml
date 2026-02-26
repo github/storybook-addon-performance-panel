@@ -34,7 +34,7 @@ jobs:
           cp -r packages/website/dist/client/* _site/
           cp -r packages/examples-react/storybook-static _site/examples/react
           cp -r packages/examples-html/storybook-static _site/examples/universal
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: site
           path: _site/
