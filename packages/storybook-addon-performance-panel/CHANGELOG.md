@@ -1,5 +1,11 @@
 # @github-ui/storybook-addon-performance-panel
 
+## 1.1.3
+
+### Patch Changes
+
+- [#59](https://github.com/github/storybook-addon-performance-panel/pull/59) [`1140eea`](https://github.com/github/storybook-addon-performance-panel/commit/1140eead4a8eabca5bd3df8a1a0ce6e8a808a474) Thanks [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent)! - Fix package.json metadata for Storybook integration catalog: switch icon from SVG to PNG, remove unrecognized "lit" framework, and add top-level `main`/`types` fields.
+
 ## 1.1.2
 
 ### Patch Changes
