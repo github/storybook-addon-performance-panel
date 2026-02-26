@@ -5,23 +5,16 @@ updates:
     schedule:
       interval: weekly
     groups:
-      storybook:
-        patterns:
-          - "@storybook/*"
-          - storybook
-      eslint:
-        patterns:
-          - "@eslint/*"
-          - eslint
-          - eslint-*
-          - typescript-eslint
-      vitest:
-        patterns:
-          - vitest
-          - vitest-*
-          - "@vitest/*"
+      production-dependencies:
+        dependency-type: production
+      dev-dependencies:
+        dependency-type: development
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      actions:
+        patterns:
+          - "*"
