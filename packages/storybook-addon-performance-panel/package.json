@@ -67,6 +67,7 @@
   },
   "files": [
     "dist/**/*",
+    "preset.js",
     "README.md",
     "**/*.md"
   ],

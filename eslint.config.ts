@@ -24,7 +24,9 @@ export default defineConfig(
   {
     languageOptions: {
       parserOptions: {
-        projectService: true,
+        projectService: {
+          allowDefaultProject: ['packages/storybook-addon-performance-panel/preset.js'],
+        },
       },
       globals: {
         ...globals.serviceworker,
