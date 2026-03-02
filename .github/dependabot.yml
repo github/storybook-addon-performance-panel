@@ -5,23 +5,22 @@ updates:
     schedule:
       interval: weekly
     groups:
+      # Storybook bumps are tracked separately – the addon must stay compatible
+      # with each major Storybook version, so these PRs warrant extra attention.
       storybook:
         patterns:
+          - "storybook"
           - "@storybook/*"
-          - storybook
-      eslint:
-        patterns:
-          - "@eslint/*"
-          - eslint
-          - eslint-*
-          - typescript-eslint
-      vitest:
-        patterns:
-          - vitest
-          - vitest-*
-          - "@vitest/*"
+      production-dependencies:
+        dependency-type: production
+      dev-dependencies:
+        dependency-type: development
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      actions:
+        patterns:
+          - "*"
