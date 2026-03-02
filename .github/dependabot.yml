@@ -5,6 +5,12 @@ updates:
     schedule:
       interval: weekly
     groups:
+      # Storybook bumps are tracked separately – the addon must stay compatible
+      # with each major Storybook version, so these PRs warrant extra attention.
+      storybook:
+        patterns:
+          - "storybook"
+          - "@storybook/*"
       production-dependencies:
         dependency-type: production
       dev-dependencies:
