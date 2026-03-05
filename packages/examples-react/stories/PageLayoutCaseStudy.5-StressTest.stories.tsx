@@ -144,8 +144,8 @@ const meta = preview.meta({
 export default meta
 
 export const Extreme = meta.story({
-  name: 'Extreme (120 items, 7× nav)',
-  args: {contentItems: 120, navMultiplier: 7},
+  name: 'Extreme (120 items, 6× nav)',
+  args: {contentItems: 120, navMultiplier: 6},
 })
 
 export const Maximum = meta.story({
