@@ -124,3 +124,8 @@ export const Heavy = meta.story({
   name: 'Heavy (100 items, 6× nav, rich cards)',
   args: {contentItems: 100, navMultiplier: 6, heavy: true},
 })
+
+export const Stress = meta.story({
+  name: 'Stress (300 items, 18× nav)',
+  args: {contentItems: 300, navMultiplier: 18, heavy: true},
+})

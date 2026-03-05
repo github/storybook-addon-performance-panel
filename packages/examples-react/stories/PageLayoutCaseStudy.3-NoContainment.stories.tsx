@@ -27,8 +27,8 @@ import {ComplexNav, ContentFeed, styles} from './PageLayoutCaseStudy.shared'
  *   cost per mutation is the issue)
  */
 function NoContainmentResize({
-  contentItems = 40,
-  navMultiplier = 3,
+  contentItems = 30,
+  navMultiplier = 2,
   heavy = false,
 }: {
   contentItems?: number
@@ -138,11 +138,16 @@ const meta = preview.meta({
 export default meta
 
 export const Default = meta.story({
-  name: 'Default (40 items)',
-  args: {contentItems: 40, navMultiplier: 3},
+  name: 'Default (30 items)',
+  args: {contentItems: 30, navMultiplier: 2},
 })
 
 export const Heavy = meta.story({
-  name: 'Heavy (120 items, 7× nav, rich cards)',
-  args: {contentItems: 120, navMultiplier: 7, heavy: true},
+  name: 'Heavy (100 items, 6× nav, rich cards)',
+  args: {contentItems: 100, navMultiplier: 6, heavy: true},
+})
+
+export const Stress = meta.story({
+  name: 'Stress (300 items, 18× nav)',
+  args: {contentItems: 300, navMultiplier: 18, heavy: true},
 })
