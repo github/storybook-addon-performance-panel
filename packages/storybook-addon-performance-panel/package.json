@@ -114,7 +114,7 @@
     "@vitest/browser-playwright": "^4.0.18",
     "esbuild": "0.27.3",
     "publint": "^0.3.18",
-    "tsdown": "^0.20.3",
+    "tsdown": "^0.21.0",
     "vitest": "^4.0.18",
     "vitest-browser-react": "^2.0.5"
   },

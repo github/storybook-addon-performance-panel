@@ -28,8 +28,8 @@
     "node": ">=22"
   },
   "devDependencies": {
-    "@changesets/changelog-github": "^0.5.2",
-    "@changesets/cli": "^2.29.8",
+    "@changesets/changelog-github": "^0.6.0",
+    "@changesets/cli": "^2.30.0",
     "@eslint/js": "^9.0.1",
     "@storybook/react-vite": "^10",
     "concurrently": "^9.2.1",
@@ -41,7 +41,7 @@
     "eslint-plugin-simple-import-sort": "12.1.1",
     "globals": "^17.4.0",
     "jiti": "^2.6.1",
-    "portless": "^0.4.2",
+    "portless": "^0.5.2",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1"
