@@ -452,6 +452,9 @@ Collected via [Element Timing API](https://w3c.github.io/element-timing/) (optim
 <div elementtiming="main-content">Important content</div>
 ```
 
+> [!NOTE]
+> Only timing‑eligible elements emit entries. Per the [Element Timing spec](https://w3c.github.io/paint-timing/#timing-eligible) that means things like images, SVG images, postered videos, contentful background-images, and text nodes. Custom elements aren't directly supported, and items hidden inside shadow DOM will be ignored. Ensure the attribute is applied to a supported node to see it show up in the panel.
+
 ---
 
 ## Browser Compatibility

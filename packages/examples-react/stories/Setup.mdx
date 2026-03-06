@@ -99,3 +99,7 @@ To track specific elements with the Element Timing collector, add the `elementti
 ```
 
 Each tracked element will appear individually in the Element Timing section of the panel with its render time.
+
+> [!IMPORTANT]
+> The browser only generates timing entries for *eligible* elements – see the [Element Timing spec](https://w3c.github.io/paint-timing/#timing-eligible) for details. In practice this means plain `<img>`s, SVG `<image>`s, videos with a poster frame, elements with contentful `background-image`s, or text nodes. Custom elements themselves are not timing‑eligible, and anything inside a shadow root is currently ignored. Make sure the attribute is on an element the browser can actually time.
+

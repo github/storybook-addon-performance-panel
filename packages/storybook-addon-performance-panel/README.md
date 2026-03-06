@@ -104,6 +104,7 @@ The addon consists of two main parts:
 - **Individual Elements**: Render time for each tracked element
   - Add `elementtiming="identifier"` attribute to elements you want to track
   - Useful for measuring when hero images, key content, or specific UI elements render
+  - Only *timing‑eligible* elements produce entries. The browser will ignore arbitrary custom elements or nodes inside shadow DOM. Valid targets include images (`<img>`), SVG `<image>`s, videos with poster frames, elements with contentful `background-image`s, and text nodes. See the [Element Timing spec](https://w3c.github.io/paint-timing/#timing-eligible) for details.
 
 ### Layout Stability
 - **CLS**: Cumulative Layout Shift score (Core Web Vital)

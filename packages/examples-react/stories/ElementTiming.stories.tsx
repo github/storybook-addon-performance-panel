@@ -57,9 +57,11 @@ function ElementTimingDemo({imageCount = 6, staggerMs = 400}: {imageCount?: numb
   // Generate deterministic placeholder colors
   const hue = (i: number) => (i * 137) % 360
 
-  // Element Timing API only tracks <img> elements and text nodes rendered as
-  // contentful paint. We use dynamically-generated SVG data-URIs as img sources
-  // so each card is a real image element that the API observes.
+  // Element Timing API only tracks *eligible* elements (images, SVG images,
+  // videos with poster frames, contentful background-images, and plain text).
+  // Arbitrary custom elements aren’t reported, and anything inside a shadow
+  // root is ignored. We generate SVG data‑URI images here so each card counts as
+  // a real <img> element the API will observe.
   const placeholderSrc = (i: number) => {
     const h = hue(i)
     const h2 = h + 60
