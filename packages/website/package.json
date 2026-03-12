@@ -12,9 +12,9 @@
     "@fontsource-variable/mona-sans": "^5.2.8",
     "@github-ui/storybook-config": "*",
     "@primer/primitives": "^11.5.1",
-    "@primer/react": "^38.14.0",
-    "@tanstack/react-router": "^1.166.2",
-    "@tanstack/react-start": "^1.166.2",
+    "@primer/react": "^38.15.0",
+    "@tanstack/react-router": "^1.166.7",
+    "@tanstack/react-start": "^1.166.8",
     "react": "^19",
     "react-dom": "^19"
   },
