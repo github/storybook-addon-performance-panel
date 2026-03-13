@@ -19,6 +19,6 @@
   "devDependencies": {
     "@types/eslint-plugin-jsx-a11y": "^6.10.1",
     "eslint-plugin-jsx-a11y": "^6.10.2",
-    "lightningcss": "^1.31.1"
+    "lightningcss": "^1.32.0"
   }
 }
