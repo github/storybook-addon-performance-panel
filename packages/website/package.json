@@ -23,7 +23,7 @@
     "@shikijs/rehype": "^4.0.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vitejs/plugin-react": "^6.0.1",
+    "@vitejs/plugin-react": "^5.2.0",
     "babel-plugin-react-compiler": "^1.0.0",
     "lightningcss": "^1.32.0",
     "patch-package": "^8.0.1",
