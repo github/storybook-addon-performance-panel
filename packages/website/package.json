@@ -13,8 +13,8 @@
     "@github-ui/storybook-config": "*",
     "@primer/primitives": "^11.5.1",
     "@primer/react": "^38.16.0",
-    "@tanstack/react-router": "^1.168.2",
-    "@tanstack/react-start": "^1.167.3",
+    "@tanstack/react-router": "^1.168.3",
+    "@tanstack/react-start": "^1.167.5",
     "react": "^19",
     "react-dom": "^19"
   },
@@ -31,7 +31,7 @@
     "rehype-slug": "^6.0.0",
     "remark-gfm": "^4.0.1",
     "shiki": "^4.0.2",
-    "vite": "^8.0.2",
+    "vite": "^7.3.1",
     "vite-plugin-typed-css-modules": "^0.5.3"
   }
 }

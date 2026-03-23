@@ -110,7 +110,7 @@
     "@arethetypeswrong/core": "^0.18.2",
     "@types/node": "^25",
     "@types/react": "^19.0.0",
-    "@vitejs/plugin-react": "^6.0.1",
+    "@vitejs/plugin-react": "^5.1.4",
     "@vitest/browser-playwright": "^4.1.1",
     "esbuild": "0.27.4",
     "publint": "^0.3.18",
