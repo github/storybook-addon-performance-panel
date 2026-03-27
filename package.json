@@ -43,7 +43,7 @@
     "jiti": "^2.6.1",
     "portless": "^0.7.2",
     "prettier": "^3.8.1",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.57.1"
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.57.2"
   }
 }
