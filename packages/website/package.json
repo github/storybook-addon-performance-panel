@@ -13,8 +13,8 @@
     "@github-ui/storybook-config": "*",
     "@primer/primitives": "^11.6.0",
     "@primer/react": "^38.17.0",
-    "@tanstack/react-router": "^1.168.5",
-    "@tanstack/react-start": "^1.167.10",
+    "@tanstack/react-router": "^1.168.8",
+    "@tanstack/react-start": "^1.167.14",
     "react": "^19",
     "react-dom": "^19"
   },
