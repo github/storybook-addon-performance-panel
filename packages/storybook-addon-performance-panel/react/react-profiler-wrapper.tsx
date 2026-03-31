@@ -225,7 +225,9 @@ export const ReactProfilerWrapper = memo(function ReactProfilerWrapper({
   enabled = true,
 }: ReactProfilerWrapperProps) {
   // Store metrics in a ref to avoid re-renders on metric updates
-  const metricsRef = useRef<ProfilerMetricsRef>(createMetricsRef())
+  const metricsRef = useRef<ProfilerMetricsRef>(null)
+  metricsRef.current ??= createMetricsRef()
+
   const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Get unique instance ID on first render using useState initializer
   const [instanceId] = useState(() => getInstanceId(baseId))
@@ -253,8 +255,10 @@ export const ReactProfilerWrapper = memo(function ReactProfilerWrapper({
     if (updateTimeoutRef.current) return // Already scheduled
 
     updateTimeoutRef.current = setTimeout(() => {
+      const metrics = metricsRef.current
+      if (metrics == null) return
       updateTimeoutRef.current = null
-      performanceStore.updateProfiler(instanceId, metricsRefToReactMetrics(metricsRef.current))
+      performanceStore.updateProfiler(instanceId, metricsRefToReactMetrics(metrics))
     }, 16) // ~1 frame
   }, [instanceId])
 
@@ -269,6 +273,7 @@ export const ReactProfilerWrapper = memo(function ReactProfilerWrapper({
       commitTime: number,
     ) => {
       const metrics = metricsRef.current
+      if (metrics == null) return
 
       // Calculate commit lag: time from render start to commit, minus actual render time
       const commitLag = Math.max(0, commitTime - startTime - actualDuration)

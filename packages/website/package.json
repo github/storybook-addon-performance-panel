@@ -12,9 +12,9 @@
     "@fontsource-variable/mona-sans": "^5.2.8",
     "@github-ui/storybook-config": "*",
     "@primer/primitives": "^11.6.0",
-    "@primer/react": "^38.17.0",
-    "@tanstack/react-router": "^1.168.8",
-    "@tanstack/react-start": "^1.167.14",
+    "@primer/react": "^38.18.0",
+    "@tanstack/react-router": "^1.168.10",
+    "@tanstack/react-start": "^1.167.16",
     "react": "^19",
     "react-dom": "^19"
   },
@@ -23,7 +23,7 @@
     "@shikijs/rehype": "^4.0.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vitejs/plugin-react": "^5.2.0",
+    "@vitejs/plugin-react": "^6.0.1",
     "babel-plugin-react-compiler": "^1.0.0",
     "lightningcss": "^1.32.0",
     "patch-package": "^8.0.1",
@@ -31,7 +31,7 @@
     "rehype-slug": "^6.0.0",
     "remark-gfm": "^4.0.1",
     "shiki": "^4.0.2",
-    "vite": "^7.3.1",
+    "vite": "^8.0.3",
     "vite-plugin-typed-css-modules": "^0.5.3"
   }
 }
