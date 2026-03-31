@@ -54,15 +54,6 @@ interface PerformanceEventTiming extends PerformanceEntry {
   interactionId: number
 }
 
-/**
- * Extended Performance interface with Event Timing extensions
- * @see https://w3c.github.io/event-timing/#sec-extensions
- */
-interface PerformanceWithEventTiming extends Performance {
-  /** Total number of distinct user interactions */
-  interactionCount?: number
-}
-
 export interface InputMetrics {
   inputLatencies: number[]
   maxInputLatency: number
@@ -260,8 +251,8 @@ export class InputCollector implements MetricCollector<InputMetrics> {
     addToWindow(this.#presentationDelays, presentationDelay, INTERACTION_LATENCIES_WINDOW)
 
     // Update interaction tracking - prefer browser's count if available
-    const perfWithEventTiming = performance as PerformanceWithEventTiming
-    this.#interactionCount = perfWithEventTiming.interactionCount ?? this.#interactionMap.size
+    const perfWithEventTiming = performance
+    this.#interactionCount = perfWithEventTiming.interactionCount
     addToWindow(this.#interactionLatencies, duration, INTERACTION_LATENCIES_WINDOW)
 
     // Prune map if it exceeds the cap to prevent unbounded growth
