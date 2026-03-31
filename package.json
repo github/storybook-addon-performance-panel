@@ -36,6 +36,7 @@
     "@changesets/cli": "^2.30.0",
     "@eslint/js": "^9.39.4",
     "@storybook/react-vite": "^10",
+    "@vitejs/plugin-react": "^6.0.1",
     "concurrently": "^9.2.1",
     "eslint": "^9.0.0 <10",
     "eslint-config-prettier": "^10.1.8",
@@ -49,6 +50,7 @@
     "portless": "^0.7.2",
     "prettier": "^3.8.1",
     "typescript": "^6.0.2",
-    "typescript-eslint": "^8.58.0"
+    "typescript-eslint": "^8.58.0",
+    "vite": "^8.0.3"
   }
 }
