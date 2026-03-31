@@ -48,6 +48,6 @@
     "portless": "^0.7.2",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.57.1"
+    "typescript-eslint": "^8.58.0"
   }
 }
