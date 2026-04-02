@@ -7,9 +7,9 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@github-ui/storybook-config": "*",
     "@github-ui/storybook-addon-performance-panel": "*",
-    "@storybook/html-vite": "^10",
+    "@github-ui/storybook-config": "*",
+    "@storybook/html-vite": "^10.3.4",
     "storybook": "^10"
   },
   "devDependencies": {
