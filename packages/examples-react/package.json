@@ -7,14 +7,14 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@github-ui/storybook-config": "*",
     "@github-ui/storybook-addon-performance-panel": "*",
+    "@github-ui/storybook-config": "*",
     "@primer/primitives": "^11.6.0",
     "@storybook/addon-docs": "^10.3.2",
     "@storybook/react-vite": "^10",
     "react": "^19",
     "react-dom": "^19",
-    "storybook": "^10"
+    "storybook": "^10.3.4"
   },
   "devDependencies": {
     "@types/eslint-plugin-jsx-a11y": "^6.10.1",
