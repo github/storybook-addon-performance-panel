@@ -108,15 +108,15 @@
   },
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.2",
-    "@types/node": "^25",
+    "@types/node": "^25.5.2",
     "@types/react": "^19.0.0",
     "@vitejs/plugin-react": "^6.0.1",
-    "@vitest/browser-playwright": "^4.1.2",
-    "esbuild": "0.27.4",
+    "@vitest/browser-playwright": "^4.1.4",
+    "esbuild": "0.28.0",
     "publint": "^0.3.18",
     "tsdown": "^0.21.7",
     "vitest": "^4.1.2",
-    "vitest-browser-react": "^2.1.0"
+    "vitest-browser-react": "^2.2.0"
   },
   "storybook": {
     "displayName": "Addon Performance Panel",
