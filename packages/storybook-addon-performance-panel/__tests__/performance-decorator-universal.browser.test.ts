@@ -123,13 +123,13 @@ describe('withPerformanceMonitor (universal / web-component usage)', () => {
   it('creates a new core when story ID changes', () => {
     withPerformanceMonitor(
       vi.fn(() => ''),
-      makeCtx({id: 'story-a'} as Partial<StoryContext>),
+      makeCtx({id: 'story-a'}),
     )
     const first = getActiveCore()
 
     withPerformanceMonitor(
       vi.fn(() => ''),
-      makeCtx({id: 'story-b'} as Partial<StoryContext>),
+      makeCtx({id: 'story-b'}),
     )
     const second = getActiveCore()
 
@@ -146,7 +146,7 @@ describe('withPerformanceMonitor (universal / web-component usage)', () => {
     expect(getActiveCore()).not.toBeNull()
 
     // Now disable via parameters
-    const ctx = makeCtx({parameters: {performancePanel: {disable: true}}} as Partial<StoryContext>)
+    const ctx = makeCtx({parameters: {performancePanel: {disable: true}}})
     withPerformanceMonitor(
       vi.fn(() => ''),
       ctx,
@@ -158,7 +158,7 @@ describe('withPerformanceMonitor (universal / web-component usage)', () => {
   it('still returns storyFn output when disabled', () => {
     const html = '<my-counter value="5"></my-counter>'
     const storyFn = vi.fn(() => html)
-    const ctx = makeCtx({parameters: {performancePanel: {disable: true}}} as Partial<StoryContext>)
+    const ctx = makeCtx({parameters: {performancePanel: {disable: true}}})
 
     const result = withPerformanceMonitor(storyFn, ctx) as string
 
@@ -228,13 +228,13 @@ describe('withPerformanceMonitor (universal / web-component usage)', () => {
   it('cleans up channel listeners when core is replaced', () => {
     withPerformanceMonitor(
       vi.fn(() => ''),
-      makeCtx({id: 'story-a'} as Partial<StoryContext>),
+      makeCtx({id: 'story-a'}),
     )
 
     // Switching story stops the old core, which should call channel.off
     withPerformanceMonitor(
       vi.fn(() => ''),
-      makeCtx({id: 'story-b'} as Partial<StoryContext>),
+      makeCtx({id: 'story-b'}),
     )
 
     expect(mockChannel.off).toHaveBeenCalledWith(PERF_EVENTS.REQUEST_METRICS, expect.any(Function))
