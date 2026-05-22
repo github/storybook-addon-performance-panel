@@ -50,7 +50,7 @@
     "portless": "^0.13.0",
     "prettier": "^3.8.3",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.59.3",
-    "vite": "^8.0.13"
+    "typescript-eslint": "^8.59.4",
+    "vite": "^8.0.14"
   }
 }
