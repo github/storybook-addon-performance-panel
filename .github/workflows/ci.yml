@@ -97,11 +97,11 @@ jobs:
   ci:
     name: CI
     if: always()
-    needs: [lint, typecheck, test]
+    needs: [install, lint, typecheck, test]
     runs-on: ubuntu-latest
     steps:
       - run: |
-          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
-            echo "One or more jobs failed or were cancelled"
+          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}" == "true" ]]; then
+            echo "One or more jobs failed, were cancelled, or skipped"
             exit 1
           fi

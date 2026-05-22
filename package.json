@@ -29,7 +29,8 @@
   },
   "overrides": {
     "h3": "$h3-v2",
-    "h3-v2": "$h3-v2"
+    "h3-v2": "$h3-v2",
+    "fflate": "0.8.2"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.7.0",

@@ -11,12 +11,13 @@
   "dependencies": {
     "@fontsource-variable/mona-sans": "^5.2.8",
     "@github-ui/storybook-config": "*",
-    "@primer/primitives": "^11.6.0",
-    "@primer/react": "^38.18.0",
-    "@tanstack/react-router": "^1.168.10",
-    "@tanstack/react-start": "^1.167.65",
-    "react": "^19",
-    "react-dom": "^19"
+    "@primer/primitives": "^11.9.0",
+    "@primer/react": "^38.23.0",
+    "@shikijs/vscode-textmate": "10.0.2",
+    "@tanstack/react-router": "^1.170.4",
+    "@tanstack/react-start": "^1.168.6",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
   },
   "devDependencies": {
     "@mdx-js/rollup": "^3.1.1",
