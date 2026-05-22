@@ -19,7 +19,7 @@
  * @see {@link ./performance-decorator.tsx} - React-specific decorator with Profiler support
  */
 
-import type {DecoratorFunction, Renderer} from 'storybook/internal/types'
+import type {DecoratorFunction, Renderer, StoryContext} from 'storybook/internal/types'
 
 import {getActiveCore, PerformanceMonitorCore, setActiveCore} from '../core/preview-core'
 
@@ -102,7 +102,11 @@ export const withPerformanceMonitor: DecoratorFunction = (storyFn, ctx): Rendere
   // The decorator runs on every render — creating a new core each time
   // would stop/restart metrics collection and lose all accumulated data.
   let core = getActiveCore()
-  if (core?.storyId !== ctx.id) {
+  const isForceRemount = (ctx as StoryContext & {forceRemount?: boolean}).forceRemount === true
+  if (core?.storyId !== ctx.id || isForceRemount) {
+    if (core) {
+      core.stop()
+    }
     core = new PerformanceMonitorCore(ctx.id)
     setActiveCore(core)
     core.start()
