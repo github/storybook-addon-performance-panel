@@ -109,7 +109,7 @@
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.2",
     "@types/node": "^25.9.1",
-    "@types/react": "^19.0.0",
+    "@types/react": "^19.2.16",
     "@vitejs/plugin-react": "^6.0.2",
     "@vitest/browser-playwright": "^4.1.7",
     "esbuild": "0.28.0",

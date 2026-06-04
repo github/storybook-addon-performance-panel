@@ -9,7 +9,7 @@
   "dependencies": {
     "@github-ui/storybook-addon-performance-panel": "*",
     "@github-ui/storybook-config": "*",
-    "@storybook/html-vite": "^10.4.0",
+    "@storybook/html-vite": "^10.4.2",
     "storybook": "^10"
   },
   "devDependencies": {
