@@ -225,6 +225,37 @@ describe('withPerformanceMonitor (universal / web-component usage)', () => {
     expect(metrics.reactMountCount).toBe(0)
   })
 
+  it('creates a new core when force remount is triggered (same story ID)', () => {
+    const ctx = makeCtx({id: 'story-a'} as Partial<StoryContext>)
+
+    withPerformanceMonitor(vi.fn(() => ''), ctx)
+    const first = getActiveCore()
+
+    // Simulate force remount — same ID but forceRemount flag
+    const remountCtx = makeCtx({id: 'story-a', forceRemount: true} as Partial<StoryContext>)
+    withPerformanceMonitor(vi.fn(() => ''), remountCtx)
+    const second = getActiveCore()
+
+    expect(second).not.toBe(first)
+  })
+
+  it('cleans up channel listeners when core is replaced by force remount', () => {
+    withPerformanceMonitor(
+      vi.fn(() => ''),
+      makeCtx({id: 'story-a'} as Partial<StoryContext>),
+    )
+
+    // Force remount replaces the core, which should stop the old one and call channel.off
+    withPerformanceMonitor(
+      vi.fn(() => ''),
+      makeCtx({id: 'story-a', forceRemount: true} as Partial<StoryContext>),
+    )
+
+    expect(mockChannel.off).toHaveBeenCalledWith(PERF_EVENTS.REQUEST_METRICS, expect.any(Function))
+    expect(mockChannel.off).toHaveBeenCalledWith(PERF_EVENTS.RESET, expect.any(Function))
+    expect(mockChannel.off).toHaveBeenCalledWith(PERF_EVENTS.INSPECT_ELEMENT, expect.any(Function))
+  })
+
   it('cleans up channel listeners when core is replaced', () => {
     withPerformanceMonitor(
       vi.fn(() => ''),

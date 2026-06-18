@@ -1521,6 +1521,11 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
         dispatch({type: 'RESET_METRICS'})
       }
     },
+
+    forceRemount: () => {
+      emit(PERF_EVENTS.RESET)
+      dispatch({type: 'RESET_METRICS'})
+    },
   })
 
   // Request metrics on mount and when preview initializes
