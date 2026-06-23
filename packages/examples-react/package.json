@@ -10,7 +10,7 @@
     "@github-ui/storybook-addon-performance-panel": "*",
     "@github-ui/storybook-config": "*",
     "@primer/primitives": "^11.9.0",
-    "@storybook/addon-docs": "^10.4.4",
+    "@storybook/addon-docs": "^10.4.6",
     "@storybook/react-vite": "^10",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
