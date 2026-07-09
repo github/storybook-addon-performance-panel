@@ -108,13 +108,13 @@
   },
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.4",
-    "@types/node": "^26.1.0",
+    "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@vitejs/plugin-react": "^6.0.3",
-    "@vitest/browser-playwright": "^4.1.9",
+    "@vitest/browser-playwright": "^4.1.10",
     "esbuild": "0.28.1",
     "publint": "^0.3.21",
-    "tsdown": "^0.22.3",
+    "tsdown": "^0.22.4",
     "vitest": "^4.1.2",
     "vitest-browser-react": "^2.2.0"
   },
