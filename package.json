@@ -34,24 +34,24 @@
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.7.0",
-    "@changesets/cli": "^2.31.0",
-    "@eslint/js": "^9.39.4",
+    "@changesets/cli": "^2.31.1",
+    "@eslint/js": "^9.39.5",
     "@storybook/react-vite": "^10",
-    "@vitejs/plugin-react": "^6.0.3",
+    "@vitejs/plugin-react": "^6.0.4",
     "concurrently": "^10.0.3",
     "eslint": "^9.0.0 <10",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-simple-import-sort": "13.0.0",
+    "eslint-plugin-simple-import-sort": "14.0.0",
     "globals": "^17.7.0",
     "h3-v2": "npm:h3@2.0.1-rc.20",
     "jiti": "^2.6.1",
-    "portless": "^0.15.1",
-    "prettier": "^3.9.4",
+    "portless": "^0.15.4",
+    "prettier": "^3.9.6",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.62.1",
-    "vite": "^8.1.3"
+    "typescript-eslint": "^8.65.0",
+    "vite": "^8.1.5"
   }
 }
