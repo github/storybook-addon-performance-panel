@@ -4,13 +4,30 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Only change a declared range when it can no longer satisfy the new
+    # version. Prevents ratcheting the published package's peerDependencies
+    # up to whatever happens to be installed (e.g. "react": "^19" -> "^19.2.8"),
+    # which creates needless peer conflicts for consumers.
+    versioning-strategy: increase-if-necessary
+    ignore:
+      # peerDependencies express compatibility, not the installed version.
+      # Bumped by hand only when we adopt an API requiring a newer floor.
+      # Majors are NOT ignored - we still want to hear about React 20.
+      - dependency-name: react
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-patch
+      - dependency-name: '@storybook/icons'
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-patch
     groups:
       # Storybook bumps are tracked separately – the addon must stay compatible
       # with each major Storybook version, so these PRs warrant extra attention.
       storybook:
         patterns:
-          - "storybook"
-          - "@storybook/*"
+          - 'storybook'
+          - '@storybook/*'
       production-dependencies:
         dependency-type: production
       dev-dependencies:
@@ -23,4 +40,4 @@ updates:
     groups:
       actions:
         patterns:
-          - "*"
+          - '*'
