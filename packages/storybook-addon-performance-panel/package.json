@@ -95,8 +95,8 @@
   "peerDependencies": {
     "@storybook/icons": "^2.0.0",
     "@storybook/react": "^10.0.0",
-    "react": "^19.2.8",
-    "storybook": "^10.5.3"
+    "react": "^19",
+    "storybook": "^10.0.0"
   },
   "peerDependenciesMeta": {
     "@storybook/react": {
