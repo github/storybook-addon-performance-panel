@@ -62,6 +62,14 @@ export default defineConfig(
       'react/prop-types': 'off',
     },
   },
+  {
+    // Passing spied-on methods (e.g. `expect(window.requestAnimationFrame)`) to
+    // vitest matchers never calls them with an unintended `this`.
+    files: ['**/__tests__/**/*.{ts,tsx}', '**/*.test.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/unbound-method': 'off',
+    },
+  },
   // Must be last: disables ESLint rules that conflict with Prettier, then runs Prettier as a rule
   eslintPluginPrettier,
 )
