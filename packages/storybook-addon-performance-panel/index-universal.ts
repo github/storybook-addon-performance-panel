@@ -22,12 +22,17 @@ const start = () => definePreviewAddon(addonAnnotations)
 export default start
 
 export type {
+  AttributionRect,
+  ElementTimingAttribution,
+  LayoutShiftAttribution,
+  LayoutShiftSourceAttribution,
   MetricProvenance,
   MetricQuality,
   MetricUnit,
   PerformanceMetricMetadata,
   PerformanceMetrics,
   PerformancePanelParameters,
+  ScriptResourceAttribution,
 } from './core/performance-types'
 export {PERFORMANCE_METRIC_METADATA} from './core/performance-types'
 export {withPerformanceMonitor} from './decorators/universal'

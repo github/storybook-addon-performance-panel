@@ -10,6 +10,8 @@
  * @see https://web.dev/articles/evolving-cls
  */
 
+import type {AttributionRect, LayoutShiftAttribution} from '../core/performance-types'
+import {addBoundedAttribution, ATTRIBUTION_SOURCE_LIMIT, getElementSelector} from './attribution'
 import type {MetricCollector} from './types'
 
 export interface LayoutMetrics {
@@ -21,10 +23,12 @@ export interface LayoutMetrics {
   currentSessionScore: number
   /** Number of completed sessions */
   sessionCount: number
+  /** Recent layout shifts with bounded source attribution */
+  layoutShiftAttribution: LayoutShiftAttribution[]
 }
 
 // These are in a later version of TypeScript's DOM lib, so we redefine them here
-interface LayoutShiftAttribution {
+interface NativeLayoutShiftSource {
   /** The DOM node that shifted. May be null if not exposed. */
   node: Node | null
 
@@ -43,7 +47,7 @@ interface LayoutShift extends PerformanceEntry {
   value: number
 
   /** Sources contributing to this layout shift. */
-  sources: readonly LayoutShiftAttribution[]
+  sources?: readonly NativeLayoutShiftSource[]
 }
 
 /** Maximum gap between shifts in a session (1 second) */
@@ -74,6 +78,7 @@ export class LayoutShiftCollector implements MetricCollector<LayoutMetrics> {
   #layoutShiftCount = 0
   /** Number of completed sessions */
   #sessionCount = 0
+  #layoutShiftAttribution: LayoutShiftAttribution[] = []
   /** Entries before this timestamp belong to an earlier story or reset. */
   #epochMs = 0
 
@@ -100,6 +105,19 @@ export class LayoutShiftCollector implements MetricCollector<LayoutMetrics> {
     if (entry.hadRecentInput) return
 
     this.#layoutShiftCount++
+
+    const sources = (entry.sources ?? []).slice(0, ATTRIBUTION_SOURCE_LIMIT).map(source => ({
+      selector: getElementSelector(source.node),
+      previousRect: this.#toAttributionRect(source.previousRect),
+      currentRect: this.#toAttributionRect(source.currentRect),
+    }))
+    if (sources.length > 0) {
+      addBoundedAttribution(this.#layoutShiftAttribution, {
+        startTime: Math.max(0, entry.startTime - this.#epochMs),
+        score: Math.round(entry.value * 10000) / 10000,
+        sources,
+      })
+    }
 
     // Check if this entry belongs to the current session or starts a new one
     const shouldStartNewSession =
@@ -149,6 +167,7 @@ export class LayoutShiftCollector implements MetricCollector<LayoutMetrics> {
     this.#sessionLastEntryTime = null
     this.#layoutShiftCount = 0
     this.#sessionCount = 0
+    this.#layoutShiftAttribution = []
     this.#epochMs = performance.now()
   }
 
@@ -158,6 +177,19 @@ export class LayoutShiftCollector implements MetricCollector<LayoutMetrics> {
       layoutShiftCount: this.#layoutShiftCount,
       currentSessionScore: Math.round(this.#currentSessionScore * 10000) / 10000,
       sessionCount: this.#sessionCount,
+      layoutShiftAttribution: this.#layoutShiftAttribution.map(attribution => ({
+        ...attribution,
+        sources: attribution.sources.map(source => ({...source})),
+      })),
+    }
+  }
+
+  #toAttributionRect(rect: DOMRectReadOnly): AttributionRect {
+    return {
+      x: Math.round(rect.x * 10) / 10,
+      y: Math.round(rect.y * 10) / 10,
+      width: Math.round(rect.width * 10) / 10,
+      height: Math.round(rect.height * 10) / 10,
     }
   }
 }

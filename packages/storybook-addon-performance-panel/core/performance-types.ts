@@ -317,6 +317,8 @@ export interface LoAFScriptAttribution {
   executionStart: number
   /** Duration this script executed (ms) */
   duration: number
+  /** Time this script forced style and layout work (ms) */
+  forcedStyleAndLayoutDuration: number
 }
 
 /**
@@ -334,8 +336,51 @@ export interface LoAFDetails {
   styleAndLayoutStart: number
   /** Number of scripts that contributed */
   scriptCount: number
+  /** Total forced style and layout duration attributed to scripts (ms) */
+  forcedStyleAndLayoutDuration: number
   /** The script that contributed the most time */
   topScript: LoAFScriptAttribution | null
+}
+
+export interface AttributionRect {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export interface LayoutShiftSourceAttribution {
+  selector: string
+  previousRect: AttributionRect
+  currentRect: AttributionRect
+}
+
+export interface LayoutShiftAttribution {
+  startTime: number
+  score: number
+  sources: LayoutShiftSourceAttribution[]
+}
+
+export interface ScriptResourceAttribution {
+  url: string
+  initiatorType: string
+  startTime: number
+  duration: number
+}
+
+export interface ElementTimingAttribution {
+  identifier: string
+  /** Effective render time relative to the story epoch; falls back to loadTime (ms) */
+  renderTime: number
+  /** Unmodified renderTime timestamp from the Performance Timeline (ms) */
+  rawRenderTime: number
+  /** Load time relative to the current story epoch (ms) */
+  loadTime: number
+  /** Unmodified loadTime timestamp from the Performance Timeline (ms) */
+  rawLoadTime: number
+  selector: string
+  tagName: string
+  url?: string
 }
 
 /**
@@ -486,6 +531,8 @@ export interface PerformanceMetrics {
   layoutShiftCount: number
   /** Current/ongoing session's CLS value */
   currentSessionCLS: number
+  /** Recent layout shifts with bounded source selectors and geometry */
+  layoutShiftAttribution: LayoutShiftAttribution[]
   /** Synchronous reads that forced browser reflow */
   forcedReflowCount: number
   /** Average DOM mutations normalized to a one-second rate */
@@ -522,6 +569,10 @@ export interface PerformanceMetrics {
   domElements: number | null
   /** Cumulative script resource loading time from the Resource Timing API (ms) */
   scriptResourceLoadTime: number
+  /** Total script resources observed in the current story */
+  scriptResourceCount: number
+  /** Bounded attribution for the slowest observed script resources */
+  scriptResources: ScriptResourceAttribution[]
   /** @deprecated Use scriptResourceLoadTime. */
   scriptEvalTime: number
 
@@ -546,8 +597,8 @@ export interface PerformanceMetrics {
   elementTimingCount: number
   /** Largest render time across all tracked elements (ms) */
   largestElementRenderTime: number
-  /** Details about tracked elements (identifier → renderTime) */
-  elementTimings: {identifier: string; renderTime: number; selector: string}[]
+  /** Bounded details about tracked elements with relative and raw timestamps */
+  elementTimings: ElementTimingAttribution[]
 }
 
 /** How a metric is obtained from its underlying browser or framework signal. */
@@ -638,6 +689,7 @@ export const PERFORMANCE_METRIC_METADATA = {
   layoutShiftScore: {provenance: 'derived', quality: 'high', unit: 'score'},
   layoutShiftCount: {provenance: 'native', quality: 'high', unit: 'count'},
   currentSessionCLS: {provenance: 'derived', quality: 'high', unit: 'score'},
+  layoutShiftAttribution: {provenance: 'native', quality: 'high', unit: 'structured'},
   forcedReflowCount: {provenance: 'heuristic', quality: 'low', unit: 'count'},
   domMutationsPerSecond: {provenance: 'derived', quality: 'medium', unit: 'per-second'},
   domMutationsPerFrame: {provenance: 'derived', quality: 'medium', unit: 'count'},
@@ -652,6 +704,8 @@ export const PERFORMANCE_METRIC_METADATA = {
   renderCascades: {provenance: 'derived', quality: 'high', unit: 'count'},
   domElements: {provenance: 'derived', quality: 'high', unit: 'count'},
   scriptResourceLoadTime: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
+  scriptResourceCount: {provenance: 'native', quality: 'high', unit: 'count'},
+  scriptResources: {provenance: 'native', quality: 'high', unit: 'structured'},
   scriptEvalTime: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
   eventListenerCount: {provenance: 'unsupported', quality: 'unavailable', unit: 'count'},
   observerCount: {provenance: 'unsupported', quality: 'unavailable', unit: 'count'},
@@ -725,6 +779,7 @@ export const DEFAULT_METRICS: PerformanceMetrics = {
   layoutShiftScore: 0,
   layoutShiftCount: 0,
   currentSessionCLS: 0,
+  layoutShiftAttribution: [],
   forcedReflowCount: 0,
   domMutationsPerSecond: 0,
   domMutationsPerFrame: 0,
@@ -739,6 +794,8 @@ export const DEFAULT_METRICS: PerformanceMetrics = {
   renderCascades: 0,
   domElements: null,
   scriptResourceLoadTime: 0,
+  scriptResourceCount: 0,
+  scriptResources: [],
   scriptEvalTime: 0,
   eventListenerCount: 0,
   observerCount: 0,

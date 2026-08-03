@@ -302,6 +302,7 @@ describe('CollectorManager', () => {
       expect(metrics).toHaveProperty('layoutShiftScore')
       expect(metrics).toHaveProperty('layoutShiftCount')
       expect(metrics).toHaveProperty('currentSessionCLS')
+      expect(metrics).toHaveProperty('layoutShiftAttribution')
 
       // React metrics
       expect(metrics).toHaveProperty('reactMountCount')
@@ -317,6 +318,7 @@ describe('CollectorManager', () => {
       expect(metrics).toHaveProperty('elementTimingSupported')
       expect(metrics).toHaveProperty('elementTimingCount')
       expect(metrics).toHaveProperty('elementTimings')
+      expect(metrics).toHaveProperty('scriptResources')
     })
 
     it('uses setDomElementCount to update domElements', () => {

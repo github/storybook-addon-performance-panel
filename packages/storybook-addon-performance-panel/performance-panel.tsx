@@ -901,6 +901,16 @@ const LoAFSection = React.memo(function LoAFSection({
           <SecondaryValue>{Math.round(worstLoaf.topScript.duration)}ms</SecondaryValue>
         </Metric>
       )}
+
+      {worstLoaf && worstLoaf.forcedStyleAndLayoutDuration > 0 && (
+        <Metric
+          label="Forced Style / Layout"
+          tooltip="Time that scripts in the worst LoAF forced synchronous style and layout work."
+          detail={worstLoaf.topScript ? <>top script: {worstLoaf.topScript.forcedStyleAndLayoutDuration}ms</> : null}
+        >
+          {Math.round(worstLoaf.forcedStyleAndLayoutDuration)}ms
+        </Metric>
+      )}
     </MetricsSection>
   )
 })
@@ -989,7 +999,7 @@ const ElementTimingSection = React.memo(function ElementTimingSection({
         <Metric
           key={el.identifier}
           label={el.identifier}
-          tooltip={`Element: ${el.selector}\nRender time: ${String(el.renderTime)}ms`}
+          tooltip={`Element: ${el.selector}\nRelative render: ${String(el.renderTime)}ms\nRaw render: ${String(el.rawRenderTime)}ms${el.url ? `\nResource: ${el.url}` : ''}`}
         >
           <StatusBadge variant={getStatus(el.renderTime, 100, 250)}>
             <span>{i === 0 ? '🥇 ' : i === 1 ? '🥈 ' : '🥉 '}</span>
@@ -1021,24 +1031,31 @@ type LayoutAndInternalsSectionProps = Pick<
   | 'layoutShiftScore'
   | 'layoutShiftCount'
   | 'currentSessionCLS'
+  | 'layoutShiftAttribution'
   | 'forcedReflowCount'
   | 'styleWrites'
   | 'cssVarChanges'
   | 'inputJitter'
->
+> & {
+  onInspectElement?: (selector: string) => void
+}
 
 const LayoutAndInternalsSection = React.memo(function LayoutAndInternalsSection({
   layoutShiftScore,
   layoutShiftCount,
   currentSessionCLS,
+  layoutShiftAttribution,
   forcedReflowCount,
   styleWrites,
   cssVarChanges,
   inputJitter,
+  onInspectElement,
 }: LayoutAndInternalsSectionProps) {
   const clsStatus = getStatus(layoutShiftScore, THRESHOLDS.CLS_GOOD, THRESHOLDS.CLS_WARNING)
   const reflowStatus = getStatus(forcedReflowCount, 0, THRESHOLDS.FORCED_REFLOW_WARNING)
   const jitterStatus = getZeroStatus(inputJitter)
+  const latestShift = layoutShiftAttribution.at(-1)
+  const latestShiftSource = latestShift?.sources[0]
 
   // Build detail parts - always show both when available
   const detailParts: string[] = []
@@ -1065,6 +1082,26 @@ const LayoutAndInternalsSection = React.memo(function LayoutAndInternalsSection(
               : formatScore(layoutShiftScore)}
         </StatusBadge>
       </Metric>
+
+      {latestShiftSource && (
+        <Metric
+          label="Latest Shift Source"
+          tooltip={`Latest attributed CLS source. Shift score: ${String(latestShift.score)}.`}
+          detail={<>score: {formatScore(latestShift.score)}</>}
+        >
+          <Code>{latestShiftSource.selector.slice(0, 24)}</Code>
+          {latestShiftSource.selector !== 'unknown' && onInspectElement && (
+            <InspectButton
+              onClick={() => {
+                onInspectElement(latestShiftSource.selector)
+              }}
+              title="Inspect latest layout shift source"
+            >
+              🔍
+            </InspectButton>
+          )}
+        </Metric>
+      )}
 
       <Metric
         label="Forced Reflows"
@@ -1284,6 +1321,9 @@ type MemoryAndRenderingSectionProps = Pick<
   | 'domElements'
   | 'initialPaintMilestones'
   | 'layerPromotionCandidates'
+  | 'scriptResourceLoadTime'
+  | 'scriptResourceCount'
+  | 'scriptResources'
 >
 
 const MemoryAndRenderingSection = React.memo(function MemoryAndRenderingSection({
@@ -1295,10 +1335,19 @@ const MemoryAndRenderingSection = React.memo(function MemoryAndRenderingSection(
   domElements,
   initialPaintMilestones,
   layerPromotionCandidates,
+  scriptResourceLoadTime,
+  scriptResourceCount,
+  scriptResources,
 }: MemoryAndRenderingSectionProps) {
   const gcStatus = getStatus(gcPressure, 0, THRESHOLDS.GC_PRESSURE_WARNING)
   const layerStatus =
     layerPromotionCandidates === null ? 'neutral' : getStatus(layerPromotionCandidates, 0, THRESHOLDS.LAYERS_WARNING)
+  const slowestScriptResource = scriptResources[0]
+  const scriptResourceDetail = slowestScriptResource ? (
+    <>
+      {slowestScriptResource.initiatorType} · {slowestScriptResource.url.slice(0, 24)}
+    </>
+  ) : null
 
   const deltaStatus =
     memoryDeltaMB === null
@@ -1329,6 +1378,14 @@ const MemoryAndRenderingSection = React.memo(function MemoryAndRenderingSection(
           tooltip="Native Paint Timing milestones such as first-paint and first-contentful-paint."
         >
           {initialPaintMilestones}
+        </Metric>
+        <Metric
+          label="Script Resources"
+          tooltip="Cumulative script loading duration from Resource Timing, with bounded URL and initiator attribution."
+          detail={scriptResourceDetail}
+        >
+          {formatMs(scriptResourceLoadTime)}
+          <SecondaryValue>/ {scriptResourceCount} scripts</SecondaryValue>
         </Metric>
         <Metric
           label="Layer-Promotion Candidates"
@@ -1384,6 +1441,15 @@ const MemoryAndRenderingSection = React.memo(function MemoryAndRenderingSection(
             <span>—</span>
           )}
         </SecondaryValue>
+      </Metric>
+
+      <Metric
+        label="Script Resources"
+        tooltip="Cumulative script loading duration from Resource Timing, with bounded URL and initiator attribution."
+        detail={scriptResourceDetail}
+      >
+        {formatMs(scriptResourceLoadTime)}
+        <SecondaryValue>/ {scriptResourceCount} scripts</SecondaryValue>
       </Metric>
     </MetricsSection>
   )
@@ -1697,10 +1763,12 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
             layoutShiftScore={metrics.layoutShiftScore}
             layoutShiftCount={metrics.layoutShiftCount}
             currentSessionCLS={metrics.currentSessionCLS}
+            layoutShiftAttribution={metrics.layoutShiftAttribution}
             forcedReflowCount={metrics.forcedReflowCount}
             styleWrites={metrics.styleWrites}
             cssVarChanges={metrics.cssVarChanges}
             inputJitter={metrics.inputJitter}
+            onInspectElement={handleInspectElement}
           />
           <MemoryAndRenderingSection
             memoryUsedMB={metrics.memoryUsedMB}
@@ -1711,6 +1779,9 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
             domElements={metrics.domElements}
             initialPaintMilestones={metrics.initialPaintMilestones}
             layerPromotionCandidates={metrics.layerPromotionCandidates}
+            scriptResourceLoadTime={metrics.scriptResourceLoadTime}
+            scriptResourceCount={metrics.scriptResourceCount}
+            scriptResources={metrics.scriptResources}
           />
           <ElementTimingSection
             elementTimingSupported={metrics.elementTimingSupported}

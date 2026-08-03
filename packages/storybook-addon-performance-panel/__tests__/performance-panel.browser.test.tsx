@@ -89,6 +89,24 @@ describe('PerformancePanel visibility', () => {
       frameBudget: 8.33,
       observedFrameIntervals: 20,
       inferredDroppedFrames: 2,
+      layoutShiftScore: 0.05,
+      layoutShiftCount: 1,
+      layoutShiftAttribution: [
+        {
+          startTime: 10,
+          score: 0.05,
+          sources: [
+            {
+              selector: '#shifted-card',
+              previousRect: {x: 0, y: 0, width: 100, height: 20},
+              currentRect: {x: 0, y: 10, width: 100, height: 20},
+            },
+          ],
+        },
+      ],
+      scriptResourceLoadTime: 42,
+      scriptResourceCount: 1,
+      scriptResources: [{url: '/assets/story.js', initiatorType: 'script', startTime: 5, duration: 42}],
     })
 
     await expect.poll(() => document.body.textContent).toContain('Pointer Frame Interval')
@@ -97,5 +115,7 @@ describe('PerformancePanel visibility', () => {
     await expect.poll(() => document.body.textContent).toContain('Layer-Promotion Candidates')
     await expect.poll(() => document.body.textContent).toContain('Inferred Drops')
     await expect.poll(() => document.body.textContent).toContain('120 Hz estimate')
+    await expect.poll(() => document.body.textContent).toContain('Latest Shift Source')
+    await expect.poll(() => document.body.textContent).toContain('Script Resources')
   })
 })
