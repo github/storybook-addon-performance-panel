@@ -28,8 +28,8 @@ import {PERF_EVENTS} from './performance-types'
 // Timing Constants
 // ============================================================================
 
-/** How often to emit metrics to the panel (ms) */
-const UPDATE_INTERVAL_MS = 50
+/** How often to emit metrics while the panel is visible (ms) */
+const UPDATE_INTERVAL_MS = 250
 
 /** How often to sample sparkline data points (ms) */
 const SPARKLINE_SAMPLE_INTERVAL_MS = 200
@@ -109,8 +109,10 @@ export class PerformanceMonitorCore {
 
   private metricsIntervalId: ReturnType<typeof setInterval> | null = null
   private sparklineIntervalId: ReturnType<typeof setInterval> | null = null
+  private containerElement: HTMLElement | null = null
   private containerCleanup: (() => void) | null = null
   private channelCleanups: (() => void)[] = []
+  private panelVisible = false
 
   constructor(storyId: string) {
     this.storyId = storyId
@@ -122,17 +124,19 @@ export class PerformanceMonitorCore {
     })
   }
 
-  /**
-   * Start all collectors and begin emitting metrics.
-   * Sets up channel event listeners and periodic intervals.
-   */
+  /** Set up channel listeners. Browser collectors begin when the panel becomes visible. */
   start(): void {
     const channel = addons.getChannel()
+    this.panelVisible = false
 
-    this.manager.start()
+    const emitMetrics = () => {
+      const computed = this.manager.computeMetrics()
+      channel.emit(PERF_EVENTS.METRICS_UPDATE, computed)
+      performanceStore.setGlobalMetrics(computed)
+    }
 
     const handleRequestMetrics = () => {
-      channel.emit(PERF_EVENTS.METRICS_UPDATE, this.manager.computeMetrics())
+      emitMetrics()
       for (const id of this.manager.getProfilerIds()) {
         const metrics = this.manager.getProfilerMetrics(id)
         if (metrics) {
@@ -145,8 +149,23 @@ export class PerformanceMonitorCore {
       this.reset()
     }
 
+    const handlePanelVisibility = (visible: boolean) => {
+      this.panelVisible = visible
+      if (visible) {
+        this.manager.start()
+        this.#startContainerObservation()
+        emitMetrics()
+        this.#startLiveUpdates(emitMetrics)
+      } else {
+        this.#stopLiveUpdates()
+        this.#stopContainerObservation()
+        this.manager.stop()
+      }
+    }
+
     channel.on(PERF_EVENTS.REQUEST_METRICS, handleRequestMetrics)
     channel.on(PERF_EVENTS.RESET, handleReset)
+    channel.on(PERF_EVENTS.PANEL_VISIBILITY, handlePanelVisibility)
     channel.on(PERF_EVENTS.INSPECT_ELEMENT, handleInspectElement)
 
     this.channelCleanups = [
@@ -157,19 +176,14 @@ export class PerformanceMonitorCore {
         channel.off(PERF_EVENTS.RESET, handleReset)
       },
       () => {
+        channel.off(PERF_EVENTS.PANEL_VISIBILITY, handlePanelVisibility)
+      },
+      () => {
         channel.off(PERF_EVENTS.INSPECT_ELEMENT, handleInspectElement)
       },
     ]
 
-    this.metricsIntervalId = setInterval(() => {
-      const computed = this.manager.computeMetrics()
-      channel.emit(PERF_EVENTS.METRICS_UPDATE, computed)
-      performanceStore.setGlobalMetrics(computed)
-    }, UPDATE_INTERVAL_MS)
-
-    this.sparklineIntervalId = setInterval(() => {
-      this.manager.updateSparklineData()
-    }, SPARKLINE_SAMPLE_INTERVAL_MS)
+    channel.emit(PERF_EVENTS.REQUEST_PANEL_VISIBILITY)
   }
 
   /**
@@ -177,25 +191,17 @@ export class PerformanceMonitorCore {
    * Removes channel listeners and clears intervals.
    */
   stop(): void {
+    this.panelVisible = false
+    this.#stopLiveUpdates()
+    this.#stopContainerObservation()
     this.manager.stop()
-
-    if (this.metricsIntervalId != null) {
-      clearInterval(this.metricsIntervalId)
-      this.metricsIntervalId = null
-    }
-
-    if (this.sparklineIntervalId != null) {
-      clearInterval(this.sparklineIntervalId)
-      this.sparklineIntervalId = null
-    }
 
     for (const cleanup of this.channelCleanups) {
       cleanup()
     }
     this.channelCleanups = []
 
-    this.containerCleanup?.()
-    this.containerCleanup = null
+    this.containerElement = null
   }
 
   /** Reset all collector and stored metrics without changing lifecycle state. */
@@ -204,14 +210,50 @@ export class PerformanceMonitorCore {
     performanceStore.resetAll()
   }
 
+  #startLiveUpdates(emitMetrics: () => void): void {
+    this.metricsIntervalId ??= setInterval(emitMetrics, UPDATE_INTERVAL_MS)
+    this.sparklineIntervalId ??= setInterval(() => {
+      this.manager.updateSparklineData()
+    }, SPARKLINE_SAMPLE_INTERVAL_MS)
+  }
+
+  #stopLiveUpdates(): void {
+    if (this.metricsIntervalId !== null) {
+      clearInterval(this.metricsIntervalId)
+      this.metricsIntervalId = null
+    }
+    if (this.sparklineIntervalId !== null) {
+      clearInterval(this.sparklineIntervalId)
+      this.sparklineIntervalId = null
+    }
+  }
+
+  #startContainerObservation(): void {
+    if (!this.panelVisible || !this.containerElement || this.containerCleanup) return
+    this.containerCleanup = this.manager.observeContainer(this.containerElement)
+  }
+
+  #stopContainerObservation(): void {
+    this.containerCleanup?.()
+    this.containerCleanup = null
+  }
+
   /**
-   * Observe a DOM container for element counting and mutation tracking.
-   * Replaces any previously observed container.
+   * Register a DOM container for element counting and mutation tracking.
+   * Observation is active only while the panel is visible.
    */
   observeContainer(element: HTMLElement): () => void {
-    this.containerCleanup?.()
-    this.containerCleanup = this.manager.observeContainer(element)
-    return this.containerCleanup
+    if (this.containerElement !== element) {
+      this.#stopContainerObservation()
+      this.containerElement = element
+    }
+    this.#startContainerObservation()
+
+    return () => {
+      if (this.containerElement !== element) return
+      this.#stopContainerObservation()
+      this.containerElement = null
+    }
   }
 }
 

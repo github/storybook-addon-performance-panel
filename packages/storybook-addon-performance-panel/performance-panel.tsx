@@ -1678,6 +1678,35 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
 }
 
 /**
+ * Keep preview collection synchronized with panel visibility.
+ *
+ * This component must remain outside AddonPanel because Storybook freezes
+ * AddonPanel children while the panel is inactive.
+ */
+function PanelVisibilityController({active}: {active: boolean}) {
+  const {previewInitialized} = useStorybookState()
+  const emit = useChannel(
+    {
+      [PERF_EVENTS.REQUEST_PANEL_VISIBILITY]: () => {
+        emit(PERF_EVENTS.PANEL_VISIBILITY, active)
+      },
+    },
+    [active],
+  )
+
+  React.useEffect(() => {
+    if (!previewInitialized) return undefined
+
+    emit(PERF_EVENTS.PANEL_VISIBILITY, active)
+    return () => {
+      emit(PERF_EVENTS.PANEL_VISIBILITY, false)
+    }
+  }, [active, emit, previewInitialized])
+
+  return null
+}
+
+/**
  * Outer panel content - handles storyId gating.
  *
  * ConnectedPanelContent stores all profiler data and cleans up old entries
@@ -1688,13 +1717,10 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
  * - viewMode: Detect docs vs story mode
  *
  * @component
- * @param props.active - Whether the panel tab is currently selected
  * @private
  */
-function PanelContent({active}: {active: boolean}) {
+function PanelContent() {
   const {storyId, previewInitialized, viewMode, refId} = useStorybookState()
-
-  if (!active) return null
 
   if (!storyId) {
     return (
@@ -1772,9 +1798,12 @@ interface PerformancePanelProps {
 export function PerformancePanel({active}: PerformancePanelProps) {
   return (
     <ErrorBoundary>
-      <AddonPanel active={active}>
-        <PanelContent active={active} />
-      </AddonPanel>
+      <>
+        <PanelVisibilityController active={active} />
+        <AddonPanel active={active}>
+          <PanelContent />
+        </AddonPanel>
+      </>
     </ErrorBoundary>
   )
 }

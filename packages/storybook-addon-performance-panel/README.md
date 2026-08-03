@@ -179,6 +179,12 @@ import '@github-ui/storybook-addon-performance-panel/preset'
 
 The universal entry collects all browser-level metrics (frame timing, CLS, INP, etc.) but omits React Profiler metrics. The React Performance section is automatically hidden in the panel.
 
+## Collection Lifecycle
+
+Browser performance collection runs automatically while the Performance panel is selected. Closing the panel disconnects browser collectors, DOM observers, and live-update timers to minimize background overhead. Reopening the panel resumes collection without clearing the metrics already gathered for the current story. React Profiler callbacks remain attached so mount and render history is not lost before the panel opens.
+
+Use the reset button to clear accumulated metrics, or set `parameters.performancePanel.disable` to `true` to disable the addon for a story.
+
 ## Collectors
 
 The addon uses modular collector classes for metrics gathering. Each collector uses the most accurate available API for its metrics.

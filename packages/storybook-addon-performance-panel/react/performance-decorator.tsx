@@ -174,7 +174,7 @@ export const PerformanceProvider = memo(function PerformanceProvider({
     const core = coreRef.current
     if (!enabled || !contentRef.current || !core) return
     return core.observeContainer(contentRef.current)
-  }, [enabled])
+  }, [enabled, storyId])
 
   // Memoize context value to avoid unnecessary re-renders
   const contextValue: ReportReactRenderProfileContextValue = useCallback(
