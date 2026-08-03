@@ -20,3 +20,6 @@ storybook-static/
 
 # Generated CSS module type declarations
 *.module.css.d.ts
+
+# Local benchmark output
+benchmark-results.json

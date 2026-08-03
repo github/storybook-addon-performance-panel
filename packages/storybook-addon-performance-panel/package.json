@@ -72,6 +72,7 @@
     "**/*.md"
   ],
   "scripts": {
+    "benchmark": "vitest bench --config vitest.benchmark.config.ts --outputJson benchmark-results.json",
     "build": "tsdown",
     "build:watch": "tsdown --watch",
     "test": "vitest run"
@@ -111,11 +112,11 @@
     "@types/node": "^26.1.2",
     "@types/react": "^19.2.17",
     "@vitejs/plugin-react": "^6.0.4",
-    "@vitest/browser-playwright": "^4.1.10",
+    "@vitest/browser-playwright": "4.1.10",
     "esbuild": "0.28.1",
     "publint": "^0.3.22",
     "tsdown": "^0.22.14",
-    "vitest": "^4.1.2",
+    "vitest": "4.1.10",
     "vitest-browser-react": "^2.2.0"
   },
   "storybook": {
