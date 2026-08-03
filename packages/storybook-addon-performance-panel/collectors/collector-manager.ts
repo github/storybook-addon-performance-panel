@@ -19,7 +19,7 @@ import {MainThreadCollector} from './main-thread-collector'
 import {MemoryCollector} from './memory-collector'
 import {PaintCollector} from './paint-collector'
 import {ReactProfilerCollector} from './react-profiler-collector'
-import {StyleMutationCollector} from './style-mutation-collector'
+import {DOM_MUTATION_SAMPLE_INTERVAL_MS, StyleMutationCollector} from './style-mutation-collector'
 import type {MetricCollector} from './types'
 import {addToWindow, computeAverage, computeP95} from './utils'
 
@@ -291,7 +291,13 @@ export class CollectorManager {
     const avgFrameTime = computeAverage(frame.frameTimes)
     const fps = avgFrameTime > 0 ? Math.round(1000 / avgFrameTime) : 0
     const avgInputLatency = computeAverage(input.inputLatencies)
-    const avgPaintTime = computeAverage(input.paintTimes)
+    const avgPointerFrameInterval = computeAverage(input.paintTimes)
+    const pointerFrameInterval = Math.round(avgPointerFrameInterval * 10) / 10
+    const maxPointerFrameInterval = Math.round(input.maxPaintTime * 10) / 10
+    const scriptResourceLoadTime = Math.round(paint.scriptEvalTime * 10) / 10
+    const averageDomMutationsPerSample = computeAverage(style.domMutationFrames)
+    const domMutationsPerSample = Math.round(averageDomMutationsPerSample)
+    const domMutationsPerSecond = Math.round((averageDomMutationsPerSample * 1000) / DOM_MUTATION_SAMPLE_INTERVAL_MS)
     const memoryDeltaMB =
       memory.lastMemoryMB !== null && memory.baselineMemoryMB !== null
         ? Math.round((memory.lastMemoryMB - memory.baselineMemoryMB) * 10) / 10
@@ -303,8 +309,12 @@ export class CollectorManager {
       maxFrameTime: Math.round(frame.maxFrameTime * 10) / 10,
       inputLatency: Math.round(avgInputLatency * 10) / 10,
       maxInputLatency: Math.round(input.maxInputLatency * 10) / 10,
-      paintTime: Math.round(avgPaintTime * 10) / 10,
-      maxPaintTime: Math.round(input.maxPaintTime * 10) / 10,
+      pointerFrameInterval,
+      maxPointerFrameInterval,
+      pointerFrameJitter: input.paintJitter,
+      initialPaintMilestones: paint.paintCount,
+      paintTime: pointerFrameInterval,
+      maxPaintTime: maxPointerFrameInterval,
       inputJitter: input.inputJitter,
       memoryUsedMB: memory.lastMemoryMB,
       memoryDeltaMB,
@@ -354,12 +364,15 @@ export class CollectorManager {
       eventListenerCount: 0, // Not currently tracked by collectors
       observerCount: 0, // Not currently tracked by collectors
       cssVarChanges: style.cssVarChanges,
-      scriptEvalTime: Math.round(paint.scriptEvalTime * 10) / 10,
+      scriptResourceLoadTime,
+      scriptEvalTime: scriptResourceLoadTime,
       gcPressure: Math.round(memory.gcPressure * 100) / 100,
       paintCount: paint.paintCount,
       paintJitter: input.paintJitter,
+      layerPromotionCandidates: paint.compositorLayers,
       compositorLayers: paint.compositorLayers,
-      domMutationsPerFrame: Math.round(computeAverage(style.domMutationFrames)),
+      domMutationsPerSecond,
+      domMutationsPerFrame: domMutationsPerSample,
       slowReactUpdates: react.slowReactUpdates,
       reactP95Duration: computeP95(react.reactUpdateDurations),
       // Element Timing metrics

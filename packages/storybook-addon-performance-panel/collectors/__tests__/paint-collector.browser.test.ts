@@ -103,7 +103,7 @@ describe('PaintCollector', () => {
       expect(metrics.paintCount).toBe(2)
     })
 
-    it('accumulates paint count', () => {
+    it('accumulates initial paint milestones', () => {
       collector.start()
       const startTime = performance.now()
 
@@ -128,7 +128,7 @@ describe('PaintCollector', () => {
       expect(metrics.paintCount).toBe(3)
     })
 
-    it('tracks script evaluation time', () => {
+    it('tracks script resource loading time', () => {
       collector.start()
       const startTime = performance.now()
 
@@ -216,7 +216,7 @@ describe('PaintCollector', () => {
     })
   })
 
-  describe('compositor layer tracking', () => {
+  describe('layer-promotion candidate tracking', () => {
     it('detects elements with will-change via initial scan', async () => {
       const el = document.createElement('div')
       el.style.willChange = 'transform'
@@ -251,7 +251,7 @@ describe('PaintCollector', () => {
       collector.start()
       await waitUntil(() => collector.getMetrics().compositorLayers !== null)
 
-      // Should have a numeric count but 2D transforms don't create compositor layers
+      // A 2D transform alone is not treated as a layer-promotion candidate.
       expect(collector.getMetrics().compositorLayers).not.toBeNull()
 
       document.body.removeChild(el)
@@ -345,7 +345,7 @@ describe('PaintCollector', () => {
       expect(metrics.scriptEvalTime).toBe(0)
     })
 
-    it('rescans compositor layers after reset', async () => {
+    it('rescans layer-promotion candidates after reset', async () => {
       collector.start()
       await waitUntil(() => collector.getMetrics().compositorLayers !== null)
 

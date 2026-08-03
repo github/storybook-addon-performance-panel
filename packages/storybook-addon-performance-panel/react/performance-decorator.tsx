@@ -41,14 +41,14 @@
  *
  * ### Input Responsiveness
  * - **Input Latency**: Time from pointer event to next animation frame
- * - **Paint Time**: Browser rendering time measured via double-RAF technique
+ * - **Pointer Frame Interval**: Double-RAF frame spacing after pointer movement (heuristic)
  * - **INP (Interaction to Next Paint)**: Worst-case click/key interaction latency
  *
  * ### Main Thread Health
  * - **Long Tasks**: Tasks blocking main thread >50ms (via PerformanceObserver)
  * - **Total Blocking Time (TBT)**: Sum of (duration - 50ms) for all long tasks
  * - **Thrashing**: Style writes followed by long frames (forced sync layout)
- * - **DOM Churn**: Rate of DOM mutations per measurement period
+ * - **DOM Churn**: Average DOM mutations normalized to a per-second rate
  *
  * ### Layout Stability
  * - **CLS (Cumulative Layout Shift)**: Layout shift score without user input
@@ -66,7 +66,7 @@
  * - **Heap Usage**: Current JS heap size (Chrome only via performance.memory)
  * - **Memory Delta**: Change from baseline since last reset
  * - **GC Pressure**: Memory allocation rate in MB/s
- * - **Compositor Layers**: Elements promoted to GPU layers
+ * - **Layer-Promotion Candidates**: Elements matching CSS promotion heuristics
  *
  * @module performance-decorator
  * @see {@link ./performance-panel.tsx} - The UI that displays these metrics

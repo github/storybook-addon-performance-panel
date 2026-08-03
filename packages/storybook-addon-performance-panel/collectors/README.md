@@ -13,7 +13,7 @@ This directory contains modular metric collector classes used by the performance
 | [ElementTimingCollector](#elementtimingcollector) | Element Timing API (`PerformanceObserver`) | **Optimal** | Excellent | Custom element render timing |
 | [LayoutShiftCollector](#layoutshiftcollector) | Layout Instability API (`PerformanceObserver`) | **Optimal** | Excellent | Standard CLS measurement |
 | [MemoryCollector](#memorycollector) | `performance.memory` | **Optimal** | Excellent | Only available API (Chrome-only) |
-| [PaintCollector](#paintcollector) | Paint Timing API (`PerformanceObserver`) | **Optimal** | Good | Standard paint event tracking |
+| [PaintCollector](#paintcollector) | Paint + Resource Timing APIs, CSS scan | Mixed | Good | Native milestones, derived loading time, heuristic candidates |
 | [StyleMutationCollector](#stylemutationcollector) | `MutationObserver` | Heuristic | Good | Only available method for DOM tracking |
 | [ForcedReflowCollector](#forcedreflowcollector) | Property getter instrumentation | Heuristic | Moderate | Approximation via property access patterns |
 | [ReactProfilerCollector](#reactprofilercollector) | React Profiler API | **Optimal** | Excellent | Official React instrumentation |
@@ -73,8 +73,8 @@ This directory contains modular metric collector classes used by the performance
 - `avgPresentationDelay` - Time from handlers to next paint
 - `interactionCount` - Total discrete interactions tracked
 - `inputLatencies[]` - Pointer move latencies (hover responsiveness)
-- `paintTimes[]` - Paint time estimates
-- `inputJitter` / `paintJitter` - Spike counts
+- `paintTimes[]` - Internal name for double-RAF pointer frame intervals
+- `inputJitter` / `paintJitter` - Input and pointer frame interval spike counts
 - `firstInputDelay` - First Input Delay (FID) - latency of first interaction
 - `firstInputType` - Event type of first input (click, keydown, etc.)
 - `slowestInteraction` - Details about worst interaction for debugging:
@@ -399,9 +399,9 @@ export function getMemoryMB(): number | null {
 **File:** [paint-collector.ts](./paint-collector.ts)
 
 ### Metrics
-- `paintCount` - Total paint operations observed
-- `scriptEvalTime` - Cumulative script loading time
-- `compositorLayers` - Elements promoted to GPU (estimated)
+- `paintCount` - Internal name for native initial paint milestones; exposed publicly as `initialPaintMilestones`
+- `scriptEvalTime` - Internal name for derived script resource loading time; exposed as `scriptResourceLoadTime`
+- `compositorLayers` - Internal heuristic count; exposed as `layerPromotionCandidates`
 
 ### Collection Method: Paint Timing API + Resource Timing
 **Type:** Optimal ✅ (for paint/resource), Heuristic (for layers)
@@ -413,7 +413,7 @@ this.#paintObserver = new PerformanceObserver(list => {
 })
 this.#paintObserver.observe({type: 'paint', buffered: true})
 
-// Resource timing for script evaluation
+// Resource Timing entries for script loading duration
 this.#resourceObserver = new PerformanceObserver(list => {
   for (const entry of list.getEntries()) {
     if (entry.initiatorType === 'script') {
@@ -423,7 +423,7 @@ this.#resourceObserver = new PerformanceObserver(list => {
 })
 ```
 
-**Compositor layers estimation (heuristic):**
+**Layer-promotion candidate scan (heuristic):**
 ```typescript
 // Checks computed styles for layer-promoting properties
 const style = getComputedStyle(el)
@@ -434,7 +434,7 @@ if (style.transform?.startsWith('matrix3d')) layerCount++
 **Why this approach:**
 - Paint Timing API is standard for first-paint/first-contentful-paint
 - Resource Timing provides script load metrics
-- Compositor layer detection is a heuristic (no direct API available)
+- Layer-promotion candidates do not represent the browser's actual compositor layers (no direct web API exists)
 
 ---
 
@@ -445,7 +445,7 @@ if (style.transform?.startsWith('matrix3d')) layerCount++
 ### Metrics
 - `styleWrites` - Inline style attribute mutations
 - `cssVarChanges` - CSS custom property changes
-- `domMutationFrames[]` - DOM mutations per sample period
+- `domMutationFrames[]` - Internal 200ms mutation samples, normalized to `domMutationsPerSecond` in public metrics
 - `thrashingScore` - Style writes near long frames
 
 ### Collection Method: MutationObserver

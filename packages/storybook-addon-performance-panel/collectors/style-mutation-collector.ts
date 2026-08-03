@@ -7,6 +7,8 @@ import {THRASHING_FRAME_THRESHOLD, THRASHING_STYLE_WRITE_WINDOW} from './constan
 import type {MetricCollector} from './types'
 import {addToWindow} from './utils'
 
+export const DOM_MUTATION_SAMPLE_INTERVAL_MS = 200
+
 export interface StyleMetrics {
   styleWrites: number
   cssVarChanges: number
@@ -20,7 +22,7 @@ export interface StyleMetrics {
  * Tracks:
  * - Style attribute mutations
  * - CSS variable changes
- * - DOM mutations per frame
+ * - DOM mutations in fixed 200ms sample windows
  * - Layout thrashing score
  */
 export class StyleMutationCollector implements MetricCollector<StyleMetrics> {
@@ -79,7 +81,7 @@ export class StyleMutationCollector implements MetricCollector<StyleMetrics> {
     this.#sampleInterval = setInterval(() => {
       addToWindow(this.#domMutationFrames, this.#domMutationCount, 30)
       this.#domMutationCount = 0
-    }, 200)
+    }, DOM_MUTATION_SAMPLE_INTERVAL_MS)
   }
 
   stop(): void {
