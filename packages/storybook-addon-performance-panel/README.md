@@ -112,7 +112,7 @@ The addon consists of two main parts:
 ### Layout Stability
 - **CLS**: Cumulative Layout Shift score (Core Web Vital)
 - **Shift Sources**: Bounded selectors and geometry for recent native layout-shift attribution
-- **Forced Reflows**: Layout property reads after style writes
+- **Forced Layout LoAFs**: Long animation frames with native forced style/layout attribution (Chrome/Edge)
 - **Style Writes**: Inline style mutations observed via MutationObserver
 
 ### React Performance
@@ -203,6 +203,8 @@ Quality is `high` for direct or deterministic signals, `medium` for sampled or b
 
 Browser performance collection runs automatically while the Performance panel is selected. Closing the panel disconnects browser collectors, DOM observers, and live-update timers to minimize background overhead. Reopening the panel resumes collection without clearing the metrics already gathered for the current story. React Profiler callbacks remain attached so mount and render history is not lost before the panel opens.
 
+DOM mutation observation and layer-promotion scans are scoped to the active story root. Layer checks are split into bounded idle-callback chunks, pointer samples share one cancellable RAF pipeline, and collection does not patch DOM or CSS prototypes.
+
 Use the reset button to clear accumulated metrics, or set `parameters.performancePanel.disable` to `true` to disable the addon for a story.
 
 ## Collectors
@@ -225,7 +227,6 @@ The addon uses modular collector classes for metrics gathering. Each collector u
 | `MemoryCollector` | `performance.memory` | **Optimal** |
 | `PaintCollector` | Paint + Resource Timing APIs, CSS heuristic | Mixed |
 | `StyleMutationCollector` | `MutationObserver` | Heuristic |
-| `ForcedReflowCollector` | Property getter instrumentation | Heuristic |
 | `ReactProfilerCollector` | React Profiler API | **Optimal** |
 
 ## Browser Compatibility
@@ -247,7 +248,15 @@ npm run tsc -w @github-ui/storybook-addon-performance-panel
 
 # Lint
 npm run lint -w @github-ui/storybook-addon-performance-panel
+
+# Write a candidate benchmark without replacing the tracked baseline
+cd packages/storybook-addon-performance-panel
+../../node_modules/.bin/vitest bench --config vitest.benchmark.config.ts --outputJson .overhead-current.json
+npm run benchmark:compare -- .overhead-current.json
+rm .overhead-current.json
 ```
+
+The benchmark also prints one internal `OVERHEAD_TELEMETRY_SNAPSHOT` after timed samples complete. It reports collector callback timing, `computeMetrics()` timing, serialization duration and bytes, scan counts, and current/peak pending work. This telemetry is opt-in benchmark instrumentation and is not part of `PerformanceMetrics` or live addon payloads.
 
 ## Related Files
 
@@ -423,15 +432,16 @@ Start by scanning these key indicators:
 
 ---
 
-#### 🔥 Forced Reflows (Layout Thrashing)
+#### 🔥 Forced Style & Layout (Layout Thrashing)
 
 **Symptoms:**
-- `Forced Reflows` count >0
+- `Forced Layout LoAFs` count >0
+- `Forced Style / Layout` duration appears on the worst LoAF
 - `Thrashing` score increasing
 - FPS drops during interactions
 
 **Where to Look:**
-1. Check `Forced Reflows` count
+1. Check `Forced Layout LoAFs` and the worst LoAF attribution
 2. Look for `Thrashing` correlation with long frames
 3. Review `Style Writes` frequency
 
@@ -524,7 +534,7 @@ Use these correlations to triangulate issues:
 | If you see... | Also check... | Likely cause |
 |---------------|---------------|--------------|
 | Low FPS + High Long Tasks | TBT, Longest Task | Heavy JS execution |
-| Low FPS + High Style Writes | Thrashing, Forced Reflows | Layout thrashing |
+| Low FPS + High Style Writes | Thrashing, Forced Layout LoAFs | Layout thrashing |
 | High INP + High Wait phase | Long Tasks | Blocked main thread |
 | High INP + High JS phase | Slow Updates, P95 | Expensive handlers |
 | High INP + High Paint phase | CLS, DOM Churn | Expensive rendering |

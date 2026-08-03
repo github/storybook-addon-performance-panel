@@ -9,23 +9,29 @@ export function limitAttributionString(value: string, fallback: string, maxLengt
   return normalized.length <= maxLength ? normalized : normalized.slice(0, maxLength)
 }
 
+function boundedSelector(selector: string): string | null {
+  return selector.length <= ATTRIBUTION_SELECTOR_MAX_LENGTH ? selector : null
+}
+
 export function getElementSelector(node: Node | null): string {
   const element = node instanceof Element ? node : node?.parentElement
   if (!element) return 'unknown'
 
   if (element.id) {
-    return limitAttributionString(`#${element.id}`, 'unknown', ATTRIBUTION_SELECTOR_MAX_LENGTH)
+    const idSelector = boundedSelector(`#${CSS.escape(element.id)}`)
+    if (idSelector) return idSelector
   }
 
   const timing = element.getAttribute('elementtiming')
   if (timing) {
-    return limitAttributionString(`[elementtiming="${timing}"]`, 'unknown', ATTRIBUTION_SELECTOR_MAX_LENGTH)
+    const timingSelector = boundedSelector(`[elementtiming="${CSS.escape(timing)}"]`)
+    if (timingSelector) return timingSelector
   }
 
   const className = typeof element.className === 'string' ? element.className : ''
-  const classes = className.split(/\s+/).filter(Boolean).slice(0, 2).join('.')
+  const classes = className.split(/\s+/).filter(Boolean).slice(0, 2).map(CSS.escape).join('.')
   const selector = `${element.tagName.toLowerCase()}${classes ? `.${classes}` : ''}`
-  return limitAttributionString(selector, 'unknown', ATTRIBUTION_SELECTOR_MAX_LENGTH)
+  return boundedSelector(selector) ?? 'unknown'
 }
 
 export function addBoundedAttribution<T>(items: T[], item: T): void {

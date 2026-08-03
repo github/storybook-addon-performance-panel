@@ -2,6 +2,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {CollectorManager} from '../../collectors/collector-manager'
 import {DOM_MUTATION_SAMPLE_INTERVAL_MS} from '../../collectors/style-mutation-collector'
+import {OverheadTelemetry} from '../../core/overhead-telemetry'
 import type {RenderInfo} from '../../core/performance-types'
 
 /**
@@ -56,7 +57,6 @@ describe('CollectorManager', () => {
       expect(manager.collectors.layoutShift).toBeDefined()
       expect(manager.collectors.memory).toBeDefined()
       expect(manager.collectors.style).toBeDefined()
-      expect(manager.collectors.reflow).toBeDefined()
       expect(manager.collectors.react).toBeDefined()
       expect(manager.collectors.paint).toBeDefined()
       expect(manager.collectors.elementTiming).toBeDefined()
@@ -66,9 +66,16 @@ describe('CollectorManager', () => {
       expect(manager.isRunning).toBe(false)
     })
 
-    it('wires up style → reflow dependency', () => {
-      // The style collector should have onLayoutDirty set
-      expect(manager.collectors.style.onLayoutDirty).toBeDefined()
+    it('does not patch global DOM prototypes when started', () => {
+      const offsetWidthDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth')
+      const setPropertyDescriptor = Object.getOwnPropertyDescriptor(CSSStyleDeclaration.prototype, 'setProperty')
+
+      manager.start()
+
+      expect(Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth')).toEqual(offsetWidthDescriptor)
+      expect(Object.getOwnPropertyDescriptor(CSSStyleDeclaration.prototype, 'setProperty')).toEqual(
+        setPropertyDescriptor,
+      )
     })
   })
 
@@ -171,6 +178,23 @@ describe('CollectorManager', () => {
   })
 
   describe('observeContainer', () => {
+    it('scopes style and paint collectors to the observed container', () => {
+      const container = document.createElement('div')
+      document.body.appendChild(container)
+      const styleSpy = vi.spyOn(manager.collectors.style, 'setContainer')
+      const paintSpy = vi.spyOn(manager.collectors.paint, 'setContainer')
+
+      const cleanup = manager.observeContainer(container)
+
+      expect(styleSpy).toHaveBeenCalledWith(container)
+      expect(paintSpy).toHaveBeenCalledWith(container)
+
+      cleanup()
+      expect(styleSpy).toHaveBeenLastCalledWith(null)
+      expect(paintSpy).toHaveBeenLastCalledWith(null)
+      container.remove()
+    })
+
     it('counts elements in container on initial call', () => {
       const container = document.createElement('div')
       container.innerHTML = '<span></span><span></span><span></span>'
@@ -297,6 +321,7 @@ describe('CollectorManager', () => {
       expect(metrics).toHaveProperty('loafSupported')
       expect(metrics).toHaveProperty('loafCount')
       expect(metrics).toHaveProperty('totalLoafBlockingDuration')
+      expect(metrics).toHaveProperty('loafsWithForcedStyleAndLayout')
 
       // Layout shift metrics
       expect(metrics).toHaveProperty('layoutShiftScore')
@@ -415,6 +440,7 @@ describe('CollectorManager', () => {
       expect(metrics.scriptResourceLoadTime).toBe(deprecatedMetrics.scriptEvalTime)
       expect(metrics.layerPromotionCandidates).toBe(deprecatedMetrics.compositorLayers)
       expect(metrics.inferredDroppedFrames).toBe(deprecatedMetrics.droppedFrames)
+      expect(metrics.loafsWithForcedStyleAndLayout).toBe(deprecatedMetrics.forcedReflowCount)
       expect(deprecatedMetrics.domMutationsPerFrame).toBe(3)
       expect(metrics.domMutationsPerSecond).toBe((3 * 1000) / DOM_MUTATION_SAMPLE_INTERVAL_MS)
     })
@@ -427,6 +453,23 @@ describe('CollectorManager', () => {
       expect(metrics.maxFrameTime).toBe(Math.round(metrics.maxFrameTime * 10) / 10)
       expect(metrics.inputLatency).toBe(Math.round(metrics.inputLatency * 10) / 10)
       expect(metrics.pointerFrameInterval).toBe(Math.round(metrics.pointerFrameInterval * 10) / 10)
+    })
+
+    it('records compute duration only when internal telemetry is supplied', () => {
+      const telemetry = new OverheadTelemetry()
+      const instrumentedManager = new CollectorManager({overheadTelemetry: telemetry})
+
+      instrumentedManager.computeMetrics()
+      instrumentedManager.start()
+      rafCallback?.(16.67)
+      instrumentedManager.reportRender(createRenderInfo())
+
+      const snapshot = telemetry.snapshot()
+      expect(snapshot.computeMetrics.count).toBe(1)
+      expect(snapshot.callbacks['frame.raf']?.count).toBe(1)
+      expect(snapshot.callbacks['react.profiler']?.count).toBe(1)
+      expect(snapshot.pendingWork['frame.raf']).toEqual({current: 1, peak: 1})
+      instrumentedManager.stop()
     })
   })
 
@@ -457,17 +500,6 @@ describe('CollectorManager', () => {
       expect(resetMetrics.reactMountCount).toBe(1)
       // Update count is reset
       expect(resetMetrics.reactPostMountUpdateCount).toBe(0)
-    })
-
-    it('style → reflow dependency is wired correctly', () => {
-      manager.start()
-
-      // Trigger layout dirty via style collector
-      manager.collectors.style.onLayoutDirty?.()
-
-      // Reflow collector should have been notified
-      // (we can't easily verify internal state, but at least verify no errors)
-      expect(manager.collectors.reflow).toBeDefined()
     })
   })
 })

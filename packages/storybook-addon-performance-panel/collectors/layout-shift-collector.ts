@@ -10,6 +10,7 @@
  * @see https://web.dev/articles/evolving-cls
  */
 
+import type {OverheadTelemetry} from '../core/overhead-telemetry'
 import type {AttributionRect, LayoutShiftAttribution} from '../core/performance-types'
 import {addBoundedAttribution, ATTRIBUTION_SOURCE_LIMIT, getElementSelector} from './attribution'
 import type {MetricCollector} from './types'
@@ -83,13 +84,25 @@ export class LayoutShiftCollector implements MetricCollector<LayoutMetrics> {
   #epochMs = 0
 
   #observer: PerformanceObserver | null = null
+  #overheadTelemetry: OverheadTelemetry | undefined
+
+  constructor(overheadTelemetry?: OverheadTelemetry) {
+    this.#overheadTelemetry = overheadTelemetry
+  }
 
   start(): void {
     this.#epochMs = performance.now()
     try {
       this.#observer = new PerformanceObserver(list => {
-        for (const entry of list.getEntries()) {
-          this.#processEntry(entry as LayoutShift)
+        const processEntries = () => {
+          for (const entry of list.getEntries()) {
+            this.#processEntry(entry as LayoutShift)
+          }
+        }
+        if (this.#overheadTelemetry) {
+          this.#overheadTelemetry.measureCallback('layout-shift.entries', processEntries)
+        } else {
+          processEntries()
         }
       })
       this.#observer.observe({type: 'layout-shift', buffered: true})

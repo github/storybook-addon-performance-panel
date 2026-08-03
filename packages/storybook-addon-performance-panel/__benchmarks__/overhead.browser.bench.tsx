@@ -1,8 +1,9 @@
 import {flushSync} from 'react-dom'
 import {createRoot, type Root} from 'react-dom/client'
 import {addons} from 'storybook/preview-api'
-import {bench, type BenchOptions, describe, vi} from 'vitest'
+import {afterAll, bench, type BenchOptions, describe, vi} from 'vitest'
 
+import {OverheadTelemetry} from '../core/overhead-telemetry'
 import {PERF_EVENTS} from '../core/performance-types'
 import {PerformanceMonitorCore} from '../core/preview-core'
 import {PerformanceProvider, ProfiledComponent} from '../react/performance-decorator'
@@ -62,6 +63,61 @@ function yieldToMainThread(): Promise<void> {
 
 function setPanelVisibility(visible: boolean): void {
   addons.getChannel().emit(PERF_EVENTS.PANEL_VISIBILITY, visible)
+}
+
+function nextAnimationFrame(): Promise<void> {
+  return new Promise(resolve => {
+    requestAnimationFrame(() => {
+      resolve()
+    })
+  })
+}
+
+function nextIdlePeriod(): Promise<void> {
+  return new Promise(resolve => {
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(() => {
+        resolve()
+      })
+    } else {
+      setTimeout(resolve, 0)
+    }
+  })
+}
+
+async function runTelemetryProbe(): Promise<void> {
+  const telemetry = new OverheadTelemetry()
+  const container = document.createElement('div')
+  document.body.appendChild(container)
+  const core = new PerformanceMonitorCore('benchmark-telemetry', {overheadTelemetry: telemetry})
+
+  try {
+    core.start()
+    core.observeContainer(container)
+    setPanelVisibility(true)
+
+    const fragment = document.createDocumentFragment()
+    for (let index = 0; index < DOM_ROW_COUNT; index++) {
+      const row = document.createElement('div')
+      row.style.willChange = index % 4 === 0 ? 'transform' : 'auto'
+      row.textContent = `Telemetry row ${String(index)}`
+      fragment.appendChild(row)
+    }
+    container.replaceChildren(fragment)
+    window.dispatchEvent(new PointerEvent('pointermove'))
+
+    await yieldToMainThread()
+    await nextAnimationFrame()
+    await nextAnimationFrame()
+    await nextIdlePeriod()
+    await nextIdlePeriod()
+    addons.getChannel().emit(PERF_EVENTS.REQUEST_METRICS)
+  } finally {
+    core.stop()
+    container.remove()
+  }
+
+  console.info('OVERHEAD_TELEMETRY_SNAPSHOT', JSON.stringify(telemetry.snapshot()))
 }
 
 function createLifecycleBenchmark(state: LifecycleState): () => void {
@@ -216,4 +272,8 @@ describe('React commit workload', () => {
     const workload = createReactWorkload(state)
     bench(state, workload.run, workload.options)
   }
+})
+
+afterAll(async () => {
+  await runTelemetryProbe()
 })

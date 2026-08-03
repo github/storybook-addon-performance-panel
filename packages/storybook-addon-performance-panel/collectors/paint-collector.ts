@@ -3,6 +3,7 @@
  * @module collectors/PaintCollector
  */
 
+import type {OverheadTelemetry} from '../core/overhead-telemetry'
 import type {ScriptResourceAttribution} from '../core/performance-types'
 import {
   ATTRIBUTION_ENTRY_LIMIT,
@@ -24,11 +25,13 @@ export interface PaintMetrics {
  * Schedule work during browser idle periods.
  * Falls back to setTimeout for environments without requestIdleCallback (e.g. Safari).
  */
-function scheduleIdle(callback: () => void, options?: IdleRequestOptions): number {
+function scheduleIdle(callback: IdleRequestCallback, options?: IdleRequestOptions): number {
   if (typeof requestIdleCallback === 'function') {
     return requestIdleCallback(callback, options)
   }
-  return setTimeout(callback, 0) as unknown as number
+  return setTimeout(() => {
+    callback({didTimeout: true, timeRemaining: () => 0})
+  }, 0) as unknown as number
 }
 
 function cancelIdle(id: number): void {
@@ -38,6 +41,8 @@ function cancelIdle(id: number): void {
     clearTimeout(id)
   }
 }
+
+const LAYER_SCAN_CHUNK_SIZE = 50
 
 /**
  * Collects initial paint milestones, script resource loading time, and layer-promotion candidates.
@@ -58,8 +63,10 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
   #layerElements = new Set<Element>()
   /** Elements whose layer status needs rechecking (attribute changed) */
   #pendingChecks = new Set<Element>()
-  /** Subtree roots that were added and need scanning */
-  #pendingSubtrees: Element[] = []
+  /** Breadth-first queue of story elements awaiting computed-style checks */
+  #pendingScanElements: Element[] = []
+  #queuedScanElements = new Set<Element>()
+  #scanCursor = 0
   /** Whether removed nodes need cleanup from #layerElements */
   #hasRemovals = false
   /** Pending idle callback ID */
@@ -68,16 +75,43 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
   #paintObserver: PerformanceObserver | null = null
   #resourceObserver: PerformanceObserver | null = null
   #layerObserver: MutationObserver | null = null
+  #container: HTMLElement | null = null
+  #running = false
+  #overheadTelemetry: OverheadTelemetry | undefined
   /** Entries before this timestamp belong to an earlier story or reset. */
   #epochMs = 0
 
+  constructor(overheadTelemetry?: OverheadTelemetry) {
+    this.#overheadTelemetry = overheadTelemetry
+  }
+
+  setContainer(container: HTMLElement | null): void {
+    if (this.#container === container) return
+    this.#container = container
+    if (!this.#running) return
+
+    this.#stopLayerTracking()
+    this.#layerElements.clear()
+    this.#compositorLayers = null
+    this.#startLayerTracking()
+  }
+
   start(): void {
+    if (this.#running) return
+    this.#running = true
     this.#epochMs = performance.now()
 
     // Paint observer
     try {
       this.#paintObserver = new PerformanceObserver(list => {
-        this.#paintCount += list.getEntries().filter(entry => entry.startTime >= this.#epochMs).length
+        const processEntries = () => {
+          this.#paintCount += list.getEntries().filter(entry => entry.startTime >= this.#epochMs).length
+        }
+        if (this.#overheadTelemetry) {
+          this.#overheadTelemetry.measureCallback('paint.entries', processEntries)
+        } else {
+          processEntries()
+        }
       })
       this.#paintObserver.observe({type: 'paint', buffered: true})
     } catch {
@@ -87,30 +121,37 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
     // Resource observer for script loading duration
     try {
       this.#resourceObserver = new PerformanceObserver(list => {
-        for (const entry of list.getEntries()) {
-          if (entry.startTime < this.#epochMs) continue
-          if (entry.entryType === 'resource') {
-            const resourceEntry = entry as PerformanceResourceTiming
-            if (resourceEntry.initiatorType === 'script') {
-              const scriptTime = resourceEntry.responseEnd - resourceEntry.fetchStart
-              if (scriptTime > 0) {
-                this.#scriptEvalTime += scriptTime
-                this.#scriptResourceCount++
-                this.#scriptResources.push({
-                  url: limitAttributionString(resourceEntry.name, 'unknown', ATTRIBUTION_URL_MAX_LENGTH),
-                  initiatorType: limitAttributionString(
-                    resourceEntry.initiatorType,
-                    'unknown',
-                    ATTRIBUTION_LABEL_MAX_LENGTH,
-                  ),
-                  startTime: Math.max(0, resourceEntry.startTime - this.#epochMs),
-                  duration: scriptTime,
-                })
-                this.#scriptResources.sort((a, b) => b.duration - a.duration)
-                this.#scriptResources.length = Math.min(this.#scriptResources.length, ATTRIBUTION_ENTRY_LIMIT)
+        const processEntries = () => {
+          for (const entry of list.getEntries()) {
+            if (entry.startTime < this.#epochMs) continue
+            if (entry.entryType === 'resource') {
+              const resourceEntry = entry as PerformanceResourceTiming
+              if (resourceEntry.initiatorType === 'script') {
+                const scriptTime = resourceEntry.responseEnd - resourceEntry.fetchStart
+                if (scriptTime > 0) {
+                  this.#scriptEvalTime += scriptTime
+                  this.#scriptResourceCount++
+                  this.#scriptResources.push({
+                    url: limitAttributionString(resourceEntry.name, 'unknown', ATTRIBUTION_URL_MAX_LENGTH),
+                    initiatorType: limitAttributionString(
+                      resourceEntry.initiatorType,
+                      'unknown',
+                      ATTRIBUTION_LABEL_MAX_LENGTH,
+                    ),
+                    startTime: Math.max(0, resourceEntry.startTime - this.#epochMs),
+                    duration: scriptTime,
+                  })
+                  this.#scriptResources.sort((a, b) => b.duration - a.duration)
+                  this.#scriptResources.length = Math.min(this.#scriptResources.length, ATTRIBUTION_ENTRY_LIMIT)
+                }
               }
             }
           }
+        }
+        if (this.#overheadTelemetry) {
+          this.#overheadTelemetry.measureCallback('paint.resources', processEntries)
+        } else {
+          processEntries()
         }
       })
       this.#resourceObserver.observe({type: 'resource', buffered: true})
@@ -123,6 +164,7 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
   }
 
   stop(): void {
+    this.#running = false
     this.#paintObserver?.disconnect()
     this.#resourceObserver?.disconnect()
     this.#paintObserver = null
@@ -138,7 +180,7 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
     this.#compositorLayers = null
     this.#layerElements.clear()
     this.#pendingChecks.clear()
-    this.#pendingSubtrees = []
+    this.#clearPendingScanElements()
     this.#hasRemovals = false
     this.#epochMs = performance.now()
     this.#cancelPendingScan()
@@ -149,27 +191,36 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
   }
 
   #startLayerTracking(): void {
+    if (!this.#container) return
     this.#scheduleFullScan()
 
     this.#layerObserver = new MutationObserver(mutations => {
-      for (const mutation of mutations) {
-        if (mutation.type === 'attributes') {
-          this.#pendingChecks.add(mutation.target as Element)
-        } else if (mutation.type === 'childList') {
-          if (mutation.removedNodes.length > 0) {
-            this.#hasRemovals = true
-          }
-          for (const node of mutation.addedNodes) {
-            if (node instanceof Element) {
-              this.#pendingSubtrees.push(node)
+      const processMutations = () => {
+        this.#overheadTelemetry?.recordScan('paint.mutation-records', mutations.length)
+        for (const mutation of mutations) {
+          if (mutation.type === 'attributes') {
+            this.#pendingChecks.add(mutation.target as Element)
+          } else if (mutation.type === 'childList') {
+            if (mutation.removedNodes.length > 0) {
+              this.#hasRemovals = true
+            }
+            for (const node of mutation.addedNodes) {
+              if (node instanceof Element) {
+                this.#enqueueScanElement(node)
+              }
             }
           }
         }
+        this.#scheduleIncrementalScan()
       }
-      this.#scheduleIncrementalScan()
+      if (this.#overheadTelemetry) {
+        this.#overheadTelemetry.measureCallback('paint.mutations', processMutations)
+      } else {
+        processMutations()
+      }
     })
 
-    this.#layerObserver.observe(document.documentElement, {
+    this.#layerObserver.observe(this.#container, {
       attributes: true,
       attributeFilter: ['style', 'class'],
       childList: true,
@@ -182,7 +233,7 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
     this.#layerObserver = null
     this.#cancelPendingScan()
     this.#pendingChecks.clear()
-    this.#pendingSubtrees = []
+    this.#clearPendingScanElements()
     this.#hasRemovals = false
   }
 
@@ -190,77 +241,110 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
     if (this.#idleCallbackId !== null) {
       cancelIdle(this.#idleCallbackId)
       this.#idleCallbackId = null
+      this.#overheadTelemetry?.setPendingWork('paint.idle-scan', 0)
     }
   }
 
   #scheduleFullScan(): void {
     this.#cancelPendingScan()
-    this.#idleCallbackId = scheduleIdle(
-      () => {
-        this.#idleCallbackId = null
-        this.#fullScan()
-      },
-      {timeout: 1000},
-    )
+    this.#layerElements.clear()
+    this.#pendingChecks.clear()
+    this.#clearPendingScanElements()
+    this.#hasRemovals = false
+    this.#compositorLayers = null
+
+    if (this.#container) {
+      for (const child of this.#container.children) {
+        this.#enqueueScanElement(child)
+      }
+    }
+    this.#scheduleIncrementalScan({timeout: 1000})
   }
 
-  #scheduleIncrementalScan(): void {
+  #scheduleIncrementalScan(options?: IdleRequestOptions): void {
     if (this.#idleCallbackId !== null) return
     this.#idleCallbackId = scheduleIdle(() => {
       this.#idleCallbackId = null
-      this.#processIncrementalChanges()
-    })
-  }
-
-  #fullScan(): void {
-    this.#layerElements.clear()
-    this.#pendingChecks.clear()
-    this.#pendingSubtrees = []
-    this.#hasRemovals = false
-
-    for (const el of document.querySelectorAll('*')) {
-      if (this.#hasLayerPromotion(el)) {
-        this.#layerElements.add(el)
+      this.#overheadTelemetry?.setPendingWork('paint.idle-scan', 0)
+      if (this.#overheadTelemetry) {
+        this.#overheadTelemetry.measureCallback('paint.layer-scan', () => {
+          this.#processScanChunk()
+        })
+      } else {
+        this.#processScanChunk()
       }
-    }
-    this.#compositorLayers = this.#layerElements.size
+    }, options)
+    this.#overheadTelemetry?.setPendingWork('paint.idle-scan', 1)
   }
 
-  #processIncrementalChanges(): void {
+  #enqueueScanElement(element: Element): void {
+    if (this.#queuedScanElements.has(element)) return
+    this.#queuedScanElements.add(element)
+    this.#pendingScanElements.push(element)
+  }
+
+  #clearPendingScanElements(): void {
+    this.#pendingScanElements = []
+    this.#queuedScanElements.clear()
+    this.#scanCursor = 0
+  }
+
+  #processScanChunk(): void {
+    const container = this.#container
+    if (!container) {
+      this.#clearPendingScanElements()
+      this.#pendingChecks.clear()
+      return
+    }
+
     // Clean up disconnected elements from removals
     if (this.#hasRemovals) {
       for (const el of this.#layerElements) {
-        if (!el.isConnected) this.#layerElements.delete(el)
+        if (!container.contains(el)) this.#layerElements.delete(el)
       }
       this.#hasRemovals = false
     }
 
-    // Check added subtrees
-    for (const root of this.#pendingSubtrees) {
-      if (!root.isConnected) continue
-      if (this.#hasLayerPromotion(root)) {
-        this.#layerElements.add(root)
-      }
-      for (const el of root.querySelectorAll('*')) {
-        if (this.#hasLayerPromotion(el)) {
-          this.#layerElements.add(el)
+    let processed = 0
+    while (processed < LAYER_SCAN_CHUNK_SIZE && this.#scanCursor < this.#pendingScanElements.length) {
+      const element = this.#pendingScanElements[this.#scanCursor++]
+      processed++
+      if (element) this.#queuedScanElements.delete(element)
+      if (element && container.contains(element)) {
+        if (this.#hasLayerPromotion(element)) {
+          this.#layerElements.add(element)
+        } else {
+          this.#layerElements.delete(element)
+        }
+        for (const child of element.children) {
+          this.#enqueueScanElement(child)
         }
       }
     }
-    this.#pendingSubtrees = []
 
     // Re-check elements with changed attributes
-    for (const el of this.#pendingChecks) {
-      if (!el.isConnected) {
-        this.#layerElements.delete(el)
-      } else if (this.#hasLayerPromotion(el)) {
-        this.#layerElements.add(el)
+    while (processed < LAYER_SCAN_CHUNK_SIZE && this.#pendingChecks.size > 0) {
+      const element = this.#pendingChecks.values().next().value
+      if (!element) break
+      this.#pendingChecks.delete(element)
+      processed++
+      if (element === container || !container.contains(element)) {
+        this.#layerElements.delete(element)
+      } else if (this.#hasLayerPromotion(element)) {
+        this.#layerElements.add(element)
       } else {
-        this.#layerElements.delete(el)
+        this.#layerElements.delete(element)
       }
     }
-    this.#pendingChecks.clear()
 
+    this.#overheadTelemetry?.recordScan('paint.layer-elements', processed)
+
+    if (this.#scanCursor < this.#pendingScanElements.length || this.#pendingChecks.size > 0) {
+      this.#scheduleIncrementalScan()
+      return
+    }
+
+    this.#clearPendingScanElements()
     this.#compositorLayers = this.#layerElements.size
   }
 
