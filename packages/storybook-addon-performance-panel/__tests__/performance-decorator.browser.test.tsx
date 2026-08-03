@@ -136,9 +136,9 @@ describe('performance-decorator', () => {
           <div>Test</div>
         </PerformanceProvider>,
       )
-      const visibilityCall = mockChannel.on.mock.calls.find(
-        (call: unknown[]) => call[0] === PERF_EVENTS.PANEL_VISIBILITY,
-      )
+      const visibilityCall = mockChannel.on.mock.calls
+        .filter((call: unknown[]) => call[0] === PERF_EVENTS.PANEL_VISIBILITY)
+        .at(-1)
       const handleVisibility = visibilityCall?.[1] as (visible: boolean) => void
 
       handleVisibility(true)
@@ -376,6 +376,12 @@ describe('performance-decorator', () => {
           </div>
         </PerformanceProvider>,
       )
+
+      const visibilityCall = mockChannel.on.mock.calls
+        .filter((call: unknown[]) => call[0] === PERF_EVENTS.PANEL_VISIBILITY)
+        .at(-1)
+      const handleVisibility = visibilityCall?.[1] as (visible: boolean) => void
+      handleVisibility(true)
 
       const requestCall = mockChannel.on.mock.calls.find((call: unknown[]) => call[0] === PERF_EVENTS.REQUEST_METRICS)
       const requestMetrics = requestCall?.[1] as () => void

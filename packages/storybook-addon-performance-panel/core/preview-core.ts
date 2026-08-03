@@ -109,8 +109,10 @@ export class PerformanceMonitorCore {
 
   private metricsIntervalId: ReturnType<typeof setInterval> | null = null
   private sparklineIntervalId: ReturnType<typeof setInterval> | null = null
+  private containerElement: HTMLElement | null = null
   private containerCleanup: (() => void) | null = null
   private channelCleanups: (() => void)[] = []
+  private panelVisible = false
 
   constructor(storyId: string) {
     this.storyId = storyId
@@ -122,14 +124,10 @@ export class PerformanceMonitorCore {
     })
   }
 
-  /**
-   * Start all collectors and begin emitting metrics.
-   * Sets up channel event listeners and periodic intervals.
-   */
+  /** Set up channel listeners. Browser collectors begin when the panel becomes visible. */
   start(): void {
     const channel = addons.getChannel()
-
-    this.manager.start()
+    this.panelVisible = false
 
     const emitMetrics = () => {
       const computed = this.manager.computeMetrics()
@@ -152,11 +150,16 @@ export class PerformanceMonitorCore {
     }
 
     const handlePanelVisibility = (visible: boolean) => {
+      this.panelVisible = visible
       if (visible) {
+        this.manager.start()
+        this.#startContainerObservation()
         emitMetrics()
         this.#startLiveUpdates(emitMetrics)
       } else {
         this.#stopLiveUpdates()
+        this.#stopContainerObservation()
+        this.manager.stop()
       }
     }
 
@@ -188,17 +191,17 @@ export class PerformanceMonitorCore {
    * Removes channel listeners and clears intervals.
    */
   stop(): void {
-    this.manager.stop()
-
+    this.panelVisible = false
     this.#stopLiveUpdates()
+    this.#stopContainerObservation()
+    this.manager.stop()
 
     for (const cleanup of this.channelCleanups) {
       cleanup()
     }
     this.channelCleanups = []
 
-    this.containerCleanup?.()
-    this.containerCleanup = null
+    this.containerElement = null
   }
 
   /** Reset all collector and stored metrics without changing lifecycle state. */
@@ -225,14 +228,32 @@ export class PerformanceMonitorCore {
     }
   }
 
+  #startContainerObservation(): void {
+    if (!this.panelVisible || !this.containerElement || this.containerCleanup) return
+    this.containerCleanup = this.manager.observeContainer(this.containerElement)
+  }
+
+  #stopContainerObservation(): void {
+    this.containerCleanup?.()
+    this.containerCleanup = null
+  }
+
   /**
-   * Observe a DOM container for element counting and mutation tracking.
-   * Replaces any previously observed container.
+   * Register a DOM container for element counting and mutation tracking.
+   * Observation is active only while the panel is visible.
    */
   observeContainer(element: HTMLElement): () => void {
-    this.containerCleanup?.()
-    this.containerCleanup = this.manager.observeContainer(element)
-    return this.containerCleanup
+    if (this.containerElement !== element) {
+      this.#stopContainerObservation()
+      this.containerElement = element
+    }
+    this.#startContainerObservation()
+
+    return () => {
+      if (this.containerElement !== element) return
+      this.#stopContainerObservation()
+      this.containerElement = null
+    }
   }
 }
 

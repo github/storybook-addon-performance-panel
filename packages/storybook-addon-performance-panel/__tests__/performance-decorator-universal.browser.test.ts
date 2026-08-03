@@ -101,6 +101,7 @@ describe('withPerformanceMonitor (universal / web-component usage)', () => {
     await new Promise(resolve => setTimeout(resolve, 300))
 
     expect(mockChannel.emit).not.toHaveBeenCalledWith(PERF_EVENTS.METRICS_UPDATE, expect.any(Object))
+    expect(getActiveCore()?.manager.isRunning).toBe(false)
   })
 
   it('emits live metrics only while the panel is visible', async () => {
@@ -115,6 +116,7 @@ describe('withPerformanceMonitor (universal / web-component usage)', () => {
 
     mockChannel.emit.mockClear()
     handleVisibility(true)
+    expect(getActiveCore()?.manager.isRunning).toBe(true)
     expect(mockChannel.emit).toHaveBeenCalledWith(PERF_EVENTS.METRICS_UPDATE, expect.any(Object))
 
     mockChannel.emit.mockClear()
@@ -122,6 +124,7 @@ describe('withPerformanceMonitor (universal / web-component usage)', () => {
     expect(mockChannel.emit).toHaveBeenCalledWith(PERF_EVENTS.METRICS_UPDATE, expect.any(Object))
 
     handleVisibility(false)
+    expect(getActiveCore()?.manager.isRunning).toBe(false)
     mockChannel.emit.mockClear()
     await new Promise(resolve => setTimeout(resolve, 300))
     expect(mockChannel.emit).not.toHaveBeenCalledWith(PERF_EVENTS.METRICS_UPDATE, expect.any(Object))

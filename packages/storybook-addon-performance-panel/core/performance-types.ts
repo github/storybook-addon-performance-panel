@@ -116,7 +116,7 @@ export const PERF_EVENTS = {
   RESET: `${ADDON_ID}/reset`,
   /** Panel → Decorator: Request immediate metrics update */
   REQUEST_METRICS: `${ADDON_ID}/request-metrics`,
-  /** Panel → Decorator: Start or stop live updates based on panel visibility */
+  /** Panel → Decorator: Start or stop browser collection based on panel visibility */
   PANEL_VISIBILITY: `${ADDON_ID}/panel-visibility`,
   /** Decorator → Panel: Request the current panel visibility state */
   REQUEST_PANEL_VISIBILITY: `${ADDON_ID}/request-panel-visibility`,
