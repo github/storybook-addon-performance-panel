@@ -251,9 +251,11 @@ describe('CollectorManager', () => {
     it('returns updated metrics after collecting', () => {
       manager.start()
 
-      // Simulate a frame
-      vi.spyOn(performance, 'now').mockReturnValue(16.67)
-      rafCallback?.(16.67)
+      // Seed the frame baseline, then simulate a measured frame.
+      vi.spyOn(performance, 'now').mockReturnValue(10)
+      rafCallback?.(10)
+      vi.spyOn(performance, 'now').mockReturnValue(26.67)
+      rafCallback?.(26.67)
 
       const metrics = manager.getFrameMetrics()
       expect(metrics.frameTimes.length).toBeGreaterThan(0)
