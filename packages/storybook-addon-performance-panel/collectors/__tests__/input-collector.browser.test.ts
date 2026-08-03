@@ -12,6 +12,7 @@ describe('InputCollector', () => {
 
   afterEach(() => {
     collector.stop()
+    vi.unstubAllGlobals()
     vi.useRealTimers()
   })
 
@@ -91,6 +92,55 @@ describe('InputCollector', () => {
       // Interaction type breakdown
       expect(metrics.interactionsByType).toEqual({})
     })
+  })
+
+  it('counts only interactions observed during the current story', () => {
+    const observerCallbacks: PerformanceObserverCallback[] = []
+    vi.stubGlobal(
+      'PerformanceObserver',
+      class MockPerformanceObserver {
+        static supportedEntryTypes = ['event', 'first-input']
+        constructor(callback: PerformanceObserverCallback) {
+          observerCallbacks.push(callback)
+        }
+        observe() {
+          /* empty */
+        }
+        disconnect() {
+          /* empty */
+        }
+      },
+    )
+
+    const scopedCollector = new InputCollector()
+    const staleStartTime = performance.now() - 1
+    scopedCollector.start()
+    observerCallbacks[0]?.(
+      {
+        getEntries: () => [
+          {
+            startTime: staleStartTime,
+            duration: 90,
+            processingStart: staleStartTime + 10,
+            processingEnd: staleStartTime + 20,
+            interactionId: 1,
+            name: 'click',
+          },
+          {
+            startTime: performance.now(),
+            duration: 40,
+            processingStart: performance.now() + 5,
+            processingEnd: performance.now() + 10,
+            interactionId: 2,
+            name: 'click',
+          },
+        ],
+      } as unknown as PerformanceObserverEntryList,
+      {} as PerformanceObserver,
+    )
+
+    expect(scopedCollector.getMetrics()).toMatchObject({interactionCount: 1, inpMs: 40})
+    scopedCollector.stop()
   })
 
   // Note: Interaction tracking is now handled via PerformanceObserver with 'event' entry type

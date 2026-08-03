@@ -74,10 +74,13 @@ export class LayoutShiftCollector implements MetricCollector<LayoutMetrics> {
   #layoutShiftCount = 0
   /** Number of completed sessions */
   #sessionCount = 0
+  /** Entries before this timestamp belong to an earlier story or reset. */
+  #epochMs = 0
 
   #observer: PerformanceObserver | null = null
 
   start(): void {
+    this.#epochMs = performance.now()
     try {
       this.#observer = new PerformanceObserver(list => {
         for (const entry of list.getEntries()) {
@@ -91,6 +94,8 @@ export class LayoutShiftCollector implements MetricCollector<LayoutMetrics> {
   }
 
   #processEntry(entry: LayoutShift): void {
+    if (entry.startTime < this.#epochMs) return
+
     // Only count layout shifts without recent user input (per CLS spec)
     if (entry.hadRecentInput) return
 
@@ -144,6 +149,7 @@ export class LayoutShiftCollector implements MetricCollector<LayoutMetrics> {
     this.#sessionLastEntryTime = null
     this.#layoutShiftCount = 0
     this.#sessionCount = 0
+    this.#epochMs = performance.now()
   }
 
   getMetrics(): LayoutMetrics {

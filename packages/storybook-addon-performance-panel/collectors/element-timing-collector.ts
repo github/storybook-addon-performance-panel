@@ -144,15 +144,17 @@ export class ElementTimingCollector implements MetricCollector<ElementTimingMetr
 
   #processEntry(entry: PerformanceElementTiming): void {
     // Use renderTime if available, fall back to loadTime for images
-    const renderTime = entry.renderTime || entry.loadTime || 0
+    const entryTime = entry.renderTime || entry.loadTime || 0
 
     // Ignore entries from before the current epoch (stale after reset/restart)
-    if (renderTime < this.#epochMs) return
+    if (entryTime < this.#epochMs) return
+
+    const renderTime = entryTime - this.#epochMs
 
     const record: ElementTimingRecord = {
       identifier: entry.identifier || 'unnamed',
       renderTime,
-      loadTime: entry.loadTime || 0,
+      loadTime: entry.loadTime > 0 ? Math.max(0, entry.loadTime - this.#epochMs) : 0,
       selector: getSimpleSelector(entry.element),
       tagName: entry.element?.tagName.toLowerCase() ?? 'unknown',
     }

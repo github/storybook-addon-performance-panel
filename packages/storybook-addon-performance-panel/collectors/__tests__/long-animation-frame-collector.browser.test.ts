@@ -1,16 +1,34 @@
-import {afterEach, beforeEach, describe, expect, it} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {LongAnimationFrameCollector} from '../../collectors/long-animation-frame-collector'
 
 describe('LongAnimationFrameCollector', () => {
   let collector: LongAnimationFrameCollector
+  let observerCallback: PerformanceObserverCallback | null = null
 
   beforeEach(() => {
+    vi.stubGlobal(
+      'PerformanceObserver',
+      class MockPerformanceObserver {
+        static supportedEntryTypes = ['long-animation-frame']
+        constructor(callback: PerformanceObserverCallback) {
+          observerCallback = callback
+        }
+        observe() {
+          /* empty */
+        }
+        disconnect() {
+          /* empty */
+        }
+      },
+    )
     collector = new LongAnimationFrameCollector()
   })
 
   afterEach(() => {
     collector.stop()
+    vi.unstubAllGlobals()
+    observerCallback = null
   })
 
   describe('getMetrics', () => {
@@ -49,6 +67,23 @@ describe('LongAnimationFrameCollector', () => {
       expect(metrics.lastLoaf).toBeNull()
       expect(metrics.worstLoaf).toBeNull()
     })
+  })
+
+  it('ignores buffered frames from before the collector started', () => {
+    const staleStartTime = performance.now() - 1
+    collector.start()
+
+    observerCallback?.(
+      {
+        getEntries: () => [
+          {startTime: staleStartTime, duration: 100, blockingDuration: 50},
+          {startTime: performance.now(), duration: 80, blockingDuration: 30},
+        ],
+      } as unknown as PerformanceObserverEntryList,
+      {} as PerformanceObserver,
+    )
+
+    expect(collector.getMetrics()).toMatchObject({loafCount: 1, longestLoafDuration: 80})
   })
 
   describe('start/stop', () => {

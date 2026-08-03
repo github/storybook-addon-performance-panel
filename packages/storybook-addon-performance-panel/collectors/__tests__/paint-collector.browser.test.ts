@@ -87,12 +87,13 @@ describe('PaintCollector', () => {
 
     it('counts paint events', () => {
       collector.start()
+      const startTime = performance.now()
 
       paintObserverCallback?.(
         {
           getEntries: () => [
-            {entryType: 'paint', name: 'first-paint'},
-            {entryType: 'paint', name: 'first-contentful-paint'},
+            {entryType: 'paint', name: 'first-paint', startTime},
+            {entryType: 'paint', name: 'first-contentful-paint', startTime},
           ],
         } as unknown as PerformanceObserverEntryList,
         {} as PerformanceObserver,
@@ -104,17 +105,21 @@ describe('PaintCollector', () => {
 
     it('accumulates paint count', () => {
       collector.start()
+      const startTime = performance.now()
 
       paintObserverCallback?.(
         {
-          getEntries: () => [{entryType: 'paint'}],
+          getEntries: () => [{entryType: 'paint', startTime}],
         } as unknown as PerformanceObserverEntryList,
         {} as PerformanceObserver,
       )
 
       paintObserverCallback?.(
         {
-          getEntries: () => [{entryType: 'paint'}, {entryType: 'paint'}],
+          getEntries: () => [
+            {entryType: 'paint', startTime},
+            {entryType: 'paint', startTime},
+          ],
         } as unknown as PerformanceObserverEntryList,
         {} as PerformanceObserver,
       )
@@ -125,12 +130,14 @@ describe('PaintCollector', () => {
 
     it('tracks script evaluation time', () => {
       collector.start()
+      const startTime = performance.now()
 
       resourceObserverCallback?.(
         {
           getEntries: () => [
             {
               entryType: 'resource',
+              startTime,
               initiatorType: 'script',
               fetchStart: 100,
               responseEnd: 150,
@@ -146,12 +153,13 @@ describe('PaintCollector', () => {
 
     it('accumulates script time from multiple scripts', () => {
       collector.start()
+      const startTime = performance.now()
 
       resourceObserverCallback?.(
         {
           getEntries: () => [
-            {entryType: 'resource', initiatorType: 'script', fetchStart: 100, responseEnd: 130},
-            {entryType: 'resource', initiatorType: 'script', fetchStart: 200, responseEnd: 250},
+            {entryType: 'resource', initiatorType: 'script', startTime, fetchStart: 100, responseEnd: 130},
+            {entryType: 'resource', initiatorType: 'script', startTime, fetchStart: 200, responseEnd: 250},
           ],
         } as unknown as PerformanceObserverEntryList,
         {} as PerformanceObserver,
@@ -163,12 +171,13 @@ describe('PaintCollector', () => {
 
     it('ignores non-script resources', () => {
       collector.start()
+      const startTime = performance.now()
 
       resourceObserverCallback?.(
         {
           getEntries: () => [
-            {entryType: 'resource', initiatorType: 'img', fetchStart: 100, responseEnd: 200},
-            {entryType: 'resource', initiatorType: 'css', fetchStart: 100, responseEnd: 200},
+            {entryType: 'resource', initiatorType: 'img', startTime, fetchStart: 100, responseEnd: 200},
+            {entryType: 'resource', initiatorType: 'css', startTime, fetchStart: 100, responseEnd: 200},
           ],
         } as unknown as PerformanceObserverEntryList,
         {} as PerformanceObserver,
@@ -176,6 +185,34 @@ describe('PaintCollector', () => {
 
       const metrics = collector.getMetrics()
       expect(metrics.scriptEvalTime).toBe(0)
+    })
+
+    it('ignores buffered entries from before the collector started', () => {
+      const staleStartTime = performance.now() - 1
+      collector.start()
+
+      paintObserverCallback?.(
+        {
+          getEntries: () => [{entryType: 'paint', startTime: staleStartTime}],
+        } as unknown as PerformanceObserverEntryList,
+        {} as PerformanceObserver,
+      )
+      resourceObserverCallback?.(
+        {
+          getEntries: () => [
+            {
+              entryType: 'resource',
+              initiatorType: 'script',
+              startTime: staleStartTime,
+              fetchStart: 100,
+              responseEnd: 150,
+            },
+          ],
+        } as unknown as PerformanceObserverEntryList,
+        {} as PerformanceObserver,
+      )
+
+      expect(collector.getMetrics()).toMatchObject({paintCount: 0, scriptEvalTime: 0})
     })
   })
 
