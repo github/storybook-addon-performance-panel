@@ -86,19 +86,44 @@ describe('withPerformanceMonitor (universal / web-component usage)', () => {
 
     expect(mockChannel.on).toHaveBeenCalledWith(PERF_EVENTS.REQUEST_METRICS, expect.any(Function))
     expect(mockChannel.on).toHaveBeenCalledWith(PERF_EVENTS.RESET, expect.any(Function))
+    expect(mockChannel.on).toHaveBeenCalledWith(PERF_EVENTS.PANEL_VISIBILITY, expect.any(Function))
     expect(mockChannel.on).toHaveBeenCalledWith(PERF_EVENTS.INSPECT_ELEMENT, expect.any(Function))
   })
 
-  it('emits metrics periodically', async () => {
+  it('does not emit metrics periodically while the panel is hidden', async () => {
+    withPerformanceMonitor(
+      vi.fn(() => ''),
+      makeCtx(),
+    )
+    mockChannel.emit.mockClear()
+
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    expect(mockChannel.emit).not.toHaveBeenCalledWith(PERF_EVENTS.METRICS_UPDATE, expect.any(Object))
+  })
+
+  it('emits live metrics only while the panel is visible', async () => {
     withPerformanceMonitor(
       vi.fn(() => ''),
       makeCtx(),
     )
 
-    // The core emits every 50ms; wait enough for at least one tick
-    await new Promise(resolve => setTimeout(resolve, 150))
+    const visibilityCall = mockChannel.on.mock.calls.find((call: unknown[]) => call[0] === PERF_EVENTS.PANEL_VISIBILITY)
+    expect(visibilityCall).toBeDefined()
+    const handleVisibility = visibilityCall?.[1] as (visible: boolean) => void
 
+    mockChannel.emit.mockClear()
+    handleVisibility(true)
     expect(mockChannel.emit).toHaveBeenCalledWith(PERF_EVENTS.METRICS_UPDATE, expect.any(Object))
+
+    mockChannel.emit.mockClear()
+    await new Promise(resolve => setTimeout(resolve, 300))
+    expect(mockChannel.emit).toHaveBeenCalledWith(PERF_EVENTS.METRICS_UPDATE, expect.any(Object))
+
+    handleVisibility(false)
+    mockChannel.emit.mockClear()
+    await new Promise(resolve => setTimeout(resolve, 300))
+    expect(mockChannel.emit).not.toHaveBeenCalledWith(PERF_EVENTS.METRICS_UPDATE, expect.any(Object))
   })
 
   it('reuses the same core for repeated renders of the same story', () => {
@@ -191,13 +216,15 @@ describe('withPerformanceMonitor (universal / web-component usage)', () => {
     )
   })
 
-  it('emitted metrics include expected browser-level fields (no React fields populated)', async () => {
+  it('requested metrics include expected browser-level fields (no React fields populated)', () => {
     withPerformanceMonitor(
       vi.fn(() => ''),
       makeCtx(),
     )
 
-    await new Promise(resolve => setTimeout(resolve, 150))
+    const requestCall = mockChannel.on.mock.calls.find((call: unknown[]) => call[0] === PERF_EVENTS.REQUEST_METRICS)
+    const handleRequest = requestCall?.[1] as () => void
+    handleRequest()
 
     const metricsCall = mockChannel.emit.mock.calls.find((call: unknown[]) => call[0] === PERF_EVENTS.METRICS_UPDATE)
     expect(metricsCall).toBeDefined()
@@ -239,6 +266,7 @@ describe('withPerformanceMonitor (universal / web-component usage)', () => {
 
     expect(mockChannel.off).toHaveBeenCalledWith(PERF_EVENTS.REQUEST_METRICS, expect.any(Function))
     expect(mockChannel.off).toHaveBeenCalledWith(PERF_EVENTS.RESET, expect.any(Function))
+    expect(mockChannel.off).toHaveBeenCalledWith(PERF_EVENTS.PANEL_VISIBILITY, expect.any(Function))
     expect(mockChannel.off).toHaveBeenCalledWith(PERF_EVENTS.INSPECT_ELEMENT, expect.any(Function))
   })
 })

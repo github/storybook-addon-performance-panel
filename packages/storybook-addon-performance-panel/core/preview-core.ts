@@ -28,8 +28,8 @@ import {PERF_EVENTS} from './performance-types'
 // Timing Constants
 // ============================================================================
 
-/** How often to emit metrics to the panel (ms) */
-const UPDATE_INTERVAL_MS = 50
+/** How often to emit metrics while the panel is visible (ms) */
+const UPDATE_INTERVAL_MS = 250
 
 /** How often to sample sparkline data points (ms) */
 const SPARKLINE_SAMPLE_INTERVAL_MS = 200
@@ -131,8 +131,14 @@ export class PerformanceMonitorCore {
 
     this.manager.start()
 
+    const emitMetrics = () => {
+      const computed = this.manager.computeMetrics()
+      channel.emit(PERF_EVENTS.METRICS_UPDATE, computed)
+      performanceStore.setGlobalMetrics(computed)
+    }
+
     const handleRequestMetrics = () => {
-      channel.emit(PERF_EVENTS.METRICS_UPDATE, this.manager.computeMetrics())
+      emitMetrics()
       for (const id of this.manager.getProfilerIds()) {
         const metrics = this.manager.getProfilerMetrics(id)
         if (metrics) {
@@ -145,8 +151,18 @@ export class PerformanceMonitorCore {
       this.reset()
     }
 
+    const handlePanelVisibility = (visible: boolean) => {
+      if (visible) {
+        emitMetrics()
+        this.#startLiveUpdates(emitMetrics)
+      } else {
+        this.#stopLiveUpdates()
+      }
+    }
+
     channel.on(PERF_EVENTS.REQUEST_METRICS, handleRequestMetrics)
     channel.on(PERF_EVENTS.RESET, handleReset)
+    channel.on(PERF_EVENTS.PANEL_VISIBILITY, handlePanelVisibility)
     channel.on(PERF_EVENTS.INSPECT_ELEMENT, handleInspectElement)
 
     this.channelCleanups = [
@@ -157,19 +173,12 @@ export class PerformanceMonitorCore {
         channel.off(PERF_EVENTS.RESET, handleReset)
       },
       () => {
+        channel.off(PERF_EVENTS.PANEL_VISIBILITY, handlePanelVisibility)
+      },
+      () => {
         channel.off(PERF_EVENTS.INSPECT_ELEMENT, handleInspectElement)
       },
     ]
-
-    this.metricsIntervalId = setInterval(() => {
-      const computed = this.manager.computeMetrics()
-      channel.emit(PERF_EVENTS.METRICS_UPDATE, computed)
-      performanceStore.setGlobalMetrics(computed)
-    }, UPDATE_INTERVAL_MS)
-
-    this.sparklineIntervalId = setInterval(() => {
-      this.manager.updateSparklineData()
-    }, SPARKLINE_SAMPLE_INTERVAL_MS)
   }
 
   /**
@@ -179,15 +188,7 @@ export class PerformanceMonitorCore {
   stop(): void {
     this.manager.stop()
 
-    if (this.metricsIntervalId != null) {
-      clearInterval(this.metricsIntervalId)
-      this.metricsIntervalId = null
-    }
-
-    if (this.sparklineIntervalId != null) {
-      clearInterval(this.sparklineIntervalId)
-      this.sparklineIntervalId = null
-    }
+    this.#stopLiveUpdates()
 
     for (const cleanup of this.channelCleanups) {
       cleanup()
@@ -202,6 +203,24 @@ export class PerformanceMonitorCore {
   reset(): void {
     this.manager.reset()
     performanceStore.resetAll()
+  }
+
+  #startLiveUpdates(emitMetrics: () => void): void {
+    this.metricsIntervalId ??= setInterval(emitMetrics, UPDATE_INTERVAL_MS)
+    this.sparklineIntervalId ??= setInterval(() => {
+      this.manager.updateSparklineData()
+    }, SPARKLINE_SAMPLE_INTERVAL_MS)
+  }
+
+  #stopLiveUpdates(): void {
+    if (this.metricsIntervalId !== null) {
+      clearInterval(this.metricsIntervalId)
+      this.metricsIntervalId = null
+    }
+    if (this.sparklineIntervalId !== null) {
+      clearInterval(this.sparklineIntervalId)
+      this.sparklineIntervalId = null
+    }
   }
 
   /**
