@@ -33,6 +33,17 @@ describe('FrameTimingCollector', () => {
       collector.start()
       expect(window.requestAnimationFrame).toHaveBeenCalled()
     })
+
+    it('does not schedule duplicate work when started repeatedly', () => {
+      const addEventListener = vi.spyOn(document, 'addEventListener')
+
+      collector.start()
+      collector.start()
+
+      const visibilityListeners = addEventListener.mock.calls.filter(([eventName]) => eventName === 'visibilitychange')
+      expect(visibilityListeners).toHaveLength(1)
+      expect(window.requestAnimationFrame).toHaveBeenCalledOnce()
+    })
   })
 
   describe('stop', () => {
@@ -40,6 +51,20 @@ describe('FrameTimingCollector', () => {
       collector.start()
       collector.stop()
       expect(window.cancelAnimationFrame).toHaveBeenCalled()
+    })
+
+    it('does not clean up more than once when stopped repeatedly', () => {
+      const removeEventListener = vi.spyOn(document, 'removeEventListener')
+
+      collector.start()
+      collector.stop()
+      collector.stop()
+
+      const visibilityListeners = removeEventListener.mock.calls.filter(
+        ([eventName]) => eventName === 'visibilitychange',
+      )
+      expect(visibilityListeners).toHaveLength(1)
+      expect(window.cancelAnimationFrame).toHaveBeenCalledOnce()
     })
   })
 
