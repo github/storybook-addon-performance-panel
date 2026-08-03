@@ -153,7 +153,9 @@ export const PerformanceProvider = memo(function PerformanceProvider({
     const core = coreRef.current
     if (!enabled || !core) return
 
-    // Update storyId in case it changed (re-render with different story)
+    if (core.storyId !== storyId) {
+      core.reset()
+    }
     core.storyId = storyId
 
     core.start()

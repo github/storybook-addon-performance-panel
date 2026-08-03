@@ -121,6 +121,7 @@ export class InputCollector implements MetricCollector<InputMetrics> {
 
   // Track worst latency per interaction (interactionId -> max duration)
   #interactionMap = new Map<number, number>()
+  #seenInteractionIds = new Set<number>()
 
   /** Cap to prevent unbounded growth during long sessions */
   static readonly #MAX_INTERACTIONS = 500
@@ -244,7 +245,8 @@ export class InputCollector implements MetricCollector<InputMetrics> {
     // Track the worst duration for each interaction
     // (an interaction may have multiple events, e.g., keydown + keyup)
     const existingDuration = this.#interactionMap.get(interactionId)
-    if (existingDuration === undefined) {
+    if (!this.#seenInteractionIds.has(interactionId)) {
+      this.#seenInteractionIds.add(interactionId)
       this.#interactionCount++
     }
     if (duration > (existingDuration ?? 0)) {
@@ -326,6 +328,7 @@ export class InputCollector implements MetricCollector<InputMetrics> {
     this.#processingTimes = []
     this.#presentationDelays = []
     this.#interactionMap.clear()
+    this.#seenInteractionIds.clear()
     this.#firstInputDelay = null
     this.#firstInputType = null
     this.#slowestInteraction = null

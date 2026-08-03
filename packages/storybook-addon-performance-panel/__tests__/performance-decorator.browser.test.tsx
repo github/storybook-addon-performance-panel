@@ -4,6 +4,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 
 import {PERF_EVENTS} from '../core/performance-types'
+import {PerformanceMonitorCore} from '../core/preview-core'
 import {PerformanceProvider, ProfiledComponent, withPerformanceMonitor} from '../react/performance-decorator'
 import {useReportReactRenderProfile} from '../react/ReportReactRenderProfileContext'
 
@@ -19,6 +20,25 @@ vi.mock('storybook/preview-api', () => ({
     getChannel: () => mockChannel,
   },
 }))
+
+class TestErrorBoundary extends React.Component<
+  {children: React.ReactNode; onError: (error: Error) => void},
+  {hasError: boolean}
+> {
+  override state = {hasError: false}
+
+  static getDerivedStateFromError() {
+    return {hasError: true}
+  }
+
+  override componentDidCatch(error: Error) {
+    this.props.onError(error)
+  }
+
+  override render() {
+    return this.state.hasError ? null : this.props.children
+  }
+}
 
 describe('performance-decorator', () => {
   beforeEach(() => {
@@ -65,6 +85,36 @@ describe('performance-decorator', () => {
       )
 
       expect(mockChannel.on).not.toHaveBeenCalled()
+    })
+
+    it('resets metrics only when the story ID changes', async () => {
+      const resetSpy = vi.spyOn(PerformanceMonitorCore.prototype, 'reset')
+
+      function StorySwitcher() {
+        const [storyId, setStoryId] = React.useState('story-a')
+        return (
+          <>
+            <button
+              data-testid="switch-story"
+              onClick={() => {
+                setStoryId('story-b')
+              }}
+            >
+              Switch story
+            </button>
+            <PerformanceProvider storyId={storyId}>
+              <div>Test</div>
+            </PerformanceProvider>
+          </>
+        )
+      }
+
+      await render(<StorySwitcher />)
+      expect(resetSpy).not.toHaveBeenCalled()
+
+      await userEvent.click(page.getByTestId('switch-story'))
+      await expect.poll(() => resetSpy.mock.calls.length).toBe(1)
+      resetSpy.mockRestore()
     })
 
     it('emits metrics periodically', async () => {
@@ -144,19 +194,26 @@ describe('performance-decorator', () => {
   })
 
   describe('useReportReactRenderProfile', () => {
-    it('throws outside of PerformanceProvider', () => {
+    it('throws outside of PerformanceProvider', async () => {
       // Suppress React's console.error for expected error boundary behavior
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const onError = vi.fn()
 
       function TestComponent() {
         useReportReactRenderProfile()
         return null
       }
 
-      expect(() => render(<TestComponent />)).toThrow(
-        'useReportReactRenderProfile must be used within a PerformanceProvider',
+      await render(
+        <TestErrorBoundary onError={onError}>
+          <TestComponent />
+        </TestErrorBoundary>,
       )
+      await expect.poll(() => onError.mock.calls.length).toBe(1)
+      expect(onError.mock.calls[0]?.[0]).toMatchObject({
+        message: 'useReportReactRenderProfile must be used within a PerformanceProvider',
+      })
 
       consoleSpy.mockRestore()
     })
@@ -186,22 +243,24 @@ describe('performance-decorator', () => {
       // Suppress React's console.error for expected error boundary behavior
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const onError = vi.fn()
 
       function TestComponent() {
         useReportReactRenderProfile()
         return null
       }
 
-      await expect
-        .poll(
-          async () =>
-            await render(
-              <PerformanceProvider storyId="test-story" enabled={false}>
-                <TestComponent />
-              </PerformanceProvider>,
-            ),
-        )
-        .toThrow('useReportReactRenderProfile must be used within a PerformanceProvider')
+      await render(
+        <TestErrorBoundary onError={onError}>
+          <PerformanceProvider storyId="test-story" enabled={false}>
+            <TestComponent />
+          </PerformanceProvider>
+        </TestErrorBoundary>,
+      )
+      await expect.poll(() => onError.mock.calls.length).toBe(1)
+      expect(onError.mock.calls[0]?.[0]).toMatchObject({
+        message: 'useReportReactRenderProfile must be used within a PerformanceProvider',
+      })
 
       consoleSpy.mockRestore()
     })
@@ -260,7 +319,7 @@ describe('performance-decorator', () => {
   describe('withPerformanceMonitor', () => {
     it('wraps story in PerformanceProvider and ProfiledComponent', async () => {
       const Story = () => <div data-testid="story">Story Content</div>
-      const context = {id: 'test-story'} as Parameters<typeof withPerformanceMonitor>[1]
+      const context = {id: 'test-story', parameters: {}} as Parameters<typeof withPerformanceMonitor>[1]
 
       const WrappedStory = () => withPerformanceMonitor(Story, context)
 
@@ -272,7 +331,7 @@ describe('performance-decorator', () => {
 
     it('emits metrics for wrapped story', async () => {
       const Story = () => <div>Story</div>
-      const context = {id: 'test-story'} as Parameters<typeof withPerformanceMonitor>[1]
+      const context = {id: 'test-story', parameters: {}} as Parameters<typeof withPerformanceMonitor>[1]
 
       const WrappedStory = () => withPerformanceMonitor(Story, context)
 

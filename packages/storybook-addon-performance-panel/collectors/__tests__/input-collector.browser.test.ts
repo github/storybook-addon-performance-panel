@@ -143,6 +143,53 @@ describe('InputCollector', () => {
     scopedCollector.stop()
   })
 
+  it('does not recount interactions removed from the bounded latency sample', () => {
+    const observerCallbacks: PerformanceObserverCallback[] = []
+    vi.stubGlobal(
+      'PerformanceObserver',
+      class MockPerformanceObserver {
+        static supportedEntryTypes = ['event', 'first-input']
+        constructor(callback: PerformanceObserverCallback) {
+          observerCallbacks.push(callback)
+        }
+        observe() {
+          /* empty */
+        }
+        disconnect() {
+          /* empty */
+        }
+      },
+    )
+
+    const scopedCollector = new InputCollector()
+    scopedCollector.start()
+    const startTime = performance.now()
+    const makeEntry = (interactionId: number, duration: number) => ({
+      startTime,
+      duration,
+      processingStart: startTime + 1,
+      processingEnd: startTime + 2,
+      interactionId,
+      name: 'click',
+    })
+    const entryList = (entries: ReturnType<typeof makeEntry>[]) =>
+      ({getEntries: () => entries}) as unknown as PerformanceObserverEntryList
+
+    observerCallbacks[0]?.(
+      entryList(Array.from({length: 501}, (_, index) => makeEntry(index + 1, 501 - index))),
+      {} as PerformanceObserver,
+    )
+    expect(scopedCollector.getMetrics().interactionCount).toBe(501)
+
+    observerCallbacks[0]?.(entryList([makeEntry(501, 1)]), {} as PerformanceObserver)
+    expect(scopedCollector.getMetrics().interactionCount).toBe(501)
+
+    scopedCollector.reset()
+    observerCallbacks[0]?.(entryList([makeEntry(501, 1)]), {} as PerformanceObserver)
+    expect(scopedCollector.getMetrics().interactionCount).toBe(1)
+    scopedCollector.stop()
+  })
+
   // Note: Interaction tracking is now handled via PerformanceObserver with 'event' entry type
   // (Event Timing API) when supported, which provides more accurate INP measurements.
   // The old manual click/keydown listeners have been removed in favor of the browser's
