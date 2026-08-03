@@ -16,6 +16,7 @@
  * @see https://w3c.github.io/event-timing/
  */
 
+import type {OverheadTelemetry} from '../core/overhead-telemetry'
 import type {InteractionInfo} from '../core/performance-types'
 import {
   INPUT_LATENCIES_WINDOW,
@@ -149,10 +150,15 @@ export class InputCollector implements MetricCollector<InputMetrics> {
   #eventTimingSupported = false
   /** Entries before this timestamp belong to an earlier story or reset. */
   #epochMs = 0
+  #pendingPointerEventTime: number | null = null
+  #pointerRafId: number | null = null
+  #paintRafId: number | null = null
+  #overheadTelemetry: OverheadTelemetry | undefined
 
   #boundHandlePointerMove: (e: PointerEvent) => void
 
-  constructor() {
+  constructor(overheadTelemetry?: OverheadTelemetry) {
+    this.#overheadTelemetry = overheadTelemetry
     this.#boundHandlePointerMove = this.#handlePointerMove.bind(this)
     // Check if Event Timing API is supported
     this.#eventTimingSupported = this.#checkEventTimingSupport()
@@ -184,8 +190,15 @@ export class InputCollector implements MetricCollector<InputMetrics> {
   #startEventTimingObserver(): void {
     try {
       this.#eventTimingObserver = new PerformanceObserver(list => {
-        for (const entry of list.getEntries()) {
-          this.#processEventTimingEntry(entry as PerformanceEventTiming)
+        const processEntries = () => {
+          for (const entry of list.getEntries()) {
+            this.#processEventTimingEntry(entry as PerformanceEventTiming)
+          }
+        }
+        if (this.#overheadTelemetry) {
+          this.#overheadTelemetry.measureCallback('input.event-timing', processEntries)
+        } else {
+          processEntries()
         }
       })
 
@@ -201,12 +214,19 @@ export class InputCollector implements MetricCollector<InputMetrics> {
       // Also observe first-input for FID (First Input Delay)
       // This is guaranteed to report even for fast interactions
       this.#firstInputObserver = new PerformanceObserver(list => {
-        const entries = list.getEntries()
-        const entry = entries.find(candidate => candidate.startTime >= this.#epochMs)
-        if (entry && this.#firstInputDelay === null) {
-          const firstInput = entry as PerformanceEventTiming
-          this.#firstInputDelay = firstInput.processingStart - firstInput.startTime
-          this.#firstInputType = firstInput.name
+        const processEntries = () => {
+          const entries = list.getEntries()
+          const entry = entries.find(candidate => candidate.startTime >= this.#epochMs)
+          if (entry && this.#firstInputDelay === null) {
+            const firstInput = entry as PerformanceEventTiming
+            this.#firstInputDelay = firstInput.processingStart - firstInput.startTime
+            this.#firstInputType = firstInput.name
+          }
+        }
+        if (this.#overheadTelemetry) {
+          this.#overheadTelemetry.measureCallback('input.first-input', processEntries)
+        } else {
+          processEntries()
         }
       })
       this.#firstInputObserver.observe({type: 'first-input', buffered: true})
@@ -315,6 +335,7 @@ export class InputCollector implements MetricCollector<InputMetrics> {
   stop(): void {
     this.#commitNativeInteractionCount()
     window.removeEventListener('pointermove', this.#boundHandlePointerMove)
+    this.#cancelPendingPointerWork()
     this.#eventTimingObserver?.disconnect()
     this.#firstInputObserver?.disconnect()
     this.#eventTimingObserver = null
@@ -322,6 +343,7 @@ export class InputCollector implements MetricCollector<InputMetrics> {
   }
 
   reset(): void {
+    this.#cancelPendingPointerWork()
     this.#inputLatencies = []
     this.#maxInputLatency = 0
     this.#inputJitter = 0
@@ -401,19 +423,60 @@ export class InputCollector implements MetricCollector<InputMetrics> {
    * This captures hover responsiveness which is not measured by INP.
    */
   #handlePointerMove(event: PointerEvent): void {
-    const eventTime = event.timeStamp
-    requestAnimationFrame(() => {
-      const rafTime = performance.now()
-      const latency = rafTime - eventTime
-      this.#processInput(latency)
+    this.#pendingPointerEventTime = event.timeStamp
+    this.#schedulePointerSample()
+  }
 
-      // Measure the interval between consecutive RAFs after pointer movement.
-      requestAnimationFrame(() => {
-        const paintEnd = performance.now()
-        const paintTime = paintEnd - rafTime
-        this.#processPaint(paintTime)
-      })
+  #schedulePointerSample(): void {
+    if (this.#pointerRafId !== null || this.#paintRafId !== null) return
+
+    this.#pointerRafId = requestAnimationFrame(() => {
+      this.#pointerRafId = null
+      this.#overheadTelemetry?.setPendingWork('input.pointer-raf', 0)
+      const processPointerFrame = () => {
+        const eventTime = this.#pendingPointerEventTime
+        this.#pendingPointerEventTime = null
+        if (eventTime === null) return
+
+        const rafTime = performance.now()
+        const latency = rafTime - eventTime
+        this.#processInput(latency)
+
+        // Measure the interval between consecutive RAFs after pointer movement.
+        this.#paintRafId = requestAnimationFrame(() => {
+          this.#paintRafId = null
+          this.#overheadTelemetry?.setPendingWork('input.paint-raf', 0)
+          const processPaintFrame = () => {
+            const paintEnd = performance.now()
+            const paintTime = paintEnd - rafTime
+            this.#processPaint(paintTime)
+            if (this.#pendingPointerEventTime !== null) this.#schedulePointerSample()
+          }
+          if (this.#overheadTelemetry) {
+            this.#overheadTelemetry.measureCallback('input.paint-raf', processPaintFrame)
+          } else {
+            processPaintFrame()
+          }
+        })
+        this.#overheadTelemetry?.setPendingWork('input.paint-raf', 1)
+      }
+      if (this.#overheadTelemetry) {
+        this.#overheadTelemetry.measureCallback('input.pointer-raf', processPointerFrame)
+      } else {
+        processPointerFrame()
+      }
     })
+    this.#overheadTelemetry?.setPendingWork('input.pointer-raf', 1)
+  }
+
+  #cancelPendingPointerWork(): void {
+    if (this.#pointerRafId !== null) cancelAnimationFrame(this.#pointerRafId)
+    if (this.#paintRafId !== null) cancelAnimationFrame(this.#paintRafId)
+    this.#pointerRafId = null
+    this.#paintRafId = null
+    this.#pendingPointerEventTime = null
+    this.#overheadTelemetry?.setPendingWork('input.pointer-raf', 0)
+    this.#overheadTelemetry?.setPendingWork('input.paint-raf', 0)
   }
 
   #processInput(latency: number): void {

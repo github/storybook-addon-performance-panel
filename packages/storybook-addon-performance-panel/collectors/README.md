@@ -15,7 +15,6 @@ This directory contains modular metric collector classes used by the performance
 | [MemoryCollector](#memorycollector) | `performance.memory` | **Optimal** | Excellent | Only available API (Chrome-only) |
 | [PaintCollector](#paintcollector) | Paint + Resource Timing APIs, CSS scan | Mixed | Good | Native milestones, derived loading time, heuristic candidates |
 | [StyleMutationCollector](#stylemutationcollector) | `MutationObserver` | Heuristic | Good | Only available method for DOM tracking |
-| [ForcedReflowCollector](#forcedreflowcollector) | Property getter instrumentation | Heuristic | Moderate | Approximation via property access patterns |
 | [ReactProfilerCollector](#reactprofilercollector) | React Profiler API | **Optimal** | Excellent | Official React instrumentation |
 
 ### Legend
@@ -195,10 +194,12 @@ this.#observer.observe({type: 'longtask'})
 - `avgLoafDuration` - Average LoAF duration
 - `p95LoafDuration` - 95th percentile LoAF duration
 - `loafsWithScripts` - Count of LoAFs with script attribution
+- `loafsWithForcedStyleAndLayout` - Count of LoAFs with native forced style/layout attribution
+- `forcedReflowCount` - Deprecated compatibility alias for `loafsWithForcedStyleAndLayout`
 - `lastLoaf` - Details of most recent LoAF (for real-time debugging)
 - `worstLoaf` - Details of longest LoAF (for debugging)
   - `duration`, `blockingDuration`, `renderStart`, `styleAndLayoutStart`
-  - `scriptCount`, `topScript` (source URL, function name, invoker type)
+  - `scriptCount`, `forcedStyleAndLayoutDuration`, `topScript` (source URL, function name, invoker type)
 
 ### Collection Method: Long Animation Frames API
 **Type:** Optimal ✅
@@ -478,46 +479,9 @@ this.#styleObserver = new MutationObserver(mutations => {
 - Only detects inline style changes, not stylesheet modifications
 - Cannot detect CSSOM manipulations via `CSSStyleSheet` API
 - Thrashing correlation is approximate
+- Observation is scoped to the active story root
 
----
-
-## ForcedReflowCollector
-
-**File:** [forced-reflow-collector.ts](./forced-reflow-collector.ts)
-
-### Metrics
-- `forcedReflowCount` - Reads of layout properties after style writes
-
-### Collection Method: Property Getter Instrumentation
-**Type:** Heuristic
-
-```typescript
-// Patches HTMLElement.prototype property getters
-Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
-  get() {
-    if (collector.#layoutDirty) {
-      collector.#forcedReflowCount++
-      collector.#layoutDirty = false
-    }
-    return originalGetter.call(this)
-  },
-  configurable: true,
-})
-```
-
-**Why this approach:**
-- No direct browser API for detecting forced synchronous layout
-- Layout-triggering properties (offset*, scroll*, client*) force reflow when read after style changes
-- `layoutDirty` flag set by StyleMutationCollector on style writes
-
-**Limitations:**
-- Only detects reflows from JavaScript property access
-- Does not detect reflows from CSS-only changes
-- May have false positives if layout was already computed
-- Property patching has slight performance overhead
-
-**Tracked properties:**
-`offsetTop`, `offsetLeft`, `offsetWidth`, `offsetHeight`, `scrollTop`, `scrollLeft`, `scrollWidth`, `scrollHeight`, `clientTop`, `clientLeft`, `clientWidth`, `clientHeight`
+Forced style/layout evidence comes from `PerformanceScriptTiming.forcedStyleAndLayoutDuration` in `LongAnimationFrameCollector`. The addon does not patch DOM or CSS prototypes. LoAF attribution is currently available in Chrome/Edge 123+.
 
 ---
 

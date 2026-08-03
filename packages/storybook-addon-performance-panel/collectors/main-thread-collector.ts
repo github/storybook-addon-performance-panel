@@ -3,6 +3,7 @@
  * @module collectors/MainThreadCollector
  */
 
+import type {OverheadTelemetry} from '../core/overhead-telemetry'
 import type {MetricCollector} from './types'
 
 export interface MainThreadMetrics {
@@ -24,17 +25,29 @@ export class MainThreadCollector implements MetricCollector<MainThreadMetrics> {
   #longestTask = 0
   #totalBlockingTime = 0
   #observer: PerformanceObserver | null = null
+  #overheadTelemetry: OverheadTelemetry | undefined
+
+  constructor(overheadTelemetry?: OverheadTelemetry) {
+    this.#overheadTelemetry = overheadTelemetry
+  }
 
   start(): void {
     try {
       this.#observer = new PerformanceObserver(list => {
-        for (const entry of list.getEntries()) {
-          this.#longTasks++
-          if (entry.duration > this.#longestTask) {
-            this.#longestTask = entry.duration
+        const processEntries = () => {
+          for (const entry of list.getEntries()) {
+            this.#longTasks++
+            if (entry.duration > this.#longestTask) {
+              this.#longestTask = entry.duration
+            }
+            // TBT = sum of (duration - 50ms) for all long tasks
+            this.#totalBlockingTime += Math.max(0, entry.duration - 50)
           }
-          // TBT = sum of (duration - 50ms) for all long tasks
-          this.#totalBlockingTime += Math.max(0, entry.duration - 50)
+        }
+        if (this.#overheadTelemetry) {
+          this.#overheadTelemetry.measureCallback('main-thread.entries', processEntries)
+        } else {
+          processEntries()
         }
       })
       this.#observer.observe({type: 'longtask'})

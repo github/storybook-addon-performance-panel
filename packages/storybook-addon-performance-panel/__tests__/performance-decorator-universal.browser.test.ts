@@ -8,8 +8,9 @@
 import type {StoryContext} from 'storybook/internal/types'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {OverheadTelemetry} from '../core/overhead-telemetry'
 import {PERF_EVENTS} from '../core/performance-types'
-import {getActiveCore, setActiveCore} from '../core/preview-core'
+import {getActiveCore, PerformanceMonitorCore, setActiveCore} from '../core/preview-core'
 
 // ── Mock storybook channel ──────────────────────────────────────────────────
 
@@ -128,6 +129,32 @@ describe('withPerformanceMonitor (universal / web-component usage)', () => {
     mockChannel.emit.mockClear()
     await new Promise(resolve => setTimeout(resolve, 300))
     expect(mockChannel.emit).not.toHaveBeenCalledWith(PERF_EVENTS.METRICS_UPDATE, expect.any(Object))
+  })
+
+  it('records channel payload serialization only with internal telemetry', () => {
+    const telemetry = new OverheadTelemetry()
+    const core = new PerformanceMonitorCore('telemetry-story', {overheadTelemetry: telemetry})
+    core.start()
+    const visibilityCall = mockChannel.on.mock.calls.find((call: unknown[]) => call[0] === PERF_EVENTS.PANEL_VISIBILITY)
+    const handleVisibility = visibilityCall?.[1] as (visible: boolean) => void
+
+    handleVisibility(true)
+
+    const snapshot = telemetry.snapshot()
+    expect(snapshot.serialization.count).toBe(1)
+    expect(snapshot.serialization.bytes).toBeGreaterThan(0)
+
+    core.manager.reportRender({
+      profilerId: 'telemetry-profiler',
+      storyId: 'telemetry-story',
+      phase: 'mount',
+      actualDuration: 5,
+      baseDuration: 6,
+      startTime: 10,
+      commitTime: 15,
+    })
+    expect(telemetry.snapshot().serialization.count).toBe(2)
+    core.stop()
   })
 
   it('reuses the same core for repeated renders of the same story', () => {

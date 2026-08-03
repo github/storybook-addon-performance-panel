@@ -1,5 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {OverheadTelemetry} from '../../core/overhead-telemetry'
 import {StyleMutationCollector} from '../style-mutation-collector'
 
 // Helper to wait for MutationObserver callbacks (microtask)
@@ -7,13 +8,20 @@ const flushMutations = () => new Promise(resolve => setTimeout(resolve, 0))
 
 describe('StyleMutationCollector', () => {
   let collector: StyleMutationCollector
+  let container: HTMLElement
+  let telemetry: OverheadTelemetry
 
   beforeEach(() => {
-    collector = new StyleMutationCollector()
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    telemetry = new OverheadTelemetry()
+    collector = new StyleMutationCollector(telemetry)
+    collector.setContainer(container)
   })
 
   afterEach(() => {
     collector.stop()
+    container.remove()
   })
 
   describe('getMetrics', () => {
@@ -32,22 +40,24 @@ describe('StyleMutationCollector', () => {
       collector.start()
 
       const el = document.createElement('div')
-      document.body.appendChild(el)
+      container.appendChild(el)
 
       el.style.color = 'red'
       await flushMutations()
 
       const metrics = collector.getMetrics()
       expect(metrics.styleWrites).toBe(1)
+      expect(telemetry.snapshot().callbacks['style.mutations']?.count).toBeGreaterThan(0)
+      expect(telemetry.snapshot().scans['style.mutation-records']).toBeGreaterThan(0)
 
-      document.body.removeChild(el)
+      container.removeChild(el)
     })
 
     it('counts CSS variable changes', async () => {
       collector.start()
 
       const el = document.createElement('div')
-      document.body.appendChild(el)
+      container.appendChild(el)
 
       el.style.setProperty('--my-color', 'blue')
       await flushMutations()
@@ -55,7 +65,7 @@ describe('StyleMutationCollector', () => {
       const metrics = collector.getMetrics()
       expect(metrics.cssVarChanges).toBeGreaterThanOrEqual(1)
 
-      document.body.removeChild(el)
+      container.removeChild(el)
     })
   })
 
@@ -64,7 +74,7 @@ describe('StyleMutationCollector', () => {
       collector.start()
 
       const parent = document.createElement('div')
-      document.body.appendChild(parent)
+      container.appendChild(parent)
 
       parent.appendChild(document.createElement('span'))
       parent.appendChild(document.createElement('span'))
@@ -76,25 +86,7 @@ describe('StyleMutationCollector', () => {
         collector.stop()
       }).not.toThrow()
 
-      document.body.removeChild(parent)
-    })
-  })
-
-  describe('onLayoutDirty callback', () => {
-    it('calls callback on style write', async () => {
-      const onLayoutDirty = vi.fn()
-      collector.onLayoutDirty = onLayoutDirty
-      collector.start()
-
-      const el = document.createElement('div')
-      document.body.appendChild(el)
-
-      el.style.width = '100px'
-      await flushMutations()
-
-      expect(onLayoutDirty).toHaveBeenCalled()
-
-      document.body.removeChild(el)
+      container.removeChild(parent)
     })
   })
 
@@ -107,7 +99,7 @@ describe('StyleMutationCollector', () => {
       collector.start()
 
       const el = document.createElement('div')
-      document.body.appendChild(el)
+      container.appendChild(el)
 
       el.style.width = '100px'
       await flushMutations()
@@ -121,7 +113,7 @@ describe('StyleMutationCollector', () => {
       const metrics = collector.getMetrics()
       expect(metrics.thrashingScore).toBe(1)
 
-      document.body.removeChild(el)
+      container.removeChild(el)
       vi.restoreAllMocks()
     })
 
@@ -133,7 +125,7 @@ describe('StyleMutationCollector', () => {
       collector.start()
 
       const el = document.createElement('div')
-      document.body.appendChild(el)
+      container.appendChild(el)
 
       el.style.width = '100px'
       await flushMutations()
@@ -146,7 +138,7 @@ describe('StyleMutationCollector', () => {
       const metrics = collector.getMetrics()
       expect(metrics.thrashingScore).toBe(0)
 
-      document.body.removeChild(el)
+      container.removeChild(el)
       vi.restoreAllMocks()
     })
   })
@@ -156,7 +148,7 @@ describe('StyleMutationCollector', () => {
       collector.start()
 
       const el = document.createElement('div')
-      document.body.appendChild(el)
+      container.appendChild(el)
 
       el.style.color = 'red'
       await flushMutations()
@@ -170,7 +162,22 @@ describe('StyleMutationCollector', () => {
       expect(metrics.domMutationSampleDurationsMs).toEqual([])
       expect(metrics.thrashingScore).toBe(0)
 
-      document.body.removeChild(el)
+      container.removeChild(el)
+    })
+
+    it('ignores style changes outside the story container', async () => {
+      collector.start()
+      const storyElement = document.createElement('div')
+      const outsideElement = document.createElement('div')
+      container.appendChild(storyElement)
+      document.body.appendChild(outsideElement)
+
+      storyElement.style.color = 'red'
+      outsideElement.style.color = 'blue'
+      await flushMutations()
+
+      expect(collector.getMetrics().styleWrites).toBe(1)
+      outsideElement.remove()
     })
   })
 

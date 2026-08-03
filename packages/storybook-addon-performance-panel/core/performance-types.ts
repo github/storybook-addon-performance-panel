@@ -513,6 +513,8 @@ export interface PerformanceMetrics {
   p95LoafDuration: number
   /** Count of LoAFs with script attribution */
   loafsWithScripts: number
+  /** Count of LoAFs with native forced style/layout attribution */
+  loafsWithForcedStyleAndLayout: number
   /** Details about the most recent LoAF */
   lastLoaf: LoAFDetails | null
   /** Details about the worst (longest) LoAF */
@@ -533,7 +535,7 @@ export interface PerformanceMetrics {
   currentSessionCLS: number
   /** Recent layout shifts with bounded source selectors and geometry */
   layoutShiftAttribution: LayoutShiftAttribution[]
-  /** Synchronous reads that forced browser reflow */
+  /** @deprecated Use loafsWithForcedStyleAndLayout. This compatibility field mirrors that native LoAF count. */
   forcedReflowCount: number
   /** Average DOM mutations normalized to a one-second rate */
   domMutationsPerSecond: number
@@ -682,6 +684,7 @@ export const PERFORMANCE_METRIC_METADATA = {
   avgLoafDuration: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
   p95LoafDuration: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
   loafsWithScripts: {provenance: 'derived', quality: 'high', unit: 'count'},
+  loafsWithForcedStyleAndLayout: {provenance: 'derived', quality: 'high', unit: 'count'},
   lastLoaf: {provenance: 'native', quality: 'high', unit: 'structured'},
   worstLoaf: {provenance: 'derived', quality: 'high', unit: 'structured'},
   styleWrites: {provenance: 'derived', quality: 'high', unit: 'count'},
@@ -690,7 +693,7 @@ export const PERFORMANCE_METRIC_METADATA = {
   layoutShiftCount: {provenance: 'native', quality: 'high', unit: 'count'},
   currentSessionCLS: {provenance: 'derived', quality: 'high', unit: 'score'},
   layoutShiftAttribution: {provenance: 'native', quality: 'high', unit: 'structured'},
-  forcedReflowCount: {provenance: 'heuristic', quality: 'low', unit: 'count'},
+  forcedReflowCount: {provenance: 'derived', quality: 'high', unit: 'count'},
   domMutationsPerSecond: {provenance: 'derived', quality: 'medium', unit: 'per-second'},
   domMutationsPerFrame: {provenance: 'derived', quality: 'medium', unit: 'count'},
   cssVarChanges: {provenance: 'derived', quality: 'medium', unit: 'count'},
@@ -771,6 +774,7 @@ export const DEFAULT_METRICS: PerformanceMetrics = {
   avgLoafDuration: 0,
   p95LoafDuration: 0,
   loafsWithScripts: 0,
+  loafsWithForcedStyleAndLayout: 0,
   lastLoaf: null,
   worstLoaf: null,
   // Layout & Style
