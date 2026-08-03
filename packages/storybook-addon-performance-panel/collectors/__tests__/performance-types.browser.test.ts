@@ -128,6 +128,7 @@ describe('DEFAULT_METRICS', () => {
 
   it('initializes corrected metric aliases', () => {
     const deprecatedMetrics = DEFAULT_METRICS as unknown as Record<string, unknown>
+    expect(DEFAULT_METRICS.inferredDroppedFrames).toBe(deprecatedMetrics.droppedFrames)
     expect(DEFAULT_METRICS.pointerFrameInterval).toBe(deprecatedMetrics.paintTime)
     expect(DEFAULT_METRICS.maxPointerFrameInterval).toBe(deprecatedMetrics.maxPaintTime)
     expect(DEFAULT_METRICS.pointerFrameJitter).toBe(deprecatedMetrics.paintJitter)
@@ -155,6 +156,8 @@ describe('PERFORMANCE_METRIC_METADATA', () => {
       unit: 'per-second',
     })
     expect(PERFORMANCE_METRIC_METADATA.layerPromotionCandidates.quality).toBe('low')
+    expect(PERFORMANCE_METRIC_METADATA.estimatedRefreshRate.unit).toBe('hertz')
+    expect(PERFORMANCE_METRIC_METADATA.inferredDroppedFrames.provenance).toBe('heuristic')
     expect(PERFORMANCE_METRIC_METADATA.eventListenerCount.quality).toBe('unavailable')
     expect(PERFORMANCE_METRIC_METADATA.observerCount.quality).toBe('unavailable')
   })

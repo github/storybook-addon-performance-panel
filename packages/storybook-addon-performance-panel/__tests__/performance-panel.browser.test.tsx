@@ -85,11 +85,17 @@ describe('PerformancePanel visibility', () => {
       domMutationsPerSecond: 25,
       initialPaintMilestones: 2,
       layerPromotionCandidates: 3,
+      estimatedRefreshRate: 120,
+      frameBudget: 8.33,
+      observedFrameIntervals: 20,
+      inferredDroppedFrames: 2,
     })
 
     await expect.poll(() => document.body.textContent).toContain('Pointer Frame Interval')
     await expect.poll(() => document.body.textContent).toContain('DOM Churn')
     await expect.poll(() => document.body.textContent).toContain('Initial Paint Milestones')
     await expect.poll(() => document.body.textContent).toContain('Layer-Promotion Candidates')
+    await expect.poll(() => document.body.textContent).toContain('Inferred Drops')
+    await expect.poll(() => document.body.textContent).toContain('120 Hz estimate')
   })
 })
