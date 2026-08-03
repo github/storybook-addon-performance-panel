@@ -10,24 +10,19 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DocsTroubleshootingRouteImport } from './routes/docs/troubleshooting'
-import { Route as DocsSetupRouteImport } from './routes/docs/setup'
-import { Route as DocsMetricsRouteImport } from './routes/docs/metrics'
 import { Route as DocsCollectorsRouteImport } from './routes/docs/collectors'
+import { Route as DocsMetricsRouteImport } from './routes/docs/metrics'
+import { Route as DocsSetupRouteImport } from './routes/docs/setup'
+import { Route as DocsTroubleshootingRouteImport } from './routes/docs/troubleshooting'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DocsTroubleshootingRoute = DocsTroubleshootingRouteImport.update({
-  id: '/docs/troubleshooting',
-  path: '/docs/troubleshooting',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DocsSetupRoute = DocsSetupRouteImport.update({
-  id: '/docs/setup',
-  path: '/docs/setup',
+const DocsCollectorsRoute = DocsCollectorsRouteImport.update({
+  id: '/docs/collectors',
+  path: '/docs/collectors',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsMetricsRoute = DocsMetricsRouteImport.update({
@@ -35,9 +30,14 @@ const DocsMetricsRoute = DocsMetricsRouteImport.update({
   path: '/docs/metrics',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DocsCollectorsRoute = DocsCollectorsRouteImport.update({
-  id: '/docs/collectors',
-  path: '/docs/collectors',
+const DocsSetupRoute = DocsSetupRouteImport.update({
+  id: '/docs/setup',
+  path: '/docs/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsTroubleshootingRoute = DocsTroubleshootingRouteImport.update({
+  id: '/docs/troubleshooting',
+  path: '/docs/troubleshooting',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -104,18 +104,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/docs/troubleshooting': {
-      id: '/docs/troubleshooting'
-      path: '/docs/troubleshooting'
-      fullPath: '/docs/troubleshooting'
-      preLoaderRoute: typeof DocsTroubleshootingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/docs/setup': {
-      id: '/docs/setup'
-      path: '/docs/setup'
-      fullPath: '/docs/setup'
-      preLoaderRoute: typeof DocsSetupRouteImport
+    '/docs/collectors': {
+      id: '/docs/collectors'
+      path: '/docs/collectors'
+      fullPath: '/docs/collectors'
+      preLoaderRoute: typeof DocsCollectorsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/docs/metrics': {
@@ -125,11 +118,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsMetricsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/docs/collectors': {
-      id: '/docs/collectors'
-      path: '/docs/collectors'
-      fullPath: '/docs/collectors'
-      preLoaderRoute: typeof DocsCollectorsRouteImport
+    '/docs/setup': {
+      id: '/docs/setup'
+      path: '/docs/setup'
+      fullPath: '/docs/setup'
+      preLoaderRoute: typeof DocsSetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/troubleshooting': {
+      id: '/docs/troubleshooting'
+      path: '/docs/troubleshooting'
+      fullPath: '/docs/troubleshooting'
+      preLoaderRoute: typeof DocsTroubleshootingRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
