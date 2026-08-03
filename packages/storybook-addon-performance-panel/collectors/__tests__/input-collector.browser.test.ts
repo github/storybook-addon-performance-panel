@@ -1,13 +1,16 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {OverheadTelemetry} from '../../core/overhead-telemetry'
 import {InputCollector} from '../input-collector'
 
 describe('InputCollector', () => {
   let collector: InputCollector
+  let telemetry: OverheadTelemetry
 
   beforeEach(() => {
     vi.useFakeTimers()
-    collector = new InputCollector()
+    telemetry = new OverheadTelemetry()
+    collector = new InputCollector(telemetry)
   })
 
   afterEach(() => {
@@ -51,6 +54,72 @@ describe('InputCollector', () => {
 
       // pointermove is still tracked for hover responsiveness (not covered by INP)
       expect(addSpy).toHaveBeenCalledWith('pointermove', expect.any(Function))
+    })
+
+    it('coalesces pointer bursts into one cancellable RAF pipeline', () => {
+      const callbacks = new Map<number, FrameRequestCallback>()
+      let nextRafId = 1
+      const requestSpy = vi.fn((callback: FrameRequestCallback) => {
+        const rafId = nextRafId++
+        callbacks.set(rafId, callback)
+        return rafId
+      })
+      const cancelSpy = vi.fn((rafId: number) => {
+        callbacks.delete(rafId)
+      })
+      vi.stubGlobal('requestAnimationFrame', requestSpy)
+      vi.stubGlobal('cancelAnimationFrame', cancelSpy)
+      collector.start()
+
+      window.dispatchEvent(new PointerEvent('pointermove'))
+      window.dispatchEvent(new PointerEvent('pointermove'))
+      expect(requestSpy).toHaveBeenCalledTimes(1)
+
+      callbacks.get(1)?.(16)
+      callbacks.delete(1)
+      expect(requestSpy).toHaveBeenCalledTimes(2)
+
+      window.dispatchEvent(new PointerEvent('pointermove'))
+      window.dispatchEvent(new PointerEvent('pointermove'))
+      expect(requestSpy).toHaveBeenCalledTimes(2)
+
+      callbacks.get(2)?.(32)
+      callbacks.delete(2)
+      expect(requestSpy).toHaveBeenCalledTimes(3)
+
+      collector.stop()
+      expect(cancelSpy).toHaveBeenCalledWith(3)
+      expect(callbacks).toHaveLength(0)
+      expect(telemetry.snapshot().callbacks['input.pointer-raf']?.count).toBe(1)
+      expect(telemetry.snapshot().callbacks['input.paint-raf']?.count).toBe(1)
+      expect(telemetry.snapshot().pendingWork['input.pointer-raf']).toEqual({current: 0, peak: 1})
+    })
+
+    it('cancels the paint RAF when stopped between pointer frames', () => {
+      const callbacks = new Map<number, FrameRequestCallback>()
+      let nextRafId = 1
+      vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+        const rafId = nextRafId++
+        callbacks.set(rafId, callback)
+        return rafId
+      })
+      const cancelSpy = vi.fn((rafId: number) => {
+        callbacks.delete(rafId)
+      })
+      vi.stubGlobal('cancelAnimationFrame', cancelSpy)
+      collector.start()
+
+      window.dispatchEvent(new PointerEvent('pointermove'))
+      callbacks.get(1)?.(16)
+      callbacks.delete(1)
+      expect(callbacks.has(2)).toBe(true)
+
+      collector.stop()
+
+      expect(cancelSpy).toHaveBeenCalledWith(2)
+      expect(callbacks).toHaveLength(0)
+      expect(telemetry.snapshot().pendingWork['input.pointer-raf']?.current).toBe(0)
+      expect(telemetry.snapshot().pendingWork['input.paint-raf']?.current).toBe(0)
     })
   })
 

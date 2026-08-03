@@ -6,10 +6,10 @@
  * handles orchestration and ensures consistent state across all collectors.
  */
 
+import type {OverheadTelemetry} from '../core/overhead-telemetry'
 import type {PerformanceMetrics, ReactMetrics, RenderInfo} from '../core/performance-types'
 import {SPARKLINE_HISTORY_SIZE} from './constants'
 import {ElementTimingCollector} from './element-timing-collector'
-import {ForcedReflowCollector} from './forced-reflow-collector'
 import type {FrameTimingMetrics} from './frame-timing-collector'
 import {FrameTimingCollector} from './frame-timing-collector'
 import {InputCollector} from './input-collector'
@@ -49,7 +49,6 @@ export interface DecoratorState {
  *
  * Benefits:
  * - Single point of control for starting/stopping all collectors
- * - Ensures proper initialization order (e.g., style → reflow dependency)
  * - Reduces boilerplate in PerformanceProvider
  * - Makes testing easier by providing a single mock point
  *
@@ -69,7 +68,6 @@ export class CollectorManager {
     readonly layoutShift: LayoutShiftCollector
     readonly memory: MemoryCollector
     readonly style: StyleMutationCollector
-    readonly reflow: ForcedReflowCollector
     readonly react: ReactProfilerCollector
     readonly paint: PaintCollector
     readonly elementTiming: ElementTimingCollector
@@ -78,6 +76,7 @@ export class CollectorManager {
   #running = false
   #state: DecoratorState
   #lastCleanedStoryId: string | null = null
+  #overheadTelemetry: OverheadTelemetry | undefined
 
   /**
    * Create a new CollectorManager.
@@ -86,29 +85,27 @@ export class CollectorManager {
    */
   constructor({
     onProfilerUpdate,
-  }: {onProfilerUpdate?: (storyId: string, id: string, metrics: ReactMetrics) => void} = {}) {
+    overheadTelemetry,
+  }: {
+    onProfilerUpdate?: (storyId: string, id: string, metrics: ReactMetrics) => void
+    overheadTelemetry?: OverheadTelemetry
+  } = {}) {
     this.#state = createInitialState()
+    this.#overheadTelemetry = overheadTelemetry
 
     this.collectors = {
-      // Order matters: style/reflow should be early (they patch DOM APIs)
-      style: new StyleMutationCollector(),
-      reflow: new ForcedReflowCollector(),
+      style: new StyleMutationCollector(overheadTelemetry),
       frame: new FrameTimingCollector(delta => {
         this.collectors.style.checkThrashing(delta)
-      }),
-      input: new InputCollector(),
-      mainThread: new MainThreadCollector(),
-      loaf: new LongAnimationFrameCollector(),
-      layoutShift: new LayoutShiftCollector(),
+      }, overheadTelemetry),
+      input: new InputCollector(overheadTelemetry),
+      mainThread: new MainThreadCollector(overheadTelemetry),
+      loaf: new LongAnimationFrameCollector(overheadTelemetry),
+      layoutShift: new LayoutShiftCollector(overheadTelemetry),
       memory: new MemoryCollector(),
-      react: new ReactProfilerCollector(),
-      paint: new PaintCollector(),
-      elementTiming: new ElementTimingCollector(),
-    }
-
-    // Wire up style → reflow dependency
-    this.collectors.style.onLayoutDirty = () => {
-      this.collectors.reflow.markLayoutDirty()
+      react: new ReactProfilerCollector(overheadTelemetry),
+      paint: new PaintCollector(overheadTelemetry),
+      elementTiming: new ElementTimingCollector(overheadTelemetry),
     }
 
     // Wire up profiler update callback with automatic cleanup
@@ -238,9 +235,15 @@ export class CollectorManager {
     let countTimeout: ReturnType<typeof setTimeout> | null = null
     let pendingCount = false
 
+    this.collectors.style.setContainer(container)
+    this.collectors.paint.setContainer(container)
+
     const countElements = () => {
-      this.#state.domElements = container.querySelectorAll('*').length
+      const elementCount = container.querySelectorAll('*').length
+      this.#state.domElements = elementCount
+      this.#overheadTelemetry?.recordScan('manager.dom-elements', elementCount + 1)
       pendingCount = false
+      this.#overheadTelemetry?.setPendingWork('manager.dom-count', 0)
     }
 
     const scheduleCount = () => {
@@ -248,18 +251,32 @@ export class CollectorManager {
       if (!pendingCount) {
         pendingCount = true
         countTimeout = setTimeout(countElements, 500)
+        this.#overheadTelemetry?.setPendingWork('manager.dom-count', 1)
       }
     }
 
     // Initial count
     countElements()
 
-    const observer = new MutationObserver(scheduleCount)
+    const observer = new MutationObserver(mutations => {
+      const processMutations = () => {
+        this.#overheadTelemetry?.recordScan('manager.mutation-records', mutations.length)
+        scheduleCount()
+      }
+      if (this.#overheadTelemetry) {
+        this.#overheadTelemetry.measureCallback('manager.container-mutations', processMutations)
+      } else {
+        processMutations()
+      }
+    })
     observer.observe(container, {childList: true, subtree: true})
 
     return () => {
       observer.disconnect()
       if (countTimeout) clearTimeout(countTimeout)
+      this.#overheadTelemetry?.setPendingWork('manager.dom-count', 0)
+      this.collectors.style.setContainer(null)
+      this.collectors.paint.setContainer(null)
     }
   }
 
@@ -282,8 +299,9 @@ export class CollectorManager {
    * @returns Processed metrics ready for panel display
    */
   computeMetrics(): PerformanceMetrics {
+    const computeStartTime = this.#overheadTelemetry ? performance.now() : 0
     const state = this.#state
-    const {frame, input, mainThread, loaf, layoutShift, memory, style, reflow, react, paint, elementTiming} =
+    const {frame, input, mainThread, loaf, layoutShift, memory, style, react, paint, elementTiming} =
       Object.fromEntries(Object.entries(this.collectors).map(([k, v]) => [k, v.getMetrics()])) as {
         [K in keyof typeof this.collectors]: ReturnType<(typeof this.collectors)[K]['getMetrics']>
       }
@@ -339,6 +357,7 @@ export class CollectorManager {
       avgLoafDuration: loaf.avgLoafDuration,
       p95LoafDuration: loaf.p95LoafDuration,
       loafsWithScripts: loaf.loafsWithScripts,
+      loafsWithForcedStyleAndLayout: loaf.loafsWithForcedStyleAndLayout,
       lastLoaf: loaf.lastLoaf,
       worstLoaf: loaf.worstLoaf,
       // Continue with other metrics
@@ -366,7 +385,8 @@ export class CollectorManager {
       reactPostMountMaxDuration: react.reactPostMountMaxDuration,
       renderCascades: react.nestedUpdateCount,
       domElements: state.domElements,
-      forcedReflowCount: reflow.forcedReflowCount,
+      // Deprecated compatibility field; global forced-reflow instrumentation was removed.
+      forcedReflowCount: loaf.loafsWithForcedStyleAndLayout,
       eventListenerCount: 0, // Not currently tracked by collectors
       observerCount: 0, // Not currently tracked by collectors
       cssVarChanges: style.cssVarChanges,
@@ -399,6 +419,9 @@ export class CollectorManager {
       })),
     }
 
+    if (this.#overheadTelemetry) {
+      this.#overheadTelemetry.recordComputeMetrics(performance.now() - computeStartTime)
+    }
     return metrics
   }
 }

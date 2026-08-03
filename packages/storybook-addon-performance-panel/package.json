@@ -73,6 +73,7 @@
   ],
   "scripts": {
     "benchmark": "vitest bench --config vitest.benchmark.config.ts --outputJson benchmark-results.json",
+    "benchmark:compare": "node __benchmarks__/compare-results.ts benchmark-results.json",
     "build": "tsdown",
     "build:watch": "tsdown --watch",
     "test": "vitest run"

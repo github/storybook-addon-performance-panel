@@ -21,6 +21,7 @@
 import {addons} from 'storybook/preview-api'
 
 import {CollectorManager} from '../collectors/collector-manager'
+import type {OverheadTelemetry} from './overhead-telemetry'
 import {performanceStore} from './performance-store'
 import {PERF_EVENTS} from './performance-types'
 
@@ -113,13 +114,18 @@ export class PerformanceMonitorCore {
   private containerCleanup: (() => void) | null = null
   private channelCleanups: (() => void)[] = []
   private panelVisible = false
+  private overheadTelemetry: OverheadTelemetry | undefined
 
-  constructor(storyId: string) {
+  constructor(storyId: string, {overheadTelemetry}: {overheadTelemetry?: OverheadTelemetry} = {}) {
     this.storyId = storyId
+    this.overheadTelemetry = overheadTelemetry
     this.manager = new CollectorManager({
+      overheadTelemetry,
       onProfilerUpdate: (profilerStoryId, id, metrics) => {
         performanceStore.updateProfiler(id, metrics)
-        addons.getChannel().emit(PERF_EVENTS.PROFILER_UPDATE, {id, metrics, storyId: profilerStoryId})
+        const payload = {id, metrics, storyId: profilerStoryId}
+        this.overheadTelemetry?.measureSerialization(payload)
+        addons.getChannel().emit(PERF_EVENTS.PROFILER_UPDATE, payload)
       },
     })
   }
@@ -130,9 +136,17 @@ export class PerformanceMonitorCore {
     this.panelVisible = false
 
     const emitMetrics = () => {
-      const computed = this.manager.computeMetrics()
-      channel.emit(PERF_EVENTS.METRICS_UPDATE, computed)
-      performanceStore.setGlobalMetrics(computed)
+      const emit = () => {
+        const computed = this.manager.computeMetrics()
+        this.overheadTelemetry?.measureSerialization(computed)
+        channel.emit(PERF_EVENTS.METRICS_UPDATE, computed)
+        performanceStore.setGlobalMetrics(computed)
+      }
+      if (this.overheadTelemetry) {
+        this.overheadTelemetry.measureCallback('core.metrics-update', emit)
+      } else {
+        emit()
+      }
     }
 
     const handleRequestMetrics = () => {
@@ -140,7 +154,9 @@ export class PerformanceMonitorCore {
       for (const id of this.manager.getProfilerIds()) {
         const metrics = this.manager.getProfilerMetrics(id)
         if (metrics) {
-          channel.emit(PERF_EVENTS.PROFILER_UPDATE, {id, metrics, storyId: this.storyId})
+          const payload = {id, metrics, storyId: this.storyId}
+          this.overheadTelemetry?.measureSerialization(payload)
+          channel.emit(PERF_EVENTS.PROFILER_UPDATE, payload)
         }
       }
     }
@@ -213,7 +229,13 @@ export class PerformanceMonitorCore {
   #startLiveUpdates(emitMetrics: () => void): void {
     this.metricsIntervalId ??= setInterval(emitMetrics, UPDATE_INTERVAL_MS)
     this.sparklineIntervalId ??= setInterval(() => {
-      this.manager.updateSparklineData()
+      if (this.overheadTelemetry) {
+        this.overheadTelemetry.measureCallback('core.sparkline-update', () => {
+          this.manager.updateSparklineData()
+        })
+      } else {
+        this.manager.updateSparklineData()
+      }
     }, SPARKLINE_SAMPLE_INTERVAL_MS)
   }
 

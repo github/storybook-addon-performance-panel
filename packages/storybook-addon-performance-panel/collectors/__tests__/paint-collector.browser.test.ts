@@ -1,5 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {OverheadTelemetry} from '../../core/overhead-telemetry'
 import {ATTRIBUTION_ENTRY_LIMIT} from '../attribution'
 import {PaintCollector} from '../paint-collector'
 
@@ -39,9 +40,11 @@ function waitForIdle(): Promise<void> {
 
 describe('PaintCollector', () => {
   let collector: PaintCollector
+  let container: HTMLElement
   let paintObserverCallback: PerformanceObserverCallback | null = null
   let resourceObserverCallback: PerformanceObserverCallback | null = null
   let mockDisconnect = vi.fn()
+  let telemetry: OverheadTelemetry
 
   beforeEach(() => {
     mockDisconnect = vi.fn()
@@ -70,11 +73,16 @@ describe('PaintCollector', () => {
       },
     )
 
-    collector = new PaintCollector()
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    telemetry = new OverheadTelemetry()
+    collector = new PaintCollector(telemetry)
+    collector.setContainer(container)
   })
 
   afterEach(() => {
     collector.stop()
+    container.remove()
     vi.unstubAllGlobals()
   })
 
@@ -252,33 +260,33 @@ describe('PaintCollector', () => {
     it('detects elements with will-change via initial scan', async () => {
       const el = document.createElement('div')
       el.style.willChange = 'transform'
-      document.body.appendChild(el)
+      container.appendChild(el)
 
       collector.start()
       await waitUntil(() => collector.getMetrics().compositorLayers !== null)
 
       expect(collector.getMetrics().compositorLayers).toBeGreaterThanOrEqual(1)
 
-      document.body.removeChild(el)
+      container.removeChild(el)
     })
 
     it('detects elements with 3D transforms', async () => {
       const el = document.createElement('div')
       el.style.transform = 'translateZ(1px)'
-      document.body.appendChild(el)
+      container.appendChild(el)
 
       collector.start()
       await waitUntil(() => collector.getMetrics().compositorLayers !== null)
 
       expect(collector.getMetrics().compositorLayers).toBeGreaterThanOrEqual(1)
 
-      document.body.removeChild(el)
+      container.removeChild(el)
     })
 
     it('does not count 2D transforms', async () => {
       const el = document.createElement('div')
       el.style.transform = 'translateX(10px)'
-      document.body.appendChild(el)
+      container.appendChild(el)
 
       collector.start()
       await waitUntil(() => collector.getMetrics().compositorLayers !== null)
@@ -286,7 +294,7 @@ describe('PaintCollector', () => {
       // A 2D transform alone is not treated as a layer-promotion candidate.
       expect(collector.getMetrics().compositorLayers).not.toBeNull()
 
-      document.body.removeChild(el)
+      container.removeChild(el)
     })
 
     it('defers scan to idle callback instead of running synchronously', () => {
@@ -294,6 +302,20 @@ describe('PaintCollector', () => {
 
       // Immediately after start, layers should still be null (scan is deferred)
       expect(collector.getMetrics().compositorLayers).toBeNull()
+    })
+
+    it('cancels a pending idle scan when stopped', () => {
+      const cancelSpy = vi.fn()
+      vi.stubGlobal('requestIdleCallback', () => 42)
+      vi.stubGlobal('cancelIdleCallback', cancelSpy)
+
+      collector.start()
+      expect(telemetry.snapshot().pendingWork['paint.idle-scan']?.current).toBe(1)
+
+      collector.stop()
+
+      expect(cancelSpy).toHaveBeenCalledWith(42)
+      expect(telemetry.snapshot().pendingWork['paint.idle-scan']?.current).toBe(0)
     })
 
     it('incrementally tracks added elements via MutationObserver', async () => {
@@ -304,18 +326,18 @@ describe('PaintCollector', () => {
 
       const el = document.createElement('div')
       el.style.willChange = 'transform'
-      document.body.appendChild(el)
+      container.appendChild(el)
       await waitUntil(() => collector.getMetrics().compositorLayers === baseline + 1)
 
       expect(collector.getMetrics().compositorLayers).toBe(baseline + 1)
 
-      document.body.removeChild(el)
+      container.removeChild(el)
     })
 
     it('decrements count when compositor-layer elements are removed', async () => {
       const el = document.createElement('div')
       el.style.willChange = 'transform'
-      document.body.appendChild(el)
+      container.appendChild(el)
 
       collector.start()
       await waitUntil(() => collector.getMetrics().compositorLayers !== null)
@@ -323,7 +345,7 @@ describe('PaintCollector', () => {
       const countWithEl = collector.getMetrics().compositorLayers ?? 0
       expect(countWithEl).toBeGreaterThanOrEqual(1)
 
-      document.body.removeChild(el)
+      container.removeChild(el)
       await waitUntil(() => collector.getMetrics().compositorLayers === countWithEl - 1)
 
       expect(collector.getMetrics().compositorLayers).toBe(countWithEl - 1)
@@ -331,7 +353,7 @@ describe('PaintCollector', () => {
 
     it('tracks style attribute changes on existing elements', async () => {
       const el = document.createElement('div')
-      document.body.appendChild(el)
+      container.appendChild(el)
 
       collector.start()
       await waitUntil(() => collector.getMetrics().compositorLayers !== null)
@@ -348,7 +370,80 @@ describe('PaintCollector', () => {
 
       expect(collector.getMetrics().compositorLayers).toBe(baseline)
 
-      document.body.removeChild(el)
+      container.removeChild(el)
+    })
+
+    it('ignores layer candidates outside the story container', async () => {
+      const outsideElement = document.createElement('div')
+      outsideElement.style.willChange = 'transform'
+      document.body.appendChild(outsideElement)
+
+      collector.start()
+      await waitUntil(() => collector.getMetrics().compositorLayers !== null)
+
+      expect(collector.getMetrics().compositorLayers).toBe(0)
+      outsideElement.remove()
+    })
+
+    it('chunks initial layer scans across idle callbacks', () => {
+      const idleCallbacks: IdleRequestCallback[] = []
+      vi.stubGlobal('requestIdleCallback', (callback: IdleRequestCallback) => {
+        idleCallbacks.push(callback)
+        return idleCallbacks.length
+      })
+      for (let index = 0; index < 75; index++) {
+        const element = document.createElement('div')
+        element.style.willChange = 'transform'
+        container.appendChild(element)
+      }
+
+      collector.start()
+      expect(idleCallbacks).toHaveLength(1)
+
+      idleCallbacks.shift()?.({didTimeout: false, timeRemaining: () => 10})
+      expect(collector.getMetrics().compositorLayers).toBeNull()
+      expect(idleCallbacks).toHaveLength(1)
+
+      idleCallbacks.shift()?.({didTimeout: false, timeRemaining: () => 10})
+      expect(collector.getMetrics().compositorLayers).toBe(75)
+      expect(telemetry.snapshot().callbacks['paint.layer-scan']?.count).toBe(2)
+      expect(telemetry.snapshot().scans['paint.layer-elements']).toBe(75)
+      expect(telemetry.snapshot().pendingWork['paint.idle-scan']).toEqual({current: 0, peak: 1})
+    })
+
+    it('keeps the story root out of descendant layer counts', async () => {
+      collector.start()
+      await waitUntil(() => collector.getMetrics().compositorLayers === 0)
+
+      container.style.willChange = 'transform'
+      await waitForIdle()
+
+      expect(collector.getMetrics().compositorLayers).toBe(0)
+    })
+
+    it('requeues an element that leaves and returns during a chunked scan', async () => {
+      const idleCallbacks: IdleRequestCallback[] = []
+      vi.stubGlobal('requestIdleCallback', (callback: IdleRequestCallback) => {
+        idleCallbacks.push(callback)
+        return idleCallbacks.length
+      })
+      const target = document.createElement('div')
+      container.appendChild(target)
+      for (let index = 0; index < 74; index++) {
+        container.appendChild(document.createElement('div'))
+      }
+
+      collector.start()
+      idleCallbacks.shift()?.({didTimeout: false, timeRemaining: () => 10})
+      expect(collector.getMetrics().compositorLayers).toBeNull()
+
+      target.remove()
+      target.style.willChange = 'transform'
+      container.appendChild(target)
+      await new Promise(resolve => setTimeout(resolve, 0))
+
+      idleCallbacks.shift()?.({didTimeout: false, timeRemaining: () => 10})
+      expect(collector.getMetrics().compositorLayers).toBe(1)
     })
   })
 
@@ -383,7 +478,7 @@ describe('PaintCollector', () => {
 
       const el = document.createElement('div')
       el.style.willChange = 'transform'
-      document.body.appendChild(el)
+      container.appendChild(el)
       await waitUntil(() => (collector.getMetrics().compositorLayers ?? 0) >= 1)
 
       collector.reset()
@@ -394,7 +489,7 @@ describe('PaintCollector', () => {
       // After idle scan completes, count is restored
       expect(collector.getMetrics().compositorLayers).toBeGreaterThanOrEqual(1)
 
-      document.body.removeChild(el)
+      container.removeChild(el)
     })
   })
 
@@ -416,13 +511,13 @@ describe('PaintCollector', () => {
 
       const el = document.createElement('div')
       el.style.willChange = 'transform'
-      document.body.appendChild(el)
+      container.appendChild(el)
       await waitForIdle()
 
       // Count should not change after stop
       await expect.poll(() => collector.getMetrics().compositorLayers).toBe(countAfterStop)
 
-      document.body.removeChild(el)
+      container.removeChild(el)
     })
   })
 })

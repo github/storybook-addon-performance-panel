@@ -1020,7 +1020,7 @@ const ElementTimingSection = React.memo(function ElementTimingSection({
  *
  * Displays:
  * - CLS: Cumulative Layout Shift (Core Web Vital)
- * - Forced Reflows: Synchronous layout caused by read-after-write
+ * - Forced Style / Layout: LoAFs with native forced style/layout attribution
  * - Style Writes: Inline style mutations
  * - Jitter: Input latency spikes
  *
@@ -1032,7 +1032,8 @@ type LayoutAndInternalsSectionProps = Pick<
   | 'layoutShiftCount'
   | 'currentSessionCLS'
   | 'layoutShiftAttribution'
-  | 'forcedReflowCount'
+  | 'loafSupported'
+  | 'loafsWithForcedStyleAndLayout'
   | 'styleWrites'
   | 'cssVarChanges'
   | 'inputJitter'
@@ -1045,14 +1046,15 @@ const LayoutAndInternalsSection = React.memo(function LayoutAndInternalsSection(
   layoutShiftCount,
   currentSessionCLS,
   layoutShiftAttribution,
-  forcedReflowCount,
+  loafSupported,
+  loafsWithForcedStyleAndLayout,
   styleWrites,
   cssVarChanges,
   inputJitter,
   onInspectElement,
 }: LayoutAndInternalsSectionProps) {
   const clsStatus = getStatus(layoutShiftScore, THRESHOLDS.CLS_GOOD, THRESHOLDS.CLS_WARNING)
-  const reflowStatus = getStatus(forcedReflowCount, 0, THRESHOLDS.FORCED_REFLOW_WARNING)
+  const reflowStatus = getStatus(loafsWithForcedStyleAndLayout, 0, THRESHOLDS.FORCED_REFLOW_WARNING)
   const jitterStatus = getZeroStatus(inputJitter)
   const latestShift = layoutShiftAttribution.at(-1)
   const latestShiftSource = latestShift?.sources[0]
@@ -1104,13 +1106,17 @@ const LayoutAndInternalsSection = React.memo(function LayoutAndInternalsSection(
       )}
 
       <Metric
-        label="Forced Reflows"
-        tooltip="Layout reads after style writes force synchronous layout. Major perf killer during drag."
+        label="Forced Layout LoAFs"
+        tooltip="Long animation frames with native forced style and layout attribution. Chrome/Edge only."
       >
-        <StatusBadge variant={reflowStatus}>
-          <span>{forcedReflowCount === 0 ? '✨ ' : '💥 '}</span>
-          <span>{forcedReflowCount}</span>
-        </StatusBadge>
+        {loafSupported ? (
+          <StatusBadge variant={reflowStatus}>
+            <span>{loafsWithForcedStyleAndLayout === 0 ? '✨ ' : '💥 '}</span>
+            <span>{loafsWithForcedStyleAndLayout}</span>
+          </StatusBadge>
+        ) : (
+          <NoDataHint>Chrome/Edge only</NoDataHint>
+        )}
       </Metric>
 
       <Metric
@@ -1764,7 +1770,8 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
             layoutShiftCount={metrics.layoutShiftCount}
             currentSessionCLS={metrics.currentSessionCLS}
             layoutShiftAttribution={metrics.layoutShiftAttribution}
-            forcedReflowCount={metrics.forcedReflowCount}
+            loafSupported={metrics.loafSupported}
+            loafsWithForcedStyleAndLayout={metrics.loafsWithForcedStyleAndLayout}
             styleWrites={metrics.styleWrites}
             cssVarChanges={metrics.cssVarChanges}
             inputJitter={metrics.inputJitter}

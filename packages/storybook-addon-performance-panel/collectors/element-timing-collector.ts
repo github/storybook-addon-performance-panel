@@ -11,6 +11,7 @@
  * @see https://web.dev/articles/custom-metrics#element-timing-api
  */
 
+import type {OverheadTelemetry} from '../core/overhead-telemetry'
 import {
   addBoundedAttribution,
   ATTRIBUTION_LABEL_MAX_LENGTH,
@@ -94,8 +95,10 @@ export class ElementTimingCollector implements MetricCollector<ElementTimingMetr
   #largestRenderTime = 0
   /** Entries with renderTime/loadTime before this threshold are ignored (stale from before reset). */
   #epochMs = 0
+  #overheadTelemetry: OverheadTelemetry | undefined
 
-  constructor() {
+  constructor(overheadTelemetry?: OverheadTelemetry) {
+    this.#overheadTelemetry = overheadTelemetry
     this.#supported = this.#checkSupport()
   }
 
@@ -114,8 +117,15 @@ export class ElementTimingCollector implements MetricCollector<ElementTimingMetr
 
     try {
       this.#observer = new PerformanceObserver(list => {
-        for (const entry of list.getEntries()) {
-          this.#processEntry(entry as PerformanceElementTiming)
+        const processEntries = () => {
+          for (const entry of list.getEntries()) {
+            this.#processEntry(entry as PerformanceElementTiming)
+          }
+        }
+        if (this.#overheadTelemetry) {
+          this.#overheadTelemetry.measureCallback('element-timing.entries', processEntries)
+        } else {
+          processEntries()
         }
       })
 
