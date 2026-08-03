@@ -8,7 +8,8 @@
  * @see https://w3c.github.io/long-animation-frames/
  */
 
-import type {LoAFScriptAttribution} from '../core/performance-types'
+import type {LoAFDetails, LoAFScriptAttribution} from '../core/performance-types'
+import {ATTRIBUTION_LABEL_MAX_LENGTH, ATTRIBUTION_URL_MAX_LENGTH, limitAttributionString} from './attribution'
 import type {MetricCollector} from './types'
 import {addToWindow, computeAverage, computeP95} from './utils'
 
@@ -51,7 +52,7 @@ interface PerformanceScriptTiming extends PerformanceEntry {
   /** Duration of script execution */
   duration: number
   /** Time forced style/layout took */
-  forcedStyleAndLayoutDuration: DOMHighResTimeStamp
+  forcedStyleAndLayoutDuration?: DOMHighResTimeStamp
   /** Window attribution */
   window: Window | null
   /** Window attribution string */
@@ -79,23 +80,9 @@ export interface LongAnimationFrameMetrics {
   /** Count of LoAFs with script attribution */
   loafsWithScripts: number
   /** Most recent LoAF details for debugging */
-  lastLoaf: {
-    duration: number
-    blockingDuration: number
-    renderStart: number
-    styleAndLayoutStart: number
-    scriptCount: number
-    topScript: LoAFScriptAttribution | null
-  } | null
+  lastLoaf: LoAFDetails | null
   /** Details about the worst (longest) LoAF */
-  worstLoaf: {
-    duration: number
-    blockingDuration: number
-    renderStart: number
-    styleAndLayoutStart: number
-    scriptCount: number
-    topScript: LoAFScriptAttribution | null
-  } | null
+  worstLoaf: LoAFDetails | null
 }
 
 /**
@@ -177,16 +164,22 @@ export class LongAnimationFrameCollector implements MetricCollector<LongAnimatio
       const top = sortedScripts[0]
       if (top) {
         topScript = {
-          sourceURL: top.sourceURL || 'unknown',
-          sourceFunctionName: top.sourceFunctionName || 'anonymous',
+          sourceURL: limitAttributionString(top.sourceURL, 'unknown', ATTRIBUTION_URL_MAX_LENGTH),
+          sourceFunctionName: limitAttributionString(top.sourceFunctionName, 'anonymous', ATTRIBUTION_LABEL_MAX_LENGTH),
           sourceCharPosition: top.sourceCharPosition,
-          invokerType: top.invokerType,
-          invoker: top.invoker || 'unknown',
+          invokerType: limitAttributionString(top.invokerType, 'unknown', ATTRIBUTION_LABEL_MAX_LENGTH),
+          invoker: limitAttributionString(top.invoker, 'unknown', ATTRIBUTION_LABEL_MAX_LENGTH),
           executionStart: top.executionStart,
           duration: top.duration,
+          forcedStyleAndLayoutDuration: top.forcedStyleAndLayoutDuration ?? 0,
         }
       }
     }
+
+    const forcedStyleAndLayoutDuration = scripts.reduce(
+      (total, script) => total + (script.forcedStyleAndLayoutDuration ?? 0),
+      0,
+    )
 
     // Build frame details
     const frameDetails = {
@@ -195,6 +188,7 @@ export class LongAnimationFrameCollector implements MetricCollector<LongAnimatio
       renderStart: entry.renderStart,
       styleAndLayoutStart: entry.styleAndLayoutStart,
       scriptCount: scripts.length,
+      forcedStyleAndLayoutDuration,
       topScript,
     }
 

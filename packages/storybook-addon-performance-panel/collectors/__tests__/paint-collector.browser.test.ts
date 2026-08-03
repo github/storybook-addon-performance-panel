@@ -1,5 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {ATTRIBUTION_ENTRY_LIMIT} from '../attribution'
 import {PaintCollector} from '../paint-collector'
 
 /** Poll until a condition is met (MutationObserver + idle callback) */
@@ -82,6 +83,8 @@ describe('PaintCollector', () => {
       const metrics = collector.getMetrics()
       expect(metrics.paintCount).toBe(0)
       expect(metrics.scriptEvalTime).toBe(0)
+      expect(metrics.scriptResourceCount).toBe(0)
+      expect(metrics.scriptResources).toEqual([])
       expect(metrics.compositorLayers).toBeNull()
     })
 
@@ -137,6 +140,7 @@ describe('PaintCollector', () => {
           getEntries: () => [
             {
               entryType: 'resource',
+              name: '/assets/story.js',
               startTime,
               initiatorType: 'script',
               fetchStart: 100,
@@ -149,6 +153,10 @@ describe('PaintCollector', () => {
 
       const metrics = collector.getMetrics()
       expect(metrics.scriptEvalTime).toBe(50)
+      expect(metrics.scriptResourceCount).toBe(1)
+      expect(metrics.scriptResources).toEqual([
+        expect.objectContaining({url: '/assets/story.js', initiatorType: 'script', duration: 50}),
+      ])
     })
 
     it('accumulates script time from multiple scripts', () => {
@@ -167,6 +175,30 @@ describe('PaintCollector', () => {
 
       const metrics = collector.getMetrics()
       expect(metrics.scriptEvalTime).toBe(80) // 30 + 50
+    })
+
+    it('retains only the slowest bounded script resources', () => {
+      collector.start()
+      const startTime = performance.now()
+      const entries = Array.from({length: ATTRIBUTION_ENTRY_LIMIT + 5}, (_, index) => ({
+        entryType: 'resource',
+        name: `/script-${String(index)}.js`,
+        initiatorType: 'script',
+        startTime,
+        fetchStart: 100,
+        responseEnd: 101 + index,
+      }))
+
+      resourceObserverCallback?.(
+        {getEntries: () => entries} as unknown as PerformanceObserverEntryList,
+        {} as PerformanceObserver,
+      )
+
+      const metrics = collector.getMetrics()
+      expect(metrics.scriptResourceCount).toBe(ATTRIBUTION_ENTRY_LIMIT + 5)
+      expect(metrics.scriptResources).toHaveLength(ATTRIBUTION_ENTRY_LIMIT)
+      expect(metrics.scriptResources[0]?.url).toBe('/script-24.js')
+      expect(metrics.scriptResources.at(-1)?.url).toBe('/script-5.js')
     })
 
     it('ignores non-script resources', () => {

@@ -86,6 +86,44 @@ describe('LongAnimationFrameCollector', () => {
     expect(collector.getMetrics()).toMatchObject({loafCount: 1, longestLoafDuration: 80})
   })
 
+  it('captures forced style and layout attribution', () => {
+    collector.start()
+    const startTime = performance.now()
+
+    observerCallback?.(
+      {
+        getEntries: () => [
+          {
+            startTime,
+            duration: 80,
+            blockingDuration: 30,
+            renderStart: startTime + 20,
+            styleAndLayoutStart: startTime + 30,
+            scripts: [
+              {
+                sourceURL: '/story.js',
+                sourceFunctionName: 'renderStory',
+                sourceCharPosition: 42,
+                invokerType: 'user-callback',
+                invoker: 'requestAnimationFrame',
+                executionStart: startTime + 5,
+                duration: 40,
+                forcedStyleAndLayoutDuration: 12,
+              },
+              {duration: 10, forcedStyleAndLayoutDuration: 3},
+            ],
+          },
+        ],
+      } as unknown as PerformanceObserverEntryList,
+      {} as PerformanceObserver,
+    )
+
+    expect(collector.getMetrics().lastLoaf).toMatchObject({
+      forcedStyleAndLayoutDuration: 15,
+      topScript: {sourceURL: '/story.js', forcedStyleAndLayoutDuration: 12},
+    })
+  })
+
   describe('start/stop', () => {
     it('can be started and stopped without error', () => {
       expect(() => {

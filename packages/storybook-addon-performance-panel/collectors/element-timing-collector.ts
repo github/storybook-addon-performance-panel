@@ -11,6 +11,13 @@
  * @see https://web.dev/articles/custom-metrics#element-timing-api
  */
 
+import {
+  addBoundedAttribution,
+  ATTRIBUTION_LABEL_MAX_LENGTH,
+  ATTRIBUTION_URL_MAX_LENGTH,
+  getElementSelector,
+  limitAttributionString,
+} from './attribution'
 import type {MetricCollector} from './types'
 
 /**
@@ -41,10 +48,14 @@ interface PerformanceElementTiming extends PerformanceEntry {
 export interface ElementTimingRecord {
   /** The elementtiming attribute value */
   identifier: string
-  /** Render time in milliseconds */
+  /** Effective render time relative to the story epoch; falls back to loadTime */
   renderTime: number
+  /** Unmodified renderTime timestamp from the Performance Timeline */
+  rawRenderTime: number
   /** Load time in milliseconds (for images, 0 otherwise) */
   loadTime: number
+  /** Unmodified loadTime timestamp from the Performance Timeline */
+  rawLoadTime: number
   /** CSS selector for the element */
   selector: string
   /** Element tag name */
@@ -68,35 +79,6 @@ export interface ElementTimingMetrics {
 }
 
 /**
- * Generates a simple CSS selector for an element
- */
-function getSimpleSelector(element: Element | null): string {
-  if (!element) return 'unknown'
-
-  // Try ID first
-  if (element.id) {
-    return `#${element.id}`
-  }
-
-  // Try elementtiming attribute
-  const timing = element.getAttribute('elementtiming')
-  if (timing) {
-    return `[elementtiming="${timing}"]`
-  }
-
-  // Fall back to tag + class
-  const classes = element.className
-    ? `.${element.className
-        .split(/\s+/)
-        .filter(c => c)
-        .slice(0, 2)
-        .join('.')}`
-    : ''
-
-  return `${element.tagName.toLowerCase()}${classes}`
-}
-
-/**
  * Collects Element Timing metrics for elements with the `elementtiming` attribute.
  *
  * This collector is useful for:
@@ -108,6 +90,7 @@ export class ElementTimingCollector implements MetricCollector<ElementTimingMetr
   #observer: PerformanceObserver | null = null
   #supported = false
   #elements: ElementTimingRecord[] = []
+  #elementCount = 0
   #largestRenderTime = 0
   /** Entries with renderTime/loadTime before this threshold are ignored (stale from before reset). */
   #epochMs = 0
@@ -152,10 +135,12 @@ export class ElementTimingCollector implements MetricCollector<ElementTimingMetr
     const renderTime = entryTime - this.#epochMs
 
     const record: ElementTimingRecord = {
-      identifier: entry.identifier || 'unnamed',
+      identifier: limitAttributionString(entry.identifier, 'unnamed', ATTRIBUTION_LABEL_MAX_LENGTH),
       renderTime,
+      rawRenderTime: entry.renderTime,
       loadTime: entry.loadTime > 0 ? Math.max(0, entry.loadTime - this.#epochMs) : 0,
-      selector: getSimpleSelector(entry.element),
+      rawLoadTime: entry.loadTime,
+      selector: getElementSelector(entry.element),
       tagName: entry.element?.tagName.toLowerCase() ?? 'unknown',
     }
 
@@ -165,10 +150,11 @@ export class ElementTimingCollector implements MetricCollector<ElementTimingMetr
       record.naturalHeight = entry.naturalHeight
     }
     if (entry.url) {
-      record.url = entry.url
+      record.url = limitAttributionString(entry.url, 'unknown', ATTRIBUTION_URL_MAX_LENGTH)
     }
 
-    this.#elements.push(record)
+    this.#elementCount++
+    addBoundedAttribution(this.#elements, record)
 
     // Track largest render time
     if (renderTime > this.#largestRenderTime) {
@@ -183,6 +169,7 @@ export class ElementTimingCollector implements MetricCollector<ElementTimingMetr
 
   reset(): void {
     this.#elements = []
+    this.#elementCount = 0
     this.#largestRenderTime = 0
     this.#epochMs = performance.now()
   }
@@ -190,9 +177,9 @@ export class ElementTimingCollector implements MetricCollector<ElementTimingMetr
   getMetrics(): ElementTimingMetrics {
     return {
       elementTimingSupported: this.#supported,
-      elements: this.#elements,
+      elements: this.#elements.map(element => ({...element})),
       largestRenderTime: this.#largestRenderTime,
-      elementCount: this.#elements.length,
+      elementCount: this.#elementCount,
     }
   }
 }

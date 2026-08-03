@@ -97,18 +97,21 @@ The addon consists of two main parts:
 - **P95 Duration**: 95th percentile LoAF duration
 - **Script Attribution**: Which scripts contributed to long frames
   - Source URL, function name, invoker type (event-listener, user-callback, etc.)
+  - Forced style and layout duration for the frame and top script
   - Helps identify exactly which code caused slow frames
 
 ### Element Timing
 - **Element Count**: Number of elements with `elementtiming` attribute tracked
 - **Largest Render Time**: Slowest element to render (similar to LCP concept)
 - **Individual Elements**: Render time for each tracked element
+  - Preserves relative story timing, raw Performance Timeline timestamps, selectors, and resource URLs
   - Add `elementtiming="identifier"` attribute to elements you want to track
   - Useful for measuring when hero images, key content, or specific UI elements render
   - Only *timing‑eligible* elements produce entries. The browser will ignore arbitrary custom elements or nodes inside shadow DOM. Valid targets include images (`<img>`), SVG `<image>`s, videos with poster frames, elements with contentful `background-image`s, and text nodes. See the [Element Timing spec](https://w3c.github.io/paint-timing/#timing-eligible) for details.
 
 ### Layout Stability
 - **CLS**: Cumulative Layout Shift score (Core Web Vital)
+- **Shift Sources**: Bounded selectors and geometry for recent native layout-shift attribution
 - **Forced Reflows**: Layout property reads after style writes
 - **Style Writes**: Inline style mutations observed via MutationObserver
 
@@ -124,6 +127,7 @@ The addon consists of two main parts:
 - **GC Pressure**: Memory allocation rate (MB/s)
 - **Initial Paint Milestones**: Native first-paint and first-contentful-paint entries
 - **Script Resource Load Time**: Cumulative loading duration derived from script Resource Timing entries
+- **Script Resource Attribution**: Bounded slowest-resource URLs, initiator types, relative start times, and durations
 - **Layer-Promotion Candidates**: Elements matching CSS layer-promotion heuristics (not the browser's compositor layer count)
 
 ## Metric Thresholds

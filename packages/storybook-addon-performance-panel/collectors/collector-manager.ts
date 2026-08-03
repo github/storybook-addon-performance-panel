@@ -350,6 +350,7 @@ export class CollectorManager {
       layoutShiftScore: layoutShift.layoutShiftScore,
       layoutShiftCount: layoutShift.layoutShiftCount,
       currentSessionCLS: layoutShift.currentSessionScore,
+      layoutShiftAttribution: layoutShift.layoutShiftAttribution,
       eventTimingSupported: input.eventTimingSupported,
       interactionCount: input.interactionCount,
       inpMs: input.inpMs,
@@ -370,6 +371,8 @@ export class CollectorManager {
       observerCount: 0, // Not currently tracked by collectors
       cssVarChanges: style.cssVarChanges,
       scriptResourceLoadTime,
+      scriptResourceCount: paint.scriptResourceCount,
+      scriptResources: paint.scriptResources,
       scriptEvalTime: scriptResourceLoadTime,
       gcPressure: Math.round(memory.gcPressure * 100) / 100,
       paintCount: paint.paintCount,
@@ -387,7 +390,12 @@ export class CollectorManager {
       elementTimings: elementTiming.elements.map(e => ({
         identifier: e.identifier,
         renderTime: Math.round(e.renderTime * 10) / 10,
+        rawRenderTime: Math.round(e.rawRenderTime * 10) / 10,
+        loadTime: Math.round(e.loadTime * 10) / 10,
+        rawLoadTime: Math.round(e.rawLoadTime * 10) / 10,
         selector: e.selector,
+        tagName: e.tagName,
+        ...(e.url ? {url: e.url} : {}),
       })),
     }
 
