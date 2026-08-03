@@ -339,7 +339,7 @@ const MetricsSection = React.memo(function MetricsSection({icon, title, children
  * Displays:
  * - FPS: Frames per second with sparkline trend
  * - Frame Time: Average/max frame duration
- * - Dropped Frames: Count of frames exceeding 2× budget
+ * - Inferred Drops: Missed refresh opportunities inferred from a calibrated frame budget
  * - Frame Jitter: Sudden spikes in frame time
  *
  * @component
@@ -351,7 +351,11 @@ type FrameTimingSectionProps = Pick<
   | 'frameTime'
   | 'maxFrameTime'
   | 'frameTimeHistory'
-  | 'droppedFrames'
+  | 'estimatedRefreshRate'
+  | 'frameBudget'
+  | 'observedFrameIntervals'
+  | 'inferredDroppedFrames'
+  | 'excludedFrameIntervals'
   | 'frameJitter'
   | 'frameStability'
   | 'pointerFrameInterval'
@@ -365,7 +369,11 @@ const FrameTimingSection = React.memo(function FrameTimingSection({
   frameTime,
   maxFrameTime,
   frameTimeHistory,
-  droppedFrames,
+  estimatedRefreshRate,
+  frameBudget,
+  observedFrameIntervals,
+  inferredDroppedFrames,
+  excludedFrameIntervals,
   frameJitter,
   frameStability,
   pointerFrameInterval,
@@ -374,7 +382,11 @@ const FrameTimingSection = React.memo(function FrameTimingSection({
 }: FrameTimingSectionProps) {
   const fpsStatus = getStatus(fps, THRESHOLDS.FPS_GOOD, THRESHOLDS.FPS_WARNING, true)
   const droppedStatus =
-    droppedFrames > THRESHOLDS.DROPPED_FRAMES_WARNING ? 'error' : droppedFrames > 0 ? 'warning' : 'success'
+    inferredDroppedFrames > THRESHOLDS.DROPPED_FRAMES_WARNING
+      ? 'error'
+      : inferredDroppedFrames > 0
+        ? 'warning'
+        : 'success'
   const frameJitterStatus = getZeroStatus(frameJitter)
   const stabilityStatus = frameStability >= 90 ? 'success' : frameStability >= 70 ? 'warning' : 'error'
   const pointerFrameJitterStatus = getZeroStatus(pointerFrameJitter)
@@ -398,7 +410,7 @@ const FrameTimingSection = React.memo(function FrameTimingSection({
 
       <Metric
         label="Frame Time"
-        tooltip="Average time per frame. Target: ≤16.67ms for 60fps."
+        tooltip="Average observed requestAnimationFrame interval. The frame budget adapts to the estimated display refresh rate."
         sparkline={
           <Sparkline
             data={frameTimeHistory}
@@ -406,15 +418,31 @@ const FrameTimingSection = React.memo(function FrameTimingSection({
             badThreshold={THRESHOLDS.FRAME_TIME_WARNING}
           />
         }
-        detail={<>max {formatMs(maxFrameTime)}</>}
+        detail={
+          <>
+            max {formatMs(maxFrameTime)} ·{' '}
+            {estimatedRefreshRate === null || frameBudget === null
+              ? 'calibrating refresh rate'
+              : `${String(estimatedRefreshRate)} Hz estimate · ${formatMs(frameBudget)} budget`}
+          </>
+        }
       >
         {formatMs(frameTime)}
       </Metric>
 
-      <Metric label="Dropped Frames" tooltip="Frames taking >2× expected time. High count indicates stuttering.">
+      <Metric
+        label="Inferred Drops"
+        tooltip="Missed refresh opportunities inferred from observed RAF intervals and the calibrated display budget. Inactive or throttled iframe gaps are excluded."
+        detail={
+          <>
+            {observedFrameIntervals} observed
+            {excludedFrameIntervals > 0 ? ` · ${String(excludedFrameIntervals)} excluded` : ''}
+          </>
+        }
+      >
         <StatusBadge variant={droppedStatus}>
-          <span>{droppedFrames}</span>
-          {droppedFrames === 0 ? <span> ✨</span> : <span> 💧</span>}
+          <span>{inferredDroppedFrames}</span>
+          {inferredDroppedFrames === 0 ? <span> ✨</span> : <span> 💧</span>}
         </StatusBadge>
       </Metric>
 
@@ -1622,7 +1650,11 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
             frameTime={metrics.frameTime}
             maxFrameTime={metrics.maxFrameTime}
             frameTimeHistory={metrics.frameTimeHistory}
-            droppedFrames={metrics.droppedFrames}
+            estimatedRefreshRate={metrics.estimatedRefreshRate}
+            frameBudget={metrics.frameBudget}
+            observedFrameIntervals={metrics.observedFrameIntervals}
+            inferredDroppedFrames={metrics.inferredDroppedFrames}
+            excludedFrameIntervals={metrics.excludedFrameIntervals}
             frameJitter={metrics.frameJitter}
             frameStability={metrics.frameStability}
             pointerFrameInterval={metrics.pointerFrameInterval}

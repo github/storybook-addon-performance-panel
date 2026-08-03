@@ -66,8 +66,9 @@ The addon consists of two main parts:
 
 ### Frame Timing
 - **FPS**: Frames per second (target: 60fps)
-- **Frame Time**: Average milliseconds per frame (target: ≤16.67ms)
-- **Dropped Frames**: Frames exceeding 2× the expected frame time
+- **Frame Time**: Average observed RAF interval with a refresh-rate-aware frame budget
+- **Inferred Drops**: Missed refresh opportunities inferred from the calibrated budget; inactive iframe gaps are excluded
+- **Refresh Estimate**: Display refresh rate estimated from stable RAF intervals
 - **Frame Jitter**: Sudden spikes in frame time vs baseline
 - **Frame Stability**: Percentage indicating frame time consistency
 

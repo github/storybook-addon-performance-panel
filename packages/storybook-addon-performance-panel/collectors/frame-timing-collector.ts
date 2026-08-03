@@ -4,8 +4,11 @@
  */
 
 import {
-  DROPPED_FRAME_MULTIPLIER,
-  FRAME_TIME_60FPS,
+  FRAME_INACTIVE_GAP_MS,
+  FRAME_INTERVAL_MAX_MS,
+  FRAME_INTERVAL_MIN_MS,
+  FRAME_RATE_CALIBRATION_SAMPLES,
+  FRAME_RATE_CALIBRATION_WINDOW,
   FRAME_TIMES_WINDOW,
   JITTER_BASELINE_SIZE,
   JITTER_FRAME_ABSOLUTE,
@@ -17,10 +20,16 @@ import {
 import type {MetricCollector} from './types'
 import {addToWindow, computeAverage, computeFrameStability, updateMaxWithDecay} from './utils'
 
+const FRAME_RATIO_EPSILON = 0.01
+
 export interface FrameTimingMetrics {
   frameTimes: number[]
   maxFrameTime: number
-  droppedFrames: number
+  estimatedRefreshRate: number | null
+  frameBudget: number | null
+  observedFrameIntervals: number
+  inferredDroppedFrames: number
+  excludedFrameIntervals: number
   frameJitter: number
   /** Frame time stability (0-100%). 100% = perfectly consistent, lower = choppy */
   frameStability: number
@@ -31,16 +40,23 @@ export interface FrameTimingMetrics {
  *
  * Tracks:
  * - Frame duration via RAF delta
- * - Dropped frames (>2× budget)
+ * - Display refresh rate and frame budget estimated from stable RAF intervals
+ * - Inferred dropped frames kept separate from observed RAF intervals
+ * - Inactive or throttled iframe gaps excluded from frame metrics
  * - Max frame time with decay
  * - Frame jitter (sudden spikes)
  */
 export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics> {
   #frameTimes: number[] = []
   #maxFrameTime = 0
-  #droppedFrames = 0
+  #calibrationIntervals: number[] = []
+  #estimatedRefreshRate: number | null = null
+  #frameBudget: number | null = null
+  #observedFrameIntervals = 0
+  #inferredDroppedFrames = 0
+  #excludedFrameIntervals = 0
   #frameJitter = 0
-  #lastTime = 0
+  #lastTime: number | null = null
   #animationId: number | null = null
   #onFrame?: (delta: number) => void
   #running = false
@@ -53,7 +69,8 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
     if (this.#running) return
 
     this.#running = true
-    this.#lastTime = 0
+    this.#lastTime = null
+    this.#resetCalibration()
     document.addEventListener('visibilitychange', this.#handleVisibilityChange)
     if (!document.hidden) {
       this.#animationId = requestAnimationFrame(this.#measure)
@@ -69,45 +86,59 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
       cancelAnimationFrame(this.#animationId)
       this.#animationId = null
     }
-    this.#lastTime = 0
+    this.#lastTime = null
   }
 
   reset(): void {
     this.#frameTimes = []
     this.#maxFrameTime = 0
-    this.#droppedFrames = 0
+    this.#calibrationIntervals = []
+    this.#estimatedRefreshRate = null
+    this.#frameBudget = null
+    this.#observedFrameIntervals = 0
+    this.#inferredDroppedFrames = 0
+    this.#excludedFrameIntervals = 0
     this.#frameJitter = 0
-    this.#lastTime = 0
+    this.#lastTime = null
   }
 
   getMetrics(): FrameTimingMetrics {
     return {
       frameTimes: this.#frameTimes,
       maxFrameTime: this.#maxFrameTime,
-      droppedFrames: this.#droppedFrames,
+      estimatedRefreshRate: this.#estimatedRefreshRate,
+      frameBudget: this.#frameBudget,
+      observedFrameIntervals: this.#observedFrameIntervals,
+      inferredDroppedFrames: this.#inferredDroppedFrames,
+      excludedFrameIntervals: this.#excludedFrameIntervals,
       frameJitter: this.#frameJitter,
       frameStability: computeFrameStability(this.#frameTimes),
     }
   }
 
-  #measure = (): void => {
+  #measure = (timestamp: DOMHighResTimeStamp): void => {
     this.#animationId = null
     if (!this.#running || document.hidden) return
 
-    const now = performance.now()
-    if (this.#lastTime > 0) {
-      const delta = now - this.#lastTime
+    if (this.#lastTime !== null) {
+      const delta = timestamp - this.#lastTime
 
-      this.#processFrame(delta)
-      this.#onFrame?.(delta)
+      if (delta >= FRAME_INACTIVE_GAP_MS) {
+        this.#excludedFrameIntervals++
+        this.#resetCalibration()
+      } else if (delta > 0) {
+        this.#processFrame(delta)
+        this.#onFrame?.(delta)
+      }
     }
-    this.#lastTime = now
+    this.#lastTime = timestamp
 
     this.#animationId = requestAnimationFrame(this.#measure)
   }
 
   #handleVisibilityChange = (): void => {
-    this.#lastTime = 0
+    this.#lastTime = null
+    this.#resetCalibration()
 
     if (document.hidden) {
       if (this.#animationId !== null) {
@@ -120,15 +151,29 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
   }
 
   #processFrame(delta: number): void {
+    const hadFrameBudget = this.#frameBudget !== null
+    this.#observedFrameIntervals++
+
     // Add to rolling window
     addToWindow(this.#frameTimes, delta, FRAME_TIMES_WINDOW)
 
     // Update max with decay
     this.#maxFrameTime = updateMaxWithDecay(this.#maxFrameTime, delta, MAX_DECAY_THRESHOLD, MAX_DECAY_RATE)
 
-    // Dropped frames
-    if (delta > FRAME_TIME_60FPS * DROPPED_FRAME_MULTIPLIER) {
-      this.#droppedFrames += Math.floor(delta / FRAME_TIME_60FPS) - 1
+    if (delta >= FRAME_INTERVAL_MIN_MS && delta <= FRAME_INTERVAL_MAX_MS) {
+      addToWindow(this.#calibrationIntervals, delta, FRAME_RATE_CALIBRATION_WINDOW)
+      this.#updateFrameBudget()
+    }
+
+    if (this.#frameBudget !== null) {
+      if (hadFrameBudget) {
+        this.#inferredDroppedFrames += this.#inferDroppedFrames(delta)
+      } else {
+        this.#inferredDroppedFrames += this.#calibrationIntervals.reduce(
+          (total, interval) => total + this.#inferDroppedFrames(interval),
+          0,
+        )
+      }
     }
 
     // Frame jitter detection
@@ -141,5 +186,29 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
         delta > JITTER_FRAME_ABSOLUTE
       if (isJitter) this.#frameJitter++
     }
+  }
+
+  #updateFrameBudget(): void {
+    if (this.#calibrationIntervals.length < FRAME_RATE_CALIBRATION_SAMPLES) return
+
+    const sortedIntervals = [...this.#calibrationIntervals].sort((a, b) => a - b)
+    const lowerQuartileIndex = Math.floor((sortedIntervals.length - 1) * 0.25)
+    const interval = sortedIntervals[lowerQuartileIndex]
+    if (interval === undefined) return
+
+    this.#estimatedRefreshRate = Math.round(1000 / interval)
+    this.#frameBudget = 1000 / this.#estimatedRefreshRate
+  }
+
+  #inferDroppedFrames(delta: number): number {
+    if (this.#frameBudget === null) return 0
+    const completeRefreshIntervals = Math.floor(delta / this.#frameBudget + FRAME_RATIO_EPSILON)
+    return Math.max(0, completeRefreshIntervals - 1)
+  }
+
+  #resetCalibration(): void {
+    this.#calibrationIntervals = []
+    this.#estimatedRefreshRate = null
+    this.#frameBudget = null
   }
 }

@@ -243,7 +243,11 @@ describe('CollectorManager', () => {
       expect(metrics).toEqual({
         frameTimes: [],
         maxFrameTime: 0,
-        droppedFrames: 0,
+        estimatedRefreshRate: null,
+        frameBudget: null,
+        observedFrameIntervals: 0,
+        inferredDroppedFrames: 0,
+        excludedFrameIntervals: 0,
         frameJitter: 0,
         frameStability: 100,
       })
@@ -408,6 +412,7 @@ describe('CollectorManager', () => {
       expect(metrics.initialPaintMilestones).toBe(deprecatedMetrics.paintCount)
       expect(metrics.scriptResourceLoadTime).toBe(deprecatedMetrics.scriptEvalTime)
       expect(metrics.layerPromotionCandidates).toBe(deprecatedMetrics.compositorLayers)
+      expect(metrics.inferredDroppedFrames).toBe(deprecatedMetrics.droppedFrames)
       expect(deprecatedMetrics.domMutationsPerFrame).toBe(3)
       expect(metrics.domMutationsPerSecond).toBe((3 * 1000) / DOM_MUTATION_SAMPLE_INTERVAL_MS)
     })

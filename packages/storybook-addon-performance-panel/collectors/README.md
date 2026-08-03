@@ -32,7 +32,11 @@ This directory contains modular metric collector classes used by the performance
 ### Metrics
 - `frameTimes[]` - Rolling window of frame durations
 - `maxFrameTime` - Peak frame time with decay
-- `droppedFrames` - Frames exceeding 2× budget (33.34ms)
+- `estimatedRefreshRate` - Display refresh rate estimated from stable RAF intervals
+- `frameBudget` - Milliseconds available per refresh at the estimated rate
+- `observedFrameIntervals` - Valid consecutive RAF intervals
+- `inferredDroppedFrames` - Missed refresh opportunities inferred from observed intervals
+- `excludedFrameIntervals` - Inactive or throttled iframe gaps excluded from metrics
 - `frameJitter` - Count of sudden frame time spikes
 - `frameStability` - Consistency score (0-100%)
 
@@ -41,10 +45,9 @@ This directory contains modular metric collector classes used by the performance
 
 ```typescript
 // Measures delta between consecutive RAF callbacks
-#measure = (): void => {
-  const now = performance.now()
-  const delta = now - this.#lastTime
-  this.#lastTime = now
+#measure = (timestamp: DOMHighResTimeStamp): void => {
+  const delta = timestamp - this.#lastTime
+  this.#lastTime = timestamp
   this.#processFrame(delta)
   this.#animationId = requestAnimationFrame(this.#measure)
 }
@@ -54,10 +57,11 @@ This directory contains modular metric collector classes used by the performance
 - No direct browser API exists for frame-level timing
 - RAF callbacks are tied to the display refresh cycle
 - Delta between callbacks approximates actual frame duration
+- Stable intervals calibrate the budget for 60, 120, 144 Hz, and other displays
 
 **Limitations:**
 - Cannot detect frames where RAF was not called
-- Background tabs may have throttled RAF
+- Background or inactive iframe gaps are excluded and trigger recalibration
 - Does not account for compositor frame timing
 
 ---

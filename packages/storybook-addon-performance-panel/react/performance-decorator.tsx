@@ -36,8 +36,8 @@
  *
  * ### Frame Timing
  * - **FPS**: Frames per second calculated from requestAnimationFrame deltas
- * - **Frame Time**: Average milliseconds per frame (target: ≤16.67ms for 60fps)
- * - **Dropped Frames**: Frames exceeding 2× the expected frame time
+ * - **Frame Time**: Average RAF interval with a refresh-rate-aware budget
+ * - **Inferred Drops**: Missed refresh opportunities inferred from observed intervals
  *
  * ### Input Responsiveness
  * - **Input Latency**: Time from pointer event to next animation frame

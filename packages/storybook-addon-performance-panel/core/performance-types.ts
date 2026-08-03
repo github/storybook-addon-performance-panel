@@ -354,7 +354,17 @@ export interface PerformanceMetrics {
   frameTime: number
   /** Peak frame time with decay (ms). Spikes indicate jank */
   maxFrameTime: number
-  /** Frames exceeding 2× frame budget (33.34ms at 60fps) */
+  /** Refresh rate estimated from stable requestAnimationFrame intervals (Hz) */
+  estimatedRefreshRate: number | null
+  /** Frame budget derived from the estimated refresh rate (ms) */
+  frameBudget: number | null
+  /** Number of valid consecutive requestAnimationFrame intervals observed */
+  observedFrameIntervals: number
+  /** Missed refresh opportunities inferred from observed intervals and the calibrated frame budget */
+  inferredDroppedFrames: number
+  /** Long intervals excluded because the document or iframe appeared inactive/throttled */
+  excludedFrameIntervals: number
+  /** @deprecated Use inferredDroppedFrames. This value is inferred rather than directly observed. */
   droppedFrames: number
   /** Frame jitter count - sudden spikes in frame time vs baseline */
   frameJitter: number
@@ -551,6 +561,7 @@ export type MetricUnit =
   | 'boolean'
   | 'count'
   | 'frames-per-second'
+  | 'hertz'
   | 'megabytes'
   | 'megabytes-per-second'
   | 'milliseconds'
@@ -575,7 +586,12 @@ export const PERFORMANCE_METRIC_METADATA = {
   fps: {provenance: 'derived', quality: 'medium', unit: 'frames-per-second'},
   frameTime: {provenance: 'derived', quality: 'medium', unit: 'milliseconds'},
   maxFrameTime: {provenance: 'derived', quality: 'medium', unit: 'milliseconds'},
-  droppedFrames: {provenance: 'derived', quality: 'medium', unit: 'count'},
+  estimatedRefreshRate: {provenance: 'heuristic', quality: 'medium', unit: 'hertz'},
+  frameBudget: {provenance: 'derived', quality: 'medium', unit: 'milliseconds'},
+  observedFrameIntervals: {provenance: 'native', quality: 'high', unit: 'count'},
+  inferredDroppedFrames: {provenance: 'heuristic', quality: 'medium', unit: 'count'},
+  excludedFrameIntervals: {provenance: 'heuristic', quality: 'medium', unit: 'count'},
+  droppedFrames: {provenance: 'heuristic', quality: 'medium', unit: 'count'},
   frameJitter: {provenance: 'heuristic', quality: 'low', unit: 'count'},
   frameStability: {provenance: 'heuristic', quality: 'low', unit: 'percent'},
   inputLatency: {provenance: 'heuristic', quality: 'low', unit: 'milliseconds'},
@@ -655,6 +671,11 @@ export const DEFAULT_METRICS: PerformanceMetrics = {
   fps: 0,
   frameTime: 0,
   maxFrameTime: 0,
+  estimatedRefreshRate: null,
+  frameBudget: null,
+  observedFrameIntervals: 0,
+  inferredDroppedFrames: 0,
+  excludedFrameIntervals: 0,
   droppedFrames: 0,
   frameJitter: 0,
   frameStability: 100,
