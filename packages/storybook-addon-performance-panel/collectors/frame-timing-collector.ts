@@ -43,21 +43,33 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
   #lastTime = 0
   #animationId: number | null = null
   #onFrame?: (delta: number) => void
+  #running = false
 
   constructor(onFrame?: (delta: number) => void) {
     this.#onFrame = onFrame
   }
 
   start(): void {
-    this.#lastTime = performance.now()
-    this.#measure()
+    if (this.#running) return
+
+    this.#running = true
+    this.#lastTime = 0
+    document.addEventListener('visibilitychange', this.#handleVisibilityChange)
+    if (!document.hidden) {
+      this.#animationId = requestAnimationFrame(this.#measure)
+    }
   }
 
   stop(): void {
+    if (!this.#running) return
+
+    this.#running = false
+    document.removeEventListener('visibilitychange', this.#handleVisibilityChange)
     if (this.#animationId !== null) {
       cancelAnimationFrame(this.#animationId)
       this.#animationId = null
     }
+    this.#lastTime = 0
   }
 
   reset(): void {
@@ -65,6 +77,7 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
     this.#maxFrameTime = 0
     this.#droppedFrames = 0
     this.#frameJitter = 0
+    this.#lastTime = 0
   }
 
   getMetrics(): FrameTimingMetrics {
@@ -78,14 +91,32 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
   }
 
   #measure = (): void => {
+    this.#animationId = null
+    if (!this.#running || document.hidden) return
+
     const now = performance.now()
-    const delta = now - this.#lastTime
+    if (this.#lastTime > 0) {
+      const delta = now - this.#lastTime
+
+      this.#processFrame(delta)
+      this.#onFrame?.(delta)
+    }
     this.#lastTime = now
 
-    this.#processFrame(delta)
-    this.#onFrame?.(delta)
-
     this.#animationId = requestAnimationFrame(this.#measure)
+  }
+
+  #handleVisibilityChange = (): void => {
+    this.#lastTime = 0
+
+    if (document.hidden) {
+      if (this.#animationId !== null) {
+        cancelAnimationFrame(this.#animationId)
+        this.#animationId = null
+      }
+    } else if (this.#running && this.#animationId === null) {
+      this.#animationId = requestAnimationFrame(this.#measure)
+    }
   }
 
   #processFrame(delta: number): void {

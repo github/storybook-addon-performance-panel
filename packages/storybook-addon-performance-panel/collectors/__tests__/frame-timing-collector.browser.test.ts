@@ -6,6 +6,7 @@ describe('FrameTimingCollector', () => {
   let collector: FrameTimingCollector
   let rafCallback: FrameRequestCallback | null = null
   let rafId = 0
+  let hidden = false
 
   beforeEach(() => {
     // Mock requestAnimationFrame
@@ -17,6 +18,7 @@ describe('FrameTimingCollector', () => {
       rafCallback = null
     })
     vi.spyOn(performance, 'now').mockReturnValue(0)
+    vi.spyOn(document, 'hidden', 'get').mockImplementation(() => hidden)
 
     collector = new FrameTimingCollector()
   })
@@ -46,10 +48,10 @@ describe('FrameTimingCollector', () => {
       collector.start()
 
       // Simulate some frames
-      vi.spyOn(performance, 'now').mockReturnValue(16.67)
-      rafCallback?.(16.67)
-      vi.spyOn(performance, 'now').mockReturnValue(33.34)
-      rafCallback?.(33.34)
+      vi.spyOn(performance, 'now').mockReturnValue(10)
+      rafCallback?.(10)
+      vi.spyOn(performance, 'now').mockReturnValue(26.67)
+      rafCallback?.(26.67)
 
       collector.reset()
 
@@ -74,22 +76,26 @@ describe('FrameTimingCollector', () => {
     it('tracks frame times', () => {
       collector.start()
 
-      // Simulate 60fps frame (16.67ms)
-      vi.spyOn(performance, 'now').mockReturnValue(16.67)
-      rafCallback?.(16.67)
+      // The first callback establishes a baseline; the second records a frame.
+      vi.spyOn(performance, 'now').mockReturnValue(10)
+      rafCallback?.(10)
+      expect(collector.getMetrics().frameTimes).toEqual([])
+
+      vi.spyOn(performance, 'now').mockReturnValue(26.67)
+      rafCallback?.(26.67)
 
       const metrics = collector.getMetrics()
-      // At least one frame should be tracked (start() may record initial frame too)
-      expect(metrics.frameTimes.length).toBeGreaterThanOrEqual(1)
-      // The last frame should be close to 16.67ms
-      expect(metrics.frameTimes[metrics.frameTimes.length - 1]).toBeCloseTo(16.67, 1)
+      expect(metrics.frameTimes).toHaveLength(1)
+      expect(metrics.frameTimes[0]).toBeCloseTo(16.67, 1)
     })
 
     it('tracks max frame time', () => {
       collector.start()
 
-      vi.spyOn(performance, 'now').mockReturnValue(50)
-      rafCallback?.(50)
+      vi.spyOn(performance, 'now').mockReturnValue(10)
+      rafCallback?.(10)
+      vi.spyOn(performance, 'now').mockReturnValue(60)
+      rafCallback?.(60)
 
       const metrics = collector.getMetrics()
       expect(metrics.maxFrameTime).toBe(50)
@@ -99,11 +105,35 @@ describe('FrameTimingCollector', () => {
       collector.start()
 
       // Frame time of 50ms = should count as 2 dropped frames (50/16.67 - 1 ≈ 2)
-      vi.spyOn(performance, 'now').mockReturnValue(50)
-      rafCallback?.(50)
+      vi.spyOn(performance, 'now').mockReturnValue(10)
+      rafCallback?.(10)
+      vi.spyOn(performance, 'now').mockReturnValue(60)
+      rafCallback?.(60)
 
       const metrics = collector.getMetrics()
       expect(metrics.droppedFrames).toBeGreaterThan(0)
+    })
+
+    it('starts a fresh baseline after the document becomes visible', () => {
+      collector.start()
+
+      vi.spyOn(performance, 'now').mockReturnValue(10)
+      rafCallback?.(10)
+
+      hidden = true
+      document.dispatchEvent(new Event('visibilitychange'))
+      hidden = false
+      document.dispatchEvent(new Event('visibilitychange'))
+
+      vi.spyOn(performance, 'now').mockReturnValue(1_000)
+      rafCallback?.(1_000)
+      expect(collector.getMetrics().frameTimes).toEqual([])
+
+      vi.spyOn(performance, 'now').mockReturnValue(1_016.67)
+      rafCallback?.(1_016.67)
+
+      expect(collector.getMetrics().frameTimes[0]).toBeCloseTo(16.67, 1)
+      expect(collector.getMetrics().droppedFrames).toBe(0)
     })
   })
 
@@ -113,8 +143,10 @@ describe('FrameTimingCollector', () => {
       collector = new FrameTimingCollector(onFrame)
       collector.start()
 
-      vi.spyOn(performance, 'now').mockReturnValue(16.67)
-      rafCallback?.(16.67)
+      vi.spyOn(performance, 'now').mockReturnValue(10)
+      rafCallback?.(10)
+      vi.spyOn(performance, 'now').mockReturnValue(26.67)
+      rafCallback?.(26.67)
 
       expect(onFrame).toHaveBeenCalledWith(expect.closeTo(16.67, 1))
     })
