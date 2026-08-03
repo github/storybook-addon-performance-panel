@@ -1,5 +1,5 @@
 ---
-'@github-ui/storybook-addon-performance-panel': patch
+'@github-ui/storybook-addon-performance-panel': minor
 ---
 
-Stop periodic metric transport and sparkline sampling while the performance panel is hidden.
+Pause browser collectors, DOM observation, metric transport, and sparkline sampling while the performance panel is hidden.
