@@ -3,11 +3,20 @@
  * @module collectors/PaintCollector
  */
 
+import type {ScriptResourceAttribution} from '../core/performance-types'
+import {
+  ATTRIBUTION_ENTRY_LIMIT,
+  ATTRIBUTION_LABEL_MAX_LENGTH,
+  ATTRIBUTION_URL_MAX_LENGTH,
+  limitAttributionString,
+} from './attribution'
 import type {MetricCollector} from './types'
 
 export interface PaintMetrics {
   paintCount: number
   scriptEvalTime: number
+  scriptResourceCount: number
+  scriptResources: ScriptResourceAttribution[]
   compositorLayers: number | null
 }
 
@@ -41,6 +50,8 @@ function cancelIdle(id: number): void {
 export class PaintCollector implements MetricCollector<PaintMetrics> {
   #paintCount = 0
   #scriptEvalTime = 0
+  #scriptResourceCount = 0
+  #scriptResources: ScriptResourceAttribution[] = []
   #compositorLayers: number | null = null
 
   /** Elements currently known to have compositor-layer-promoting properties */
@@ -84,6 +95,19 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
               const scriptTime = resourceEntry.responseEnd - resourceEntry.fetchStart
               if (scriptTime > 0) {
                 this.#scriptEvalTime += scriptTime
+                this.#scriptResourceCount++
+                this.#scriptResources.push({
+                  url: limitAttributionString(resourceEntry.name, 'unknown', ATTRIBUTION_URL_MAX_LENGTH),
+                  initiatorType: limitAttributionString(
+                    resourceEntry.initiatorType,
+                    'unknown',
+                    ATTRIBUTION_LABEL_MAX_LENGTH,
+                  ),
+                  startTime: Math.max(0, resourceEntry.startTime - this.#epochMs),
+                  duration: scriptTime,
+                })
+                this.#scriptResources.sort((a, b) => b.duration - a.duration)
+                this.#scriptResources.length = Math.min(this.#scriptResources.length, ATTRIBUTION_ENTRY_LIMIT)
               }
             }
           }
@@ -109,6 +133,8 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
   reset(): void {
     this.#paintCount = 0
     this.#scriptEvalTime = 0
+    this.#scriptResourceCount = 0
+    this.#scriptResources = []
     this.#compositorLayers = null
     this.#layerElements.clear()
     this.#pendingChecks.clear()
@@ -260,6 +286,8 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
     return {
       paintCount: this.#paintCount,
       scriptEvalTime: this.#scriptEvalTime,
+      scriptResourceCount: this.#scriptResourceCount,
+      scriptResources: this.#scriptResources.map(resource => ({...resource})),
       compositorLayers: this.#compositorLayers,
     }
   }
