@@ -7,11 +7,20 @@
 // Frame Timing Constants
 // ============================================================================
 
-/** Target frame time for 60fps rendering (ms) */
-export const FRAME_TIME_60FPS = 16.67
+/** Number of stable RAF intervals required before estimating the display refresh rate */
+export const FRAME_RATE_CALIBRATION_SAMPLES = 8
 
-/** Multiplier for detecting dropped frames (frame > 16.67ms × 2 = dropped) */
-export const DROPPED_FRAME_MULTIPLIER = 2
+/** Rolling window used to adapt when the story moves between displays */
+export const FRAME_RATE_CALIBRATION_WINDOW = 30
+
+/** RAF gaps at or above this duration are treated as inactive/throttled iframe periods */
+export const FRAME_INACTIVE_GAP_MS = 250
+
+/** Fastest plausible display interval used during refresh-rate calibration */
+export const FRAME_INTERVAL_MIN_MS = 1000 / 300
+
+/** Slowest plausible display interval used during refresh-rate calibration */
+export const FRAME_INTERVAL_MAX_MS = 1000 / 24
 
 /** Frame time threshold (ms) for detecting layout thrashing */
 export const THRASHING_FRAME_THRESHOLD = 50

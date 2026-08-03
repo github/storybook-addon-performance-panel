@@ -8,6 +8,21 @@ describe('FrameTimingCollector', () => {
   let rafId = 0
   let hidden = false
 
+  function runFrame(timestamp: number): void {
+    rafCallback?.(timestamp)
+  }
+
+  function runSteadyFrames(refreshRate: number, intervalCount: number, startTime = 0): number {
+    const interval = 1000 / refreshRate
+    let timestamp = startTime
+    runFrame(timestamp)
+    for (let index = 0; index < intervalCount; index++) {
+      timestamp += interval
+      runFrame(timestamp)
+    }
+    return timestamp
+  }
+
   beforeEach(() => {
     // Mock requestAnimationFrame
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation(callback => {
@@ -17,7 +32,6 @@ describe('FrameTimingCollector', () => {
     vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {
       rafCallback = null
     })
-    vi.spyOn(performance, 'now').mockReturnValue(0)
     vi.spyOn(document, 'hidden', 'get').mockImplementation(() => hidden)
 
     collector = new FrameTimingCollector()
@@ -66,6 +80,23 @@ describe('FrameTimingCollector', () => {
       expect(visibilityListeners).toHaveLength(1)
       expect(window.cancelAnimationFrame).toHaveBeenCalledOnce()
     })
+
+    it('recalibrates after resuming without clearing accumulated counts', () => {
+      collector.start()
+      runSteadyFrames(60, 8)
+      expect(collector.getMetrics().estimatedRefreshRate).toBe(60)
+
+      collector.stop()
+      collector.start()
+
+      const resumedMetrics = collector.getMetrics()
+      expect(resumedMetrics.estimatedRefreshRate).toBeNull()
+      expect(resumedMetrics.observedFrameIntervals).toBe(8)
+
+      runSteadyFrames(120, 8, 1_000)
+      expect(collector.getMetrics().estimatedRefreshRate).toBe(120)
+      expect(collector.getMetrics().observedFrameIntervals).toBe(16)
+    })
   })
 
   describe('reset', () => {
@@ -73,17 +104,17 @@ describe('FrameTimingCollector', () => {
       collector.start()
 
       // Simulate some frames
-      vi.spyOn(performance, 'now').mockReturnValue(10)
-      rafCallback?.(10)
-      vi.spyOn(performance, 'now').mockReturnValue(26.67)
-      rafCallback?.(26.67)
+      runFrame(10)
+      runFrame(26.67)
 
       collector.reset()
 
       const metrics = collector.getMetrics()
       expect(metrics.frameTimes).toEqual([])
       expect(metrics.maxFrameTime).toBe(0)
-      expect(metrics.droppedFrames).toBe(0)
+      expect(metrics.inferredDroppedFrames).toBe(0)
+      expect(metrics.observedFrameIntervals).toBe(0)
+      expect(metrics.excludedFrameIntervals).toBe(0)
       expect(metrics.frameJitter).toBe(0)
     })
   })
@@ -93,7 +124,11 @@ describe('FrameTimingCollector', () => {
       const metrics = collector.getMetrics()
       expect(metrics.frameTimes).toEqual([])
       expect(metrics.maxFrameTime).toBe(0)
-      expect(metrics.droppedFrames).toBe(0)
+      expect(metrics.estimatedRefreshRate).toBeNull()
+      expect(metrics.frameBudget).toBeNull()
+      expect(metrics.observedFrameIntervals).toBe(0)
+      expect(metrics.inferredDroppedFrames).toBe(0)
+      expect(metrics.excludedFrameIntervals).toBe(0)
       expect(metrics.frameJitter).toBe(0)
       expect(metrics.frameStability).toBe(100)
     })
@@ -102,12 +137,10 @@ describe('FrameTimingCollector', () => {
       collector.start()
 
       // The first callback establishes a baseline; the second records a frame.
-      vi.spyOn(performance, 'now').mockReturnValue(10)
-      rafCallback?.(10)
+      runFrame(10)
       expect(collector.getMetrics().frameTimes).toEqual([])
 
-      vi.spyOn(performance, 'now').mockReturnValue(26.67)
-      rafCallback?.(26.67)
+      runFrame(26.67)
 
       const metrics = collector.getMetrics()
       expect(metrics.frameTimes).toHaveLength(1)
@@ -117,48 +150,78 @@ describe('FrameTimingCollector', () => {
     it('tracks max frame time', () => {
       collector.start()
 
-      vi.spyOn(performance, 'now').mockReturnValue(10)
-      rafCallback?.(10)
-      vi.spyOn(performance, 'now').mockReturnValue(60)
-      rafCallback?.(60)
+      runFrame(10)
+      runFrame(60)
 
       const metrics = collector.getMetrics()
       expect(metrics.maxFrameTime).toBe(50)
     })
 
-    it('counts dropped frames for long frames', () => {
+    it.each([60, 120, 144])('calibrates a %i Hz budget and infers missed refreshes', refreshRate => {
       collector.start()
 
-      // Frame time of 50ms = should count as 2 dropped frames (50/16.67 - 1 ≈ 2)
-      vi.spyOn(performance, 'now').mockReturnValue(10)
-      rafCallback?.(10)
-      vi.spyOn(performance, 'now').mockReturnValue(60)
-      rafCallback?.(60)
+      const timestamp = runSteadyFrames(refreshRate, 8)
+      const interval = 1000 / refreshRate
+      let metrics = collector.getMetrics()
+
+      expect(metrics.estimatedRefreshRate).toBe(refreshRate)
+      expect(metrics.frameBudget).toBeCloseTo(interval, 2)
+      expect(metrics.observedFrameIntervals).toBe(8)
+      expect(metrics.inferredDroppedFrames).toBe(0)
+
+      runFrame(timestamp + interval * 3)
+      metrics = collector.getMetrics()
+
+      expect(metrics.observedFrameIntervals).toBe(9)
+      expect(metrics.inferredDroppedFrames).toBe(2)
+    })
+
+    it('counts only complete missed refresh opportunities', () => {
+      collector.start()
+
+      let timestamp = runSteadyFrames(120, 8)
+      const interval = 1000 / 120
+
+      timestamp += interval * 1.5
+      runFrame(timestamp)
+      expect(collector.getMetrics().inferredDroppedFrames).toBe(0)
+
+      timestamp += interval * 2.5
+      runFrame(timestamp)
+      expect(collector.getMetrics().inferredDroppedFrames).toBe(1)
+    })
+
+    it('excludes throttled iframe gaps and recalibrates', () => {
+      collector.start()
+
+      const timestamp = runSteadyFrames(60, 8)
+      runFrame(timestamp + 1_000)
 
       const metrics = collector.getMetrics()
-      expect(metrics.droppedFrames).toBeGreaterThan(0)
+      expect(metrics.observedFrameIntervals).toBe(8)
+      expect(metrics.inferredDroppedFrames).toBe(0)
+      expect(metrics.excludedFrameIntervals).toBe(1)
+      expect(metrics.estimatedRefreshRate).toBeNull()
+      expect(metrics.frameBudget).toBeNull()
     })
 
     it('starts a fresh baseline after the document becomes visible', () => {
       collector.start()
 
-      vi.spyOn(performance, 'now').mockReturnValue(10)
-      rafCallback?.(10)
+      runFrame(10)
 
       hidden = true
       document.dispatchEvent(new Event('visibilitychange'))
       hidden = false
       document.dispatchEvent(new Event('visibilitychange'))
 
-      vi.spyOn(performance, 'now').mockReturnValue(1_000)
-      rafCallback?.(1_000)
+      runFrame(1_000)
       expect(collector.getMetrics().frameTimes).toEqual([])
 
-      vi.spyOn(performance, 'now').mockReturnValue(1_016.67)
-      rafCallback?.(1_016.67)
+      runFrame(1_016.67)
 
       expect(collector.getMetrics().frameTimes[0]).toBeCloseTo(16.67, 1)
-      expect(collector.getMetrics().droppedFrames).toBe(0)
+      expect(collector.getMetrics().inferredDroppedFrames).toBe(0)
     })
   })
 
@@ -168,10 +231,8 @@ describe('FrameTimingCollector', () => {
       collector = new FrameTimingCollector(onFrame)
       collector.start()
 
-      vi.spyOn(performance, 'now').mockReturnValue(10)
-      rafCallback?.(10)
-      vi.spyOn(performance, 'now').mockReturnValue(26.67)
-      rafCallback?.(26.67)
+      runFrame(10)
+      runFrame(26.67)
 
       expect(onFrame).toHaveBeenCalledWith(expect.closeTo(16.67, 1))
     })
