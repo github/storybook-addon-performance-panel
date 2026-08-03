@@ -57,12 +57,16 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
   #paintObserver: PerformanceObserver | null = null
   #resourceObserver: PerformanceObserver | null = null
   #layerObserver: MutationObserver | null = null
+  /** Entries before this timestamp belong to an earlier story or reset. */
+  #epochMs = 0
 
   start(): void {
+    this.#epochMs = performance.now()
+
     // Paint observer
     try {
       this.#paintObserver = new PerformanceObserver(list => {
-        this.#paintCount += list.getEntries().length
+        this.#paintCount += list.getEntries().filter(entry => entry.startTime >= this.#epochMs).length
       })
       this.#paintObserver.observe({type: 'paint', buffered: true})
     } catch {
@@ -73,6 +77,7 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
     try {
       this.#resourceObserver = new PerformanceObserver(list => {
         for (const entry of list.getEntries()) {
+          if (entry.startTime < this.#epochMs) continue
           if (entry.entryType === 'resource') {
             const resourceEntry = entry as PerformanceResourceTiming
             if (resourceEntry.initiatorType === 'script') {
@@ -109,6 +114,7 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
     this.#pendingChecks.clear()
     this.#pendingSubtrees = []
     this.#hasRemovals = false
+    this.#epochMs = performance.now()
     this.#cancelPendingScan()
     // Schedule a fresh full scan if tracking is active
     if (this.#layerObserver) {

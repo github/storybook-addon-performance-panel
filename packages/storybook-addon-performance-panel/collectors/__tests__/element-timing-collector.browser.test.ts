@@ -2,7 +2,7 @@
  * @vitest-environment browser
  */
 
-import {beforeEach, describe, expect, it} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {ElementTimingCollector} from '../../collectors/element-timing-collector'
 
@@ -11,6 +11,11 @@ describe('ElementTimingCollector', () => {
 
   beforeEach(() => {
     collector = new ElementTimingCollector()
+  })
+
+  afterEach(() => {
+    collector.stop()
+    vi.unstubAllGlobals()
   })
 
   it('initializes with empty metrics', () => {
@@ -77,5 +82,61 @@ describe('ElementTimingCollector', () => {
       }
     })()
     expect(metrics.elementTimingSupported).toBe(expected)
+  })
+
+  it('reports render time relative to the current story epoch', () => {
+    const observerCallbacks: PerformanceObserverCallback[] = []
+    vi.stubGlobal(
+      'PerformanceObserver',
+      class MockPerformanceObserver {
+        static supportedEntryTypes = ['element']
+        constructor(callback: PerformanceObserverCallback) {
+          observerCallbacks.push(callback)
+        }
+        observe() {
+          /* empty */
+        }
+        disconnect() {
+          /* empty */
+        }
+      },
+    )
+    const nowSpy = vi.spyOn(performance, 'now').mockReturnValue(1_000)
+    const scopedCollector = new ElementTimingCollector()
+    scopedCollector.start()
+
+    const entryList: PerformanceObserverEntryList = {
+      getEntries: () => [
+        {
+          renderTime: 1_125,
+          loadTime: 1_100,
+          identifier: 'hero',
+          element: null,
+          naturalWidth: 0,
+          naturalHeight: 0,
+          url: '',
+        } as unknown as PerformanceEntry,
+      ],
+      getEntriesByName: () => [],
+      getEntriesByType: () => [],
+    }
+    const observer: PerformanceObserver = {
+      disconnect() {
+        /* empty */
+      },
+      observe() {
+        /* empty */
+      },
+      takeRecords: () => [],
+    }
+
+    observerCallbacks[0]?.(entryList, observer)
+
+    expect(scopedCollector.getMetrics()).toMatchObject({
+      largestRenderTime: 125,
+      elements: [{identifier: 'hero', renderTime: 125, loadTime: 100}],
+    })
+    scopedCollector.stop()
+    nowSpy.mockRestore()
   })
 })

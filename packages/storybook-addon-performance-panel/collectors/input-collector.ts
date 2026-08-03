@@ -110,7 +110,7 @@ export class InputCollector implements MetricCollector<InputMetrics> {
   #maxPaintTime = 0
   #paintJitter = 0
   #recentPaintTimes: number[] = []
-  #interactionCount = 0
+  #interactionCountEstimate = 0
   #interactionLatencies: number[] = []
   #inpMs = 0
 
@@ -121,9 +121,15 @@ export class InputCollector implements MetricCollector<InputMetrics> {
 
   // Track worst latency per interaction (interactionId -> max duration)
   #interactionMap = new Map<number, number>()
+  #minKnownInteractionId = Infinity
+  #maxKnownInteractionId = 0
+  #nativeInteractionCountOffset = 0
+  #nativeInteractionCountBaseline: number | null = null
 
   /** Cap to prevent unbounded growth during long sessions */
   static readonly #MAX_INTERACTIONS = 500
+  /** Legacy Chromium uses a step of seven when the native interaction count is unavailable. */
+  static readonly #INTERACTION_ID_INCREMENT = 7
 
   // First Input Delay tracking
   #firstInputDelay: number | null = null
@@ -141,6 +147,8 @@ export class InputCollector implements MetricCollector<InputMetrics> {
   #eventTimingObserver: PerformanceObserver | null = null
   #firstInputObserver: PerformanceObserver | null = null
   #eventTimingSupported = false
+  /** Entries before this timestamp belong to an earlier story or reset. */
+  #epochMs = 0
 
   #boundHandlePointerMove: (e: PointerEvent) => void
 
@@ -161,6 +169,9 @@ export class InputCollector implements MetricCollector<InputMetrics> {
   }
 
   start(): void {
+    this.#epochMs = performance.now()
+    this.#nativeInteractionCountBaseline = this.#readNativeInteractionCount()
+
     // Always track pointermove for continuous input latency (hover responsiveness)
     window.addEventListener('pointermove', this.#boundHandlePointerMove)
 
@@ -191,10 +202,11 @@ export class InputCollector implements MetricCollector<InputMetrics> {
       // This is guaranteed to report even for fast interactions
       this.#firstInputObserver = new PerformanceObserver(list => {
         const entries = list.getEntries()
-        if (entries.length > 0 && this.#firstInputDelay === null) {
-          const entry = entries[0] as PerformanceEventTiming
-          this.#firstInputDelay = entry.processingStart - entry.startTime
-          this.#firstInputType = entry.name
+        const entry = entries.find(candidate => candidate.startTime >= this.#epochMs)
+        if (entry && this.#firstInputDelay === null) {
+          const firstInput = entry as PerformanceEventTiming
+          this.#firstInputDelay = firstInput.processingStart - firstInput.startTime
+          this.#firstInputType = firstInput.name
         }
       })
       this.#firstInputObserver.observe({type: 'first-input', buffered: true})
@@ -205,6 +217,8 @@ export class InputCollector implements MetricCollector<InputMetrics> {
   }
 
   #processEventTimingEntry(entry: PerformanceEventTiming): void {
+    if (entry.startTime < this.#epochMs) return
+
     // Only count discrete interactions (click, keydown, etc.)
     // interactionId === 0 means it's not a discrete interaction
     if (entry.interactionId === 0) return
@@ -236,8 +250,14 @@ export class InputCollector implements MetricCollector<InputMetrics> {
 
     // Track the worst duration for each interaction
     // (an interaction may have multiple events, e.g., keydown + keyup)
-    const existingDuration = this.#interactionMap.get(interactionId) ?? 0
-    if (duration > existingDuration) {
+    const existingDuration = this.#interactionMap.get(interactionId)
+    if (this.#nativeInteractionCountBaseline === null) {
+      this.#minKnownInteractionId = Math.min(this.#minKnownInteractionId, interactionId)
+      this.#maxKnownInteractionId = Math.max(this.#maxKnownInteractionId, interactionId)
+      this.#interactionCountEstimate =
+        (this.#maxKnownInteractionId - this.#minKnownInteractionId) / InputCollector.#INTERACTION_ID_INCREMENT + 1
+    }
+    if (duration > (existingDuration ?? 0)) {
       this.#interactionMap.set(interactionId, duration)
 
       // Update slowest interaction info if this is the new worst
@@ -250,9 +270,6 @@ export class InputCollector implements MetricCollector<InputMetrics> {
     addToWindow(this.#processingTimes, processingTime, INTERACTION_LATENCIES_WINDOW)
     addToWindow(this.#presentationDelays, presentationDelay, INTERACTION_LATENCIES_WINDOW)
 
-    // Update interaction tracking - prefer browser's count if available
-    const perfWithEventTiming = performance
-    this.#interactionCount = perfWithEventTiming.interactionCount
     addToWindow(this.#interactionLatencies, duration, INTERACTION_LATENCIES_WINDOW)
 
     // Prune map if it exceeds the cap to prevent unbounded growth
@@ -296,6 +313,7 @@ export class InputCollector implements MetricCollector<InputMetrics> {
   }
 
   stop(): void {
+    this.#commitNativeInteractionCount()
     window.removeEventListener('pointermove', this.#boundHandlePointerMove)
     this.#eventTimingObserver?.disconnect()
     this.#firstInputObserver?.disconnect()
@@ -312,18 +330,23 @@ export class InputCollector implements MetricCollector<InputMetrics> {
     this.#maxPaintTime = 0
     this.#paintJitter = 0
     this.#recentPaintTimes = []
-    this.#interactionCount = 0
+    this.#interactionCountEstimate = 0
     this.#interactionLatencies = []
     this.#inpMs = 0
     this.#inputDelays = []
     this.#processingTimes = []
     this.#presentationDelays = []
     this.#interactionMap.clear()
+    this.#minKnownInteractionId = Infinity
+    this.#maxKnownInteractionId = 0
+    this.#nativeInteractionCountOffset = 0
+    this.#nativeInteractionCountBaseline = this.#readNativeInteractionCount()
     this.#firstInputDelay = null
     this.#firstInputType = null
     this.#slowestInteraction = null
     this.#lastInteraction = null
     this.#interactionsByType = {}
+    this.#epochMs = performance.now()
   }
 
   getMetrics(): InputMetrics {
@@ -335,7 +358,7 @@ export class InputCollector implements MetricCollector<InputMetrics> {
       maxPaintTime: this.#maxPaintTime,
       paintJitter: this.#paintJitter,
       eventTimingSupported: this.#eventTimingSupported,
-      interactionCount: this.#interactionCount,
+      interactionCount: this.#getInteractionCount(),
       interactionLatencies: this.#interactionLatencies,
       inpMs: this.#inpMs,
       avgInputDelay: computeAverage(this.#inputDelays),
@@ -347,6 +370,30 @@ export class InputCollector implements MetricCollector<InputMetrics> {
       lastInteraction: this.#lastInteraction,
       interactionsByType: {...this.#interactionsByType},
     }
+  }
+
+  #readNativeInteractionCount(): number | null {
+    const count = (performance as Performance & {interactionCount?: number}).interactionCount
+    return typeof count === 'number' ? count : null
+  }
+
+  #getInteractionCount(): number {
+    const currentNativeCount = this.#readNativeInteractionCount()
+    if (currentNativeCount === null) return this.#interactionCountEstimate
+
+    const currentNativeDelta =
+      this.#nativeInteractionCountBaseline === null
+        ? 0
+        : Math.max(0, currentNativeCount - this.#nativeInteractionCountBaseline)
+    return this.#nativeInteractionCountOffset + currentNativeDelta
+  }
+
+  #commitNativeInteractionCount(): void {
+    const currentNativeCount = this.#readNativeInteractionCount()
+    if (currentNativeCount !== null && this.#nativeInteractionCountBaseline !== null) {
+      this.#nativeInteractionCountOffset += Math.max(0, currentNativeCount - this.#nativeInteractionCountBaseline)
+    }
+    this.#nativeInteractionCountBaseline = null
   }
 
   /**

@@ -142,8 +142,7 @@ export class PerformanceMonitorCore {
     }
 
     const handleReset = () => {
-      this.manager.reset()
-      performanceStore.resetAll()
+      this.reset()
     }
 
     channel.on(PERF_EVENTS.REQUEST_METRICS, handleRequestMetrics)
@@ -197,6 +196,12 @@ export class PerformanceMonitorCore {
 
     this.containerCleanup?.()
     this.containerCleanup = null
+  }
+
+  /** Reset all collector and stored metrics without changing lifecycle state. */
+  reset(): void {
+    this.manager.reset()
+    performanceStore.resetAll()
   }
 
   /**

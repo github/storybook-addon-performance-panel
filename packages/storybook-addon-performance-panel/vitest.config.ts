@@ -19,8 +19,11 @@ export default defineConfig({
         },
       },
       {
+        optimizeDeps: {
+          include: ['vitest-browser-react'],
+        },
         test: {
-          include: ['**/*.browser.{test,spec}.ts'],
+          include: ['**/*.browser.{test,spec}.{ts,tsx}'],
           name: 'browser',
           browser: {
             enabled: true,

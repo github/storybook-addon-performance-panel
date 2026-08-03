@@ -122,6 +122,8 @@ export class LongAnimationFrameCollector implements MetricCollector<LongAnimatio
   #loafsWithScripts = 0
   #lastLoaf: LongAnimationFrameMetrics['lastLoaf'] = null
   #worstLoaf: LongAnimationFrameMetrics['worstLoaf'] = null
+  /** Entries before this timestamp belong to an earlier story or reset. */
+  #epochMs = 0
 
   #observer: PerformanceObserver | null = null
 
@@ -140,6 +142,7 @@ export class LongAnimationFrameCollector implements MetricCollector<LongAnimatio
   start(): void {
     if (!this.#loafSupported) return
 
+    this.#epochMs = performance.now()
     try {
       this.#observer = new PerformanceObserver(list => {
         for (const entry of list.getEntries()) {
@@ -153,6 +156,8 @@ export class LongAnimationFrameCollector implements MetricCollector<LongAnimatio
   }
 
   #processEntry(entry: PerformanceLongAnimationFrameTiming): void {
+    if (entry.startTime < this.#epochMs) return
+
     this.#loafCount++
     this.#totalBlockingDuration += entry.blockingDuration
 
@@ -218,6 +223,7 @@ export class LongAnimationFrameCollector implements MetricCollector<LongAnimatio
     this.#loafsWithScripts = 0
     this.#lastLoaf = null
     this.#worstLoaf = null
+    this.#epochMs = performance.now()
   }
 
   getMetrics(): LongAnimationFrameMetrics {

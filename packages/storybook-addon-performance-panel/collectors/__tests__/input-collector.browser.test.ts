@@ -12,6 +12,7 @@ describe('InputCollector', () => {
 
   afterEach(() => {
     collector.stop()
+    vi.unstubAllGlobals()
     vi.useRealTimers()
   })
 
@@ -91,6 +92,181 @@ describe('InputCollector', () => {
       // Interaction type breakdown
       expect(metrics.interactionsByType).toEqual({})
     })
+  })
+
+  it('counts only interactions observed during the current story', () => {
+    const observerCallbacks: PerformanceObserverCallback[] = []
+    vi.spyOn(performance, 'interactionCount', 'get').mockImplementation(() => undefined as unknown as number)
+    vi.stubGlobal(
+      'PerformanceObserver',
+      class MockPerformanceObserver {
+        static supportedEntryTypes = ['event', 'first-input']
+        constructor(callback: PerformanceObserverCallback) {
+          observerCallbacks.push(callback)
+        }
+        observe() {
+          /* empty */
+        }
+        disconnect() {
+          /* empty */
+        }
+      },
+    )
+
+    const scopedCollector = new InputCollector()
+    const staleStartTime = performance.now() - 1
+    scopedCollector.start()
+    observerCallbacks[0]?.(
+      {
+        getEntries: () => [
+          {
+            startTime: staleStartTime,
+            duration: 90,
+            processingStart: staleStartTime + 10,
+            processingEnd: staleStartTime + 20,
+            interactionId: 1,
+            name: 'click',
+          },
+          {
+            startTime: performance.now(),
+            duration: 40,
+            processingStart: performance.now() + 5,
+            processingEnd: performance.now() + 10,
+            interactionId: 2,
+            name: 'click',
+          },
+        ],
+      } as unknown as PerformanceObserverEntryList,
+      {} as PerformanceObserver,
+    )
+
+    expect(scopedCollector.getMetrics()).toMatchObject({interactionCount: 1, inpMs: 40})
+    scopedCollector.stop()
+  })
+
+  it('reports the story-local delta from the native interaction count', () => {
+    let nativeInteractionCount = 12
+    vi.spyOn(performance, 'interactionCount', 'get').mockImplementation(() => nativeInteractionCount)
+
+    const scopedCollector = new InputCollector()
+    scopedCollector.start()
+    nativeInteractionCount = 15
+
+    expect(scopedCollector.getMetrics().interactionCount).toBe(3)
+
+    scopedCollector.reset()
+    nativeInteractionCount = 16
+    expect(scopedCollector.getMetrics().interactionCount).toBe(1)
+    scopedCollector.stop()
+  })
+
+  it('prefers the native count over user-agent-specific interaction ID spacing', () => {
+    const observerCallbacks: PerformanceObserverCallback[] = []
+    vi.stubGlobal(
+      'PerformanceObserver',
+      class MockPerformanceObserver {
+        static supportedEntryTypes = ['event', 'first-input']
+        constructor(callback: PerformanceObserverCallback) {
+          observerCallbacks.push(callback)
+        }
+        observe() {
+          /* empty */
+        }
+        disconnect() {
+          /* empty */
+        }
+      },
+    )
+    let nativeInteractionCount = 12
+    vi.spyOn(performance, 'interactionCount', 'get').mockImplementation(() => nativeInteractionCount)
+
+    const scopedCollector = new InputCollector()
+    scopedCollector.start()
+    const startTime = performance.now()
+    observerCallbacks[0]?.(
+      {
+        getEntries: () =>
+          [1, 11].map(interactionId => ({
+            startTime,
+            duration: 40,
+            processingStart: startTime + 5,
+            processingEnd: startTime + 10,
+            interactionId,
+            name: 'click',
+          })),
+      } as unknown as PerformanceObserverEntryList,
+      {} as PerformanceObserver,
+    )
+    nativeInteractionCount = 14
+
+    expect(scopedCollector.getMetrics().interactionCount).toBe(2)
+    scopedCollector.stop()
+  })
+
+  it('does not include native interactions while collection is stopped', () => {
+    let nativeInteractionCount = 20
+    vi.spyOn(performance, 'interactionCount', 'get').mockImplementation(() => nativeInteractionCount)
+
+    const scopedCollector = new InputCollector()
+    scopedCollector.start()
+    nativeInteractionCount = 22
+    scopedCollector.stop()
+
+    nativeInteractionCount = 30
+    scopedCollector.start()
+    nativeInteractionCount = 31
+
+    expect(scopedCollector.getMetrics().interactionCount).toBe(3)
+    scopedCollector.stop()
+  })
+
+  it('does not recount interactions removed from the bounded latency sample', () => {
+    const observerCallbacks: PerformanceObserverCallback[] = []
+    vi.spyOn(performance, 'interactionCount', 'get').mockImplementation(() => undefined as unknown as number)
+    vi.stubGlobal(
+      'PerformanceObserver',
+      class MockPerformanceObserver {
+        static supportedEntryTypes = ['event', 'first-input']
+        constructor(callback: PerformanceObserverCallback) {
+          observerCallbacks.push(callback)
+        }
+        observe() {
+          /* empty */
+        }
+        disconnect() {
+          /* empty */
+        }
+      },
+    )
+
+    const scopedCollector = new InputCollector()
+    scopedCollector.start()
+    const startTime = performance.now()
+    const lastInteractionId = 1 + 500 * 7
+    const makeEntry = (interactionId: number, duration: number) => ({
+      startTime,
+      duration,
+      processingStart: startTime + 1,
+      processingEnd: startTime + 2,
+      interactionId,
+      name: 'click',
+    })
+    const entryList = (entries: ReturnType<typeof makeEntry>[]) =>
+      ({getEntries: () => entries}) as unknown as PerformanceObserverEntryList
+
+    observerCallbacks[0]?.(
+      entryList(Array.from({length: 501}, (_, index) => makeEntry(1 + index * 7, 501 - index))),
+      {} as PerformanceObserver,
+    )
+    expect(scopedCollector.getMetrics().interactionCount).toBe(501)
+
+    observerCallbacks[0]?.(entryList([makeEntry(lastInteractionId, 1)]), {} as PerformanceObserver)
+    expect(scopedCollector.getMetrics().interactionCount).toBe(501)
+
+    scopedCollector.reset()
+    observerCallbacks[0]?.(entryList([makeEntry(lastInteractionId, 1)]), {} as PerformanceObserver)
+    expect(scopedCollector.getMetrics().interactionCount).toBe(1)
+    scopedCollector.stop()
   })
 
   // Note: Interaction tracking is now handled via PerformanceObserver with 'event' entry type
