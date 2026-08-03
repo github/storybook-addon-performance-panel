@@ -143,6 +143,39 @@ describe('InputCollector', () => {
     scopedCollector.stop()
   })
 
+  it('reports the story-local delta from the native interaction count', () => {
+    let nativeInteractionCount = 12
+    vi.spyOn(performance, 'interactionCount', 'get').mockImplementation(() => nativeInteractionCount)
+
+    const scopedCollector = new InputCollector()
+    scopedCollector.start()
+    nativeInteractionCount = 15
+
+    expect(scopedCollector.getMetrics().interactionCount).toBe(3)
+
+    scopedCollector.reset()
+    nativeInteractionCount = 16
+    expect(scopedCollector.getMetrics().interactionCount).toBe(1)
+    scopedCollector.stop()
+  })
+
+  it('does not include native interactions while collection is stopped', () => {
+    let nativeInteractionCount = 20
+    vi.spyOn(performance, 'interactionCount', 'get').mockImplementation(() => nativeInteractionCount)
+
+    const scopedCollector = new InputCollector()
+    scopedCollector.start()
+    nativeInteractionCount = 22
+    scopedCollector.stop()
+
+    nativeInteractionCount = 30
+    scopedCollector.start()
+    nativeInteractionCount = 31
+
+    expect(scopedCollector.getMetrics().interactionCount).toBe(3)
+    scopedCollector.stop()
+  })
+
   it('does not recount interactions removed from the bounded latency sample', () => {
     const observerCallbacks: PerformanceObserverCallback[] = []
     vi.stubGlobal(
@@ -164,6 +197,7 @@ describe('InputCollector', () => {
     const scopedCollector = new InputCollector()
     scopedCollector.start()
     const startTime = performance.now()
+    const lastInteractionId = 1 + 500 * 7
     const makeEntry = (interactionId: number, duration: number) => ({
       startTime,
       duration,
@@ -176,16 +210,16 @@ describe('InputCollector', () => {
       ({getEntries: () => entries}) as unknown as PerformanceObserverEntryList
 
     observerCallbacks[0]?.(
-      entryList(Array.from({length: 501}, (_, index) => makeEntry(index + 1, 501 - index))),
+      entryList(Array.from({length: 501}, (_, index) => makeEntry(1 + index * 7, 501 - index))),
       {} as PerformanceObserver,
     )
     expect(scopedCollector.getMetrics().interactionCount).toBe(501)
 
-    observerCallbacks[0]?.(entryList([makeEntry(501, 1)]), {} as PerformanceObserver)
+    observerCallbacks[0]?.(entryList([makeEntry(lastInteractionId, 1)]), {} as PerformanceObserver)
     expect(scopedCollector.getMetrics().interactionCount).toBe(501)
 
     scopedCollector.reset()
-    observerCallbacks[0]?.(entryList([makeEntry(501, 1)]), {} as PerformanceObserver)
+    observerCallbacks[0]?.(entryList([makeEntry(lastInteractionId, 1)]), {} as PerformanceObserver)
     expect(scopedCollector.getMetrics().interactionCount).toBe(1)
     scopedCollector.stop()
   })
