@@ -179,6 +179,8 @@ export class PerformanceMonitorCore {
         channel.off(PERF_EVENTS.INSPECT_ELEMENT, handleInspectElement)
       },
     ]
+
+    channel.emit(PERF_EVENTS.REQUEST_PANEL_VISIBILITY)
   }
 
   /**

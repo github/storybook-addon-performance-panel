@@ -88,6 +88,7 @@ describe('withPerformanceMonitor (universal / web-component usage)', () => {
     expect(mockChannel.on).toHaveBeenCalledWith(PERF_EVENTS.RESET, expect.any(Function))
     expect(mockChannel.on).toHaveBeenCalledWith(PERF_EVENTS.PANEL_VISIBILITY, expect.any(Function))
     expect(mockChannel.on).toHaveBeenCalledWith(PERF_EVENTS.INSPECT_ELEMENT, expect.any(Function))
+    expect(mockChannel.emit).toHaveBeenCalledWith(PERF_EVENTS.REQUEST_PANEL_VISIBILITY)
   })
 
   it('does not emit metrics periodically while the panel is hidden', async () => {
@@ -160,6 +161,32 @@ describe('withPerformanceMonitor (universal / web-component usage)', () => {
 
     expect(second).not.toBe(first)
     expect(second?.storyId).toBe('story-b')
+  })
+
+  it('requests visibility again so an open panel resumes after a story change', () => {
+    withPerformanceMonitor(
+      vi.fn(() => ''),
+      makeCtx({id: 'story-a'}),
+    )
+    const firstVisibilityCall = mockChannel.on.mock.calls.find(
+      (call: unknown[]) => call[0] === PERF_EVENTS.PANEL_VISIBILITY,
+    )
+    const handleFirstVisibility = firstVisibilityCall?.[1] as (visible: boolean) => void
+    handleFirstVisibility(true)
+
+    mockChannel.emit.mockClear()
+    withPerformanceMonitor(
+      vi.fn(() => ''),
+      makeCtx({id: 'story-b'}),
+    )
+
+    expect(mockChannel.emit).toHaveBeenCalledWith(PERF_EVENTS.REQUEST_PANEL_VISIBILITY)
+    const visibilityCalls = mockChannel.on.mock.calls.filter(
+      (call: unknown[]) => call[0] === PERF_EVENTS.PANEL_VISIBILITY,
+    )
+    const handleCurrentVisibility = visibilityCalls.at(-1)?.[1] as (visible: boolean) => void
+    handleCurrentVisibility(true)
+    expect(mockChannel.emit).toHaveBeenCalledWith(PERF_EVENTS.METRICS_UPDATE, expect.any(Object))
   })
 
   it('clears active core when disabled via parameters', () => {

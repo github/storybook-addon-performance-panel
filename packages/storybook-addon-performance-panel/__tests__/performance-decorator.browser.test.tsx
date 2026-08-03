@@ -117,15 +117,33 @@ describe('performance-decorator', () => {
       resetSpy.mockRestore()
     })
 
-    it('emits metrics periodically', async () => {
+    it('does not emit metrics periodically while the panel is hidden', async () => {
       await render(
         <PerformanceProvider storyId="test-story">
           <div>Test</div>
         </PerformanceProvider>,
       )
+      mockChannel.emit.mockClear()
 
-      // Wait for real time to pass for metrics emission (50ms interval)
-      await new Promise(resolve => setTimeout(resolve, 150))
+      await new Promise(resolve => setTimeout(resolve, 300))
+
+      expect(mockChannel.emit).not.toHaveBeenCalledWith(PERF_EVENTS.METRICS_UPDATE, expect.any(Object))
+    })
+
+    it('emits metrics periodically while the panel is visible', async () => {
+      await render(
+        <PerformanceProvider storyId="test-story">
+          <div>Test</div>
+        </PerformanceProvider>,
+      )
+      const visibilityCall = mockChannel.on.mock.calls.find(
+        (call: unknown[]) => call[0] === PERF_EVENTS.PANEL_VISIBILITY,
+      )
+      const handleVisibility = visibilityCall?.[1] as (visible: boolean) => void
+
+      handleVisibility(true)
+      mockChannel.emit.mockClear()
+      await new Promise(resolve => setTimeout(resolve, 300))
 
       expect(mockChannel.emit).toHaveBeenCalledWith(PERF_EVENTS.METRICS_UPDATE, expect.any(Object))
     })
@@ -170,7 +188,9 @@ describe('performance-decorator', () => {
         </PerformanceProvider>,
       )
 
-      await new Promise(resolve => setTimeout(resolve, 150))
+      const requestCall = mockChannel.on.mock.calls.find((call: unknown[]) => call[0] === PERF_EVENTS.REQUEST_METRICS)
+      const requestMetrics = requestCall?.[1] as () => void
+      requestMetrics()
 
       const emittedCall = mockChannel.emit.mock.calls.find((call: unknown[]) => call[0] === PERF_EVENTS.METRICS_UPDATE)
 
@@ -329,7 +349,7 @@ describe('performance-decorator', () => {
       expect(mockChannel.on).toHaveBeenCalled() // Provider is active
     })
 
-    it('emits metrics for wrapped story', async () => {
+    it('responds to metric requests for a wrapped story', async () => {
       const Story = () => <div>Story</div>
       const context = {id: 'test-story', parameters: {}} as Parameters<typeof withPerformanceMonitor>[1]
 
@@ -337,7 +357,9 @@ describe('performance-decorator', () => {
 
       await render(<WrappedStory />)
 
-      await new Promise(resolve => setTimeout(resolve, 150))
+      const requestCall = mockChannel.on.mock.calls.find((call: unknown[]) => call[0] === PERF_EVENTS.REQUEST_METRICS)
+      const requestMetrics = requestCall?.[1] as () => void
+      requestMetrics()
 
       expect(mockChannel.emit).toHaveBeenCalledWith(PERF_EVENTS.METRICS_UPDATE, expect.any(Object))
     })
@@ -355,8 +377,9 @@ describe('performance-decorator', () => {
         </PerformanceProvider>,
       )
 
-      // Wait for initial count and metrics emission
-      await new Promise(resolve => setTimeout(resolve, 600))
+      const requestCall = mockChannel.on.mock.calls.find((call: unknown[]) => call[0] === PERF_EVENTS.REQUEST_METRICS)
+      const requestMetrics = requestCall?.[1] as () => void
+      requestMetrics()
 
       const emittedCall2 = mockChannel.emit.mock.calls.find((call: unknown[]) => call[0] === PERF_EVENTS.METRICS_UPDATE)
 

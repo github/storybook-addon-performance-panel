@@ -1693,7 +1693,11 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
  */
 function PanelContent({active}: {active: boolean}) {
   const {storyId, previewInitialized, viewMode, refId} = useStorybookState()
-  const emit = useChannel({})
+  const emit = useChannel({
+    [PERF_EVENTS.REQUEST_PANEL_VISIBILITY]: () => {
+      emit(PERF_EVENTS.PANEL_VISIBILITY, active)
+    },
+  })
 
   React.useEffect(() => {
     if (!previewInitialized) return undefined
@@ -1702,7 +1706,7 @@ function PanelContent({active}: {active: boolean}) {
     return () => {
       emit(PERF_EVENTS.PANEL_VISIBILITY, false)
     }
-  }, [active, emit, previewInitialized, storyId])
+  }, [active, emit, previewInitialized])
 
   if (!active) return null
 
