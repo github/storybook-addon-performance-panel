@@ -96,6 +96,7 @@ describe('InputCollector', () => {
 
   it('counts only interactions observed during the current story', () => {
     const observerCallbacks: PerformanceObserverCallback[] = []
+    vi.spyOn(performance, 'interactionCount', 'get').mockImplementation(() => undefined as unknown as number)
     vi.stubGlobal(
       'PerformanceObserver',
       class MockPerformanceObserver {
@@ -159,6 +160,49 @@ describe('InputCollector', () => {
     scopedCollector.stop()
   })
 
+  it('prefers the native count over user-agent-specific interaction ID spacing', () => {
+    const observerCallbacks: PerformanceObserverCallback[] = []
+    vi.stubGlobal(
+      'PerformanceObserver',
+      class MockPerformanceObserver {
+        static supportedEntryTypes = ['event', 'first-input']
+        constructor(callback: PerformanceObserverCallback) {
+          observerCallbacks.push(callback)
+        }
+        observe() {
+          /* empty */
+        }
+        disconnect() {
+          /* empty */
+        }
+      },
+    )
+    let nativeInteractionCount = 12
+    vi.spyOn(performance, 'interactionCount', 'get').mockImplementation(() => nativeInteractionCount)
+
+    const scopedCollector = new InputCollector()
+    scopedCollector.start()
+    const startTime = performance.now()
+    observerCallbacks[0]?.(
+      {
+        getEntries: () =>
+          [1, 11].map(interactionId => ({
+            startTime,
+            duration: 40,
+            processingStart: startTime + 5,
+            processingEnd: startTime + 10,
+            interactionId,
+            name: 'click',
+          })),
+      } as unknown as PerformanceObserverEntryList,
+      {} as PerformanceObserver,
+    )
+    nativeInteractionCount = 14
+
+    expect(scopedCollector.getMetrics().interactionCount).toBe(2)
+    scopedCollector.stop()
+  })
+
   it('does not include native interactions while collection is stopped', () => {
     let nativeInteractionCount = 20
     vi.spyOn(performance, 'interactionCount', 'get').mockImplementation(() => nativeInteractionCount)
@@ -178,6 +222,7 @@ describe('InputCollector', () => {
 
   it('does not recount interactions removed from the bounded latency sample', () => {
     const observerCallbacks: PerformanceObserverCallback[] = []
+    vi.spyOn(performance, 'interactionCount', 'get').mockImplementation(() => undefined as unknown as number)
     vi.stubGlobal(
       'PerformanceObserver',
       class MockPerformanceObserver {

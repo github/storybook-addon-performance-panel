@@ -128,7 +128,7 @@ export class InputCollector implements MetricCollector<InputMetrics> {
 
   /** Cap to prevent unbounded growth during long sessions */
   static readonly #MAX_INTERACTIONS = 500
-  /** Browsers increment interaction IDs by seven to reduce fingerprinting precision. */
+  /** Legacy Chromium uses a step of seven when the native interaction count is unavailable. */
   static readonly #INTERACTION_ID_INCREMENT = 7
 
   // First Input Delay tracking
@@ -251,10 +251,12 @@ export class InputCollector implements MetricCollector<InputMetrics> {
     // Track the worst duration for each interaction
     // (an interaction may have multiple events, e.g., keydown + keyup)
     const existingDuration = this.#interactionMap.get(interactionId)
-    this.#minKnownInteractionId = Math.min(this.#minKnownInteractionId, interactionId)
-    this.#maxKnownInteractionId = Math.max(this.#maxKnownInteractionId, interactionId)
-    this.#interactionCountEstimate =
-      (this.#maxKnownInteractionId - this.#minKnownInteractionId) / InputCollector.#INTERACTION_ID_INCREMENT + 1
+    if (this.#nativeInteractionCountBaseline === null) {
+      this.#minKnownInteractionId = Math.min(this.#minKnownInteractionId, interactionId)
+      this.#maxKnownInteractionId = Math.max(this.#maxKnownInteractionId, interactionId)
+      this.#interactionCountEstimate =
+        (this.#maxKnownInteractionId - this.#minKnownInteractionId) / InputCollector.#INTERACTION_ID_INCREMENT + 1
+    }
     if (duration > (existingDuration ?? 0)) {
       this.#interactionMap.set(interactionId, duration)
 
@@ -377,12 +379,13 @@ export class InputCollector implements MetricCollector<InputMetrics> {
 
   #getInteractionCount(): number {
     const currentNativeCount = this.#readNativeInteractionCount()
-    const currentNativeDelta =
-      currentNativeCount !== null && this.#nativeInteractionCountBaseline !== null
-        ? Math.max(0, currentNativeCount - this.#nativeInteractionCountBaseline)
-        : 0
+    if (currentNativeCount === null) return this.#interactionCountEstimate
 
-    return Math.max(this.#nativeInteractionCountOffset + currentNativeDelta, this.#interactionCountEstimate)
+    const currentNativeDelta =
+      this.#nativeInteractionCountBaseline === null
+        ? 0
+        : Math.max(0, currentNativeCount - this.#nativeInteractionCountBaseline)
+    return this.#nativeInteractionCountOffset + currentNativeDelta
   }
 
   #commitNativeInteractionCount(): void {
