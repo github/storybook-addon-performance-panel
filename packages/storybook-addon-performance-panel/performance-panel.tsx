@@ -354,9 +354,9 @@ type FrameTimingSectionProps = Pick<
   | 'droppedFrames'
   | 'frameJitter'
   | 'frameStability'
-  | 'paintTime'
-  | 'maxPaintTime'
-  | 'paintJitter'
+  | 'pointerFrameInterval'
+  | 'maxPointerFrameInterval'
+  | 'pointerFrameJitter'
 >
 
 const FrameTimingSection = React.memo(function FrameTimingSection({
@@ -368,16 +368,16 @@ const FrameTimingSection = React.memo(function FrameTimingSection({
   droppedFrames,
   frameJitter,
   frameStability,
-  paintTime,
-  maxPaintTime,
-  paintJitter,
+  pointerFrameInterval,
+  maxPointerFrameInterval,
+  pointerFrameJitter,
 }: FrameTimingSectionProps) {
   const fpsStatus = getStatus(fps, THRESHOLDS.FPS_GOOD, THRESHOLDS.FPS_WARNING, true)
   const droppedStatus =
     droppedFrames > THRESHOLDS.DROPPED_FRAMES_WARNING ? 'error' : droppedFrames > 0 ? 'warning' : 'success'
   const frameJitterStatus = getZeroStatus(frameJitter)
   const stabilityStatus = frameStability >= 90 ? 'success' : frameStability >= 70 ? 'warning' : 'error'
-  const paintJitterStatus = getZeroStatus(paintJitter)
+  const pointerFrameJitterStatus = getZeroStatus(pointerFrameJitter)
 
   return (
     <MetricsSection icon="📊" title="Frame Timing">
@@ -437,17 +437,17 @@ const FrameTimingSection = React.memo(function FrameTimingSection({
         </StatusBadge>
       </Metric>
 
-      <Metric label="Paint Time" tooltip="Browser rendering time via double-RAF technique.">
-        {formatMs(paintTime)}
-        <SecondaryValue>/ {formatMs(maxPaintTime)} max</SecondaryValue>
+      <Metric
+        label="Pointer Frame Interval"
+        tooltip="Time between the first and second animation frames scheduled after a pointer move. This double-RAF heuristic is not browser paint duration."
+      >
+        {formatMs(pointerFrameInterval)}
+        <SecondaryValue>/ {formatMs(maxPointerFrameInterval)} max</SecondaryValue>
       </Metric>
 
-      <Metric
-        label="Paint Jitter"
-        tooltip="Sudden spikes in paint time vs recent baseline. Indicates rendering inconsistency."
-      >
-        <StatusBadge variant={paintJitterStatus}>
-          {paintJitter === 0 ? '✨ None' : `🎢 ${String(paintJitter)} spikes`}
+      <Metric label="Pointer Frame Jitter" tooltip="Sudden spikes in the double-RAF interval after pointer movement.">
+        <StatusBadge variant={pointerFrameJitterStatus}>
+          {pointerFrameJitter === 0 ? '✨ None' : `🎢 ${String(pointerFrameJitter)} spikes`}
         </StatusBadge>
       </Metric>
     </MetricsSection>
@@ -693,13 +693,13 @@ const InputSection = React.memo(function InputSection({
  * - Long Tasks: Tasks >50ms blocking the main thread
  * - TBT: Total Blocking Time (Core Web Vital correlate)
  * - Thrashing: Style write + forced layout combinations
- * - DOM Churn: Mutations per measurement period
+ * - DOM Churn: Mutations normalized to a per-second rate
  *
  * @component
  */
 type MainThreadSectionProps = Pick<
   PerformanceMetrics,
-  'longTasks' | 'longestTask' | 'totalBlockingTime' | 'thrashingScore' | 'domMutationsPerFrame'
+  'longTasks' | 'longestTask' | 'totalBlockingTime' | 'thrashingScore' | 'domMutationsPerSecond'
 >
 
 const MainThreadSection = React.memo(function MainThreadSection({
@@ -707,12 +707,12 @@ const MainThreadSection = React.memo(function MainThreadSection({
   longestTask,
   totalBlockingTime,
   thrashingScore,
-  domMutationsPerFrame,
+  domMutationsPerSecond,
 }: MainThreadSectionProps) {
   const longTaskStatus = getStatus(longTasks, 0, THRESHOLDS.LONG_TASKS_WARNING)
   const tbtStatus = getStatus(totalBlockingTime, 0, THRESHOLDS.TBT_WARNING)
   const thrashingStatus = getZeroStatus(thrashingScore)
-  const domMutationStatus = getStatus(domMutationsPerFrame, 0, THRESHOLDS.DOM_MUTATIONS_WARNING)
+  const domMutationStatus = getStatus(domMutationsPerSecond, 0, THRESHOLDS.DOM_MUTATIONS_PER_SECOND_WARNING)
 
   return (
     <MetricsSection icon="⏱️" title="Main Thread">
@@ -744,12 +744,18 @@ const MainThreadSection = React.memo(function MainThreadSection({
         </StatusBadge>
       </Metric>
 
-      <Metric label="DOM Churn" tooltip="DOM mutations per sample period. High values indicate excessive re-rendering.">
+      <Metric label="DOM Churn" tooltip="Average DOM mutations normalized to a per-second rate.">
         <StatusBadge variant={domMutationStatus}>
-          <span>{domMutationsPerFrame === 0 ? '✨ ' : domMutationsPerFrame > 10 ? '🌪️ ' : '🔨 '}</span>
-          <span>{domMutationsPerFrame}</span>
+          <span>
+            {domMutationsPerSecond === 0
+              ? '✨ '
+              : domMutationsPerSecond > THRESHOLDS.DOM_MUTATIONS_PER_SECOND_WARNING
+                ? '🌪️ '
+                : '🔨 '}
+          </span>
+          <span>{domMutationsPerSecond}</span>
         </StatusBadge>
-        <SecondaryValue>/period</SecondaryValue>
+        <SecondaryValue>/s</SecondaryValue>
       </Metric>
     </MetricsSection>
   )
@@ -1234,7 +1240,7 @@ const ReactSection = React.memo(function ReactSection({profilers = EMPTY_PROFILE
  * - Heap: Current JS heap size with sparkline (Chrome only)
  * - Peak / DOM: Peak memory and DOM node count
  * - GC Pressure: Memory allocation rate (MB/s)
- * - Paint / Layers: Paint count and compositor layers
+ * - Paint milestones / layer candidates: Native milestones and CSS promotion heuristics
  *
  * Shows alternate view when memory API is unavailable (Firefox/Safari).
  *
@@ -1248,8 +1254,8 @@ type MemoryAndRenderingSectionProps = Pick<
   | 'memoryHistory'
   | 'gcPressure'
   | 'domElements'
-  | 'paintCount'
-  | 'compositorLayers'
+  | 'initialPaintMilestones'
+  | 'layerPromotionCandidates'
 >
 
 const MemoryAndRenderingSection = React.memo(function MemoryAndRenderingSection({
@@ -1259,11 +1265,12 @@ const MemoryAndRenderingSection = React.memo(function MemoryAndRenderingSection(
   memoryHistory,
   gcPressure,
   domElements,
-  paintCount,
-  compositorLayers,
+  initialPaintMilestones,
+  layerPromotionCandidates,
 }: MemoryAndRenderingSectionProps) {
   const gcStatus = getStatus(gcPressure, 0, THRESHOLDS.GC_PRESSURE_WARNING)
-  const layerStatus = compositorLayers === null ? 'neutral' : getStatus(compositorLayers, 0, THRESHOLDS.LAYERS_WARNING)
+  const layerStatus =
+    layerPromotionCandidates === null ? 'neutral' : getStatus(layerPromotionCandidates, 0, THRESHOLDS.LAYERS_WARNING)
 
   const deltaStatus =
     memoryDeltaMB === null
@@ -1289,11 +1296,21 @@ const MemoryAndRenderingSection = React.memo(function MemoryAndRenderingSection(
         <Metric label="Heap">
           <SecondaryValue>Not available (Chrome only)</SecondaryValue>
         </Metric>
-        <Metric label="Paint Count" tooltip="Number of paint operations.">
-          {paintCount}
+        <Metric
+          label="Initial Paint Milestones"
+          tooltip="Native Paint Timing milestones such as first-paint and first-contentful-paint."
+        >
+          {initialPaintMilestones}
         </Metric>
-        <Metric label="Compositor Layers" tooltip="Elements promoted to GPU layers.">
-          {compositorLayers !== null ? <StatusBadge variant={layerStatus}>{compositorLayers}</StatusBadge> : '—'}
+        <Metric
+          label="Layer-Promotion Candidates"
+          tooltip="Elements matching CSS layer-promotion heuristics. This is not the browser's compositor layer count."
+        >
+          {layerPromotionCandidates !== null ? (
+            <StatusBadge variant={layerStatus}>{layerPromotionCandidates}</StatusBadge>
+          ) : (
+            '—'
+          )}
         </Metric>
       </MetricsSection>
     )
@@ -1326,12 +1343,15 @@ const MemoryAndRenderingSection = React.memo(function MemoryAndRenderingSection(
         </StatusBadge>
       </Metric>
 
-      <Metric label="Paint / Layers" tooltip="Paint operations and compositor layer count.">
-        <span>{paintCount}</span>
+      <Metric
+        label="Paint Milestones / Layer Candidates"
+        tooltip="Native initial paint milestones and heuristic CSS layer-promotion candidates."
+      >
+        <span>{initialPaintMilestones}</span>
         <SecondaryValue>
           /{' '}
-          {compositorLayers !== null ? (
-            <StatusBadge variant={layerStatus}>{compositorLayers} layers</StatusBadge>
+          {layerPromotionCandidates !== null ? (
+            <StatusBadge variant={layerStatus}>{layerPromotionCandidates} candidates</StatusBadge>
           ) : (
             <span>—</span>
           )}
@@ -1605,9 +1625,9 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
             droppedFrames={metrics.droppedFrames}
             frameJitter={metrics.frameJitter}
             frameStability={metrics.frameStability}
-            paintTime={metrics.paintTime}
-            maxPaintTime={metrics.maxPaintTime}
-            paintJitter={metrics.paintJitter}
+            pointerFrameInterval={metrics.pointerFrameInterval}
+            maxPointerFrameInterval={metrics.maxPointerFrameInterval}
+            pointerFrameJitter={metrics.pointerFrameJitter}
           />
           <InputSection
             inputLatency={metrics.inputLatency}
@@ -1626,7 +1646,7 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
             longestTask={metrics.longestTask}
             totalBlockingTime={metrics.totalBlockingTime}
             thrashingScore={metrics.thrashingScore}
-            domMutationsPerFrame={metrics.domMutationsPerFrame}
+            domMutationsPerSecond={metrics.domMutationsPerSecond}
           />
           <LoAFSection
             loafSupported={metrics.loafSupported}
@@ -1657,8 +1677,8 @@ function ConnectedPanelContent({storyId}: {storyId: string}) {
             memoryHistory={metrics.memoryHistory}
             gcPressure={metrics.gcPressure}
             domElements={metrics.domElements}
-            paintCount={metrics.paintCount}
-            compositorLayers={metrics.compositorLayers}
+            initialPaintMilestones={metrics.initialPaintMilestones}
+            layerPromotionCandidates={metrics.layerPromotionCandidates}
           />
           <ElementTimingSection
             elementTimingSupported={metrics.elementTimingSupported}

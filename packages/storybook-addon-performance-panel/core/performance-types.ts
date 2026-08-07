@@ -215,9 +215,13 @@ export const THRESHOLDS = {
   FORCED_REFLOW_WARNING: 5,
   /** Forced reflows above this is serious */
   FORCED_REFLOW_DANGER: 20,
-  /** DOM mutations/frame above this may cause jank */
+  /** DOM mutations/second above this may cause jank */
+  DOM_MUTATIONS_PER_SECOND_WARNING: 250,
+  /** DOM mutations/second above this likely causes jank */
+  DOM_MUTATIONS_PER_SECOND_DANGER: 1000,
+  /** @deprecated Use DOM_MUTATIONS_PER_SECOND_WARNING. */
   DOM_MUTATIONS_WARNING: 50,
-  /** DOM mutations/frame above this likely causes jank */
+  /** @deprecated Use DOM_MUTATIONS_PER_SECOND_DANGER. */
   DOM_MUTATIONS_DANGER: 200,
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -263,9 +267,9 @@ export const THRESHOLDS = {
   OBSERVERS_DANGER: 25,
   /** CSS var changes above this is excessive */
   CSS_VAR_CHANGES_WARNING: 50,
-  /** Compositor layers above this needs attention */
+  /** Layer-promotion candidate count above this needs attention */
   LAYERS_WARNING: 20,
-  /** Compositor layers above this is concerning */
+  /** Layer-promotion candidate count above this is concerning */
   LAYERS_DANGER: 50,
 } as const
 
@@ -386,13 +390,21 @@ export interface PerformanceMetrics {
   // ─────────────────────────────────────────────────────────────────────────
   // Paint Performance
   // ─────────────────────────────────────────────────────────────────────────
-  /** Average paint time (ms) */
+  /** Average interval between the first and second animation frames after a pointer move (ms) */
+  pointerFrameInterval: number
+  /** Peak pointer frame interval with decay (ms) */
+  maxPointerFrameInterval: number
+  /** Pointer frame interval jitter count */
+  pointerFrameJitter: number
+  /** Number of native initial paint milestones observed */
+  initialPaintMilestones: number
+  /** @deprecated Use pointerFrameInterval. */
   paintTime: number
-  /** Peak paint time with decay (ms) */
+  /** @deprecated Use maxPointerFrameInterval. */
   maxPaintTime: number
-  /** Total paint operations observed */
+  /** @deprecated Use initialPaintMilestones. */
   paintCount: number
-  /** Paint jitter count - sudden spikes in paint time vs baseline */
+  /** @deprecated Use pointerFrameJitter. */
   paintJitter: number
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -466,7 +478,9 @@ export interface PerformanceMetrics {
   currentSessionCLS: number
   /** Synchronous reads that forced browser reflow */
   forcedReflowCount: number
-  /** Average DOM mutations per frame. High: >50 */
+  /** Average DOM mutations normalized to a one-second rate */
+  domMutationsPerSecond: number
+  /** @deprecated Use domMutationsPerSecond. This is the average count per 200ms sample. */
   domMutationsPerFrame: number
   /** CSS custom property changes */
   cssVarChanges: number
@@ -496,17 +510,21 @@ export interface PerformanceMetrics {
   // ─────────────────────────────────────────────────────────────────────────
   /** Current DOM element count in story container */
   domElements: number | null
-  /** Script evaluation time (ms) */
+  /** Cumulative script resource loading time from the Resource Timing API (ms) */
+  scriptResourceLoadTime: number
+  /** @deprecated Use scriptResourceLoadTime. */
   scriptEvalTime: number
 
   // ─────────────────────────────────────────────────────────────────────────
   // Observer Counts (informational)
   // ─────────────────────────────────────────────────────────────────────────
-  /** Active event listeners (when trackable) */
+  /** @deprecated Unsupported and always 0. */
   eventListenerCount: number
-  /** Active observers (Intersection, Mutation, Resize) */
+  /** @deprecated Unsupported and always 0. */
   observerCount: number
-  /** Compositor layers (DevTools protocol, often null) */
+  /** Elements matching CSS layer-promotion heuristics. Null until the initial scan completes. */
+  layerPromotionCandidates: number | null
+  /** @deprecated Use layerPromotionCandidates. This is not a browser compositor layer count. */
   compositorLayers: number | null
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -521,6 +539,113 @@ export interface PerformanceMetrics {
   /** Details about tracked elements (identifier → renderTime) */
   elementTimings: {identifier: string; renderTime: number; selector: string}[]
 }
+
+/** How a metric is obtained from its underlying browser or framework signal. */
+export type MetricProvenance = 'native' | 'derived' | 'heuristic' | 'unsupported'
+
+/** Confidence in how faithfully a metric represents the behavior named by its public contract. */
+export type MetricQuality = 'high' | 'medium' | 'low' | 'unavailable'
+
+/** Units used by public metric contracts. */
+export type MetricUnit =
+  | 'boolean'
+  | 'count'
+  | 'frames-per-second'
+  | 'megabytes'
+  | 'megabytes-per-second'
+  | 'milliseconds'
+  | 'percent'
+  | 'per-second'
+  | 'score'
+  | 'structured'
+  | 'text'
+
+/** Static metadata for a public performance metric. */
+export interface PerformanceMetricMetadata {
+  provenance: MetricProvenance
+  quality: MetricQuality
+  unit: MetricUnit
+}
+
+/**
+ * Provenance, confidence, and units for every public metric.
+ * Static metadata avoids repeating invariant descriptions in every live metrics payload.
+ */
+export const PERFORMANCE_METRIC_METADATA = {
+  fps: {provenance: 'derived', quality: 'medium', unit: 'frames-per-second'},
+  frameTime: {provenance: 'derived', quality: 'medium', unit: 'milliseconds'},
+  maxFrameTime: {provenance: 'derived', quality: 'medium', unit: 'milliseconds'},
+  droppedFrames: {provenance: 'derived', quality: 'medium', unit: 'count'},
+  frameJitter: {provenance: 'heuristic', quality: 'low', unit: 'count'},
+  frameStability: {provenance: 'heuristic', quality: 'low', unit: 'percent'},
+  inputLatency: {provenance: 'heuristic', quality: 'low', unit: 'milliseconds'},
+  maxInputLatency: {provenance: 'heuristic', quality: 'low', unit: 'milliseconds'},
+  inputJitter: {provenance: 'heuristic', quality: 'low', unit: 'count'},
+  eventTimingSupported: {provenance: 'native', quality: 'high', unit: 'boolean'},
+  interactionCount: {provenance: 'derived', quality: 'medium', unit: 'count'},
+  inpMs: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
+  firstInputDelay: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
+  firstInputType: {provenance: 'native', quality: 'high', unit: 'text'},
+  lastInteraction: {provenance: 'native', quality: 'high', unit: 'structured'},
+  slowestInteraction: {provenance: 'derived', quality: 'high', unit: 'structured'},
+  interactionsByType: {provenance: 'derived', quality: 'high', unit: 'structured'},
+  pointerFrameInterval: {provenance: 'heuristic', quality: 'low', unit: 'milliseconds'},
+  maxPointerFrameInterval: {provenance: 'heuristic', quality: 'low', unit: 'milliseconds'},
+  pointerFrameJitter: {provenance: 'heuristic', quality: 'low', unit: 'count'},
+  initialPaintMilestones: {provenance: 'native', quality: 'high', unit: 'count'},
+  paintTime: {provenance: 'heuristic', quality: 'low', unit: 'milliseconds'},
+  maxPaintTime: {provenance: 'heuristic', quality: 'low', unit: 'milliseconds'},
+  paintCount: {provenance: 'native', quality: 'high', unit: 'count'},
+  paintJitter: {provenance: 'heuristic', quality: 'low', unit: 'count'},
+  memoryUsedMB: {provenance: 'native', quality: 'medium', unit: 'megabytes'},
+  memoryDeltaMB: {provenance: 'derived', quality: 'medium', unit: 'megabytes'},
+  peakMemoryMB: {provenance: 'derived', quality: 'medium', unit: 'megabytes'},
+  gcPressure: {provenance: 'heuristic', quality: 'low', unit: 'megabytes-per-second'},
+  fpsHistory: {provenance: 'derived', quality: 'medium', unit: 'frames-per-second'},
+  frameTimeHistory: {provenance: 'derived', quality: 'medium', unit: 'milliseconds'},
+  memoryHistory: {provenance: 'derived', quality: 'medium', unit: 'megabytes'},
+  longTasks: {provenance: 'native', quality: 'high', unit: 'count'},
+  longestTask: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
+  totalBlockingTime: {provenance: 'derived', quality: 'medium', unit: 'milliseconds'},
+  loafSupported: {provenance: 'native', quality: 'high', unit: 'boolean'},
+  loafCount: {provenance: 'native', quality: 'high', unit: 'count'},
+  totalLoafBlockingDuration: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
+  longestLoafDuration: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
+  longestLoafBlockingDuration: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
+  avgLoafDuration: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
+  p95LoafDuration: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
+  loafsWithScripts: {provenance: 'derived', quality: 'high', unit: 'count'},
+  lastLoaf: {provenance: 'native', quality: 'high', unit: 'structured'},
+  worstLoaf: {provenance: 'derived', quality: 'high', unit: 'structured'},
+  styleWrites: {provenance: 'derived', quality: 'high', unit: 'count'},
+  thrashingScore: {provenance: 'heuristic', quality: 'low', unit: 'count'},
+  layoutShiftScore: {provenance: 'derived', quality: 'high', unit: 'score'},
+  layoutShiftCount: {provenance: 'native', quality: 'high', unit: 'count'},
+  currentSessionCLS: {provenance: 'derived', quality: 'high', unit: 'score'},
+  forcedReflowCount: {provenance: 'heuristic', quality: 'low', unit: 'count'},
+  domMutationsPerSecond: {provenance: 'derived', quality: 'medium', unit: 'per-second'},
+  domMutationsPerFrame: {provenance: 'derived', quality: 'medium', unit: 'count'},
+  cssVarChanges: {provenance: 'derived', quality: 'medium', unit: 'count'},
+  reactRenderCount: {provenance: 'native', quality: 'high', unit: 'count'},
+  reactMountCount: {provenance: 'derived', quality: 'high', unit: 'count'},
+  reactMountDuration: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
+  reactPostMountUpdateCount: {provenance: 'derived', quality: 'high', unit: 'count'},
+  reactPostMountMaxDuration: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
+  reactP95Duration: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
+  slowReactUpdates: {provenance: 'derived', quality: 'high', unit: 'count'},
+  renderCascades: {provenance: 'derived', quality: 'high', unit: 'count'},
+  domElements: {provenance: 'derived', quality: 'high', unit: 'count'},
+  scriptResourceLoadTime: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
+  scriptEvalTime: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
+  eventListenerCount: {provenance: 'unsupported', quality: 'unavailable', unit: 'count'},
+  observerCount: {provenance: 'unsupported', quality: 'unavailable', unit: 'count'},
+  layerPromotionCandidates: {provenance: 'heuristic', quality: 'low', unit: 'count'},
+  compositorLayers: {provenance: 'heuristic', quality: 'low', unit: 'count'},
+  elementTimingSupported: {provenance: 'native', quality: 'high', unit: 'boolean'},
+  elementTimingCount: {provenance: 'derived', quality: 'high', unit: 'count'},
+  largestElementRenderTime: {provenance: 'derived', quality: 'high', unit: 'milliseconds'},
+  elementTimings: {provenance: 'native', quality: 'high', unit: 'structured'},
+} as const satisfies Record<keyof PerformanceMetrics, PerformanceMetricMetadata>
 
 /**
  * Default/initial metrics state (all zeros/nulls).
@@ -544,6 +669,10 @@ export const DEFAULT_METRICS: PerformanceMetrics = {
   lastInteraction: null,
   slowestInteraction: null,
   interactionsByType: {},
+  pointerFrameInterval: 0,
+  maxPointerFrameInterval: 0,
+  pointerFrameJitter: 0,
+  initialPaintMilestones: 0,
   paintTime: 0,
   maxPaintTime: 0,
   paintCount: 0,
@@ -576,6 +705,7 @@ export const DEFAULT_METRICS: PerformanceMetrics = {
   layoutShiftCount: 0,
   currentSessionCLS: 0,
   forcedReflowCount: 0,
+  domMutationsPerSecond: 0,
   domMutationsPerFrame: 0,
   cssVarChanges: 0,
   reactRenderCount: 0,
@@ -587,9 +717,11 @@ export const DEFAULT_METRICS: PerformanceMetrics = {
   slowReactUpdates: 0,
   renderCascades: 0,
   domElements: null,
+  scriptResourceLoadTime: 0,
   scriptEvalTime: 0,
   eventListenerCount: 0,
   observerCount: 0,
+  layerPromotionCandidates: null,
   compositorLayers: null,
   // Element Timing
   elementTimingSupported: true, // Assume supported until told otherwise

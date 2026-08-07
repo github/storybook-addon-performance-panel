@@ -73,7 +73,7 @@ The addon consists of two main parts:
 
 ### Input Responsiveness
 - **Input Latency**: Time from pointer event to next animation frame
-- **Paint Time**: Browser rendering time via double-RAF technique
+- **Pointer Frame Interval**: Time between the first and second animation frames scheduled after a pointer move (double-RAF heuristic, not paint duration)
 - **INP**: Interaction to Next Paint via [Event Timing API](https://w3c.github.io/event-timing/) (Core Web Vital)
   - Uses `PerformanceObserver` with `event` entry type for accurate measurement
   - Calculated as p98 of worst interactions per Web Vitals spec
@@ -88,7 +88,7 @@ The addon consists of two main parts:
 - **Long Tasks**: Tasks blocking main thread >50ms (via PerformanceObserver)
 - **Total Blocking Time (TBT)**: Sum of (duration - 50ms) for all long tasks
 - **Thrashing**: Style writes followed by long frames (forced sync layout)
-- **DOM Churn**: Rate of DOM mutations per measurement period
+- **DOM Churn**: Average DOM mutations normalized to a per-second rate
 
 ### Long Animation Frames (Chrome 123+)
 - **LoAF Count**: Number of animation frames exceeding 50ms
@@ -121,7 +121,9 @@ The addon consists of two main parts:
 - **Heap Usage**: Current JS heap size
 - **Memory Delta**: Change from baseline since last reset
 - **GC Pressure**: Memory allocation rate (MB/s)
-- **Compositor Layers**: Elements promoted to GPU layers
+- **Initial Paint Milestones**: Native first-paint and first-contentful-paint entries
+- **Script Resource Load Time**: Cumulative loading duration derived from script Resource Timing entries
+- **Layer-Promotion Candidates**: Elements matching CSS layer-promotion heuristics (not the browser's compositor layer count)
 
 ## Metric Thresholds
 
@@ -179,6 +181,19 @@ import '@github-ui/storybook-addon-performance-panel/preset'
 
 The universal entry collects all browser-level metrics (frame timing, CLS, INP, etc.) but omits React Profiler metrics. The React Performance section is automatically hidden in the panel.
 
+### Metric contract metadata
+
+Every public metric has static metadata describing its source, confidence, and unit:
+
+```typescript
+import {PERFORMANCE_METRIC_METADATA} from '@github-ui/storybook-addon-performance-panel'
+
+const {provenance, quality, unit} = PERFORMANCE_METRIC_METADATA.pointerFrameInterval
+// {provenance: 'heuristic', quality: 'low', unit: 'milliseconds'}
+```
+
+Quality is `high` for direct or deterministic signals, `medium` for sampled or browser-limited values, `low` for heuristic proxies, and `unavailable` for unsupported compatibility placeholders. This metadata is invariant and is not repeated in live channel payloads.
+
 ## Collection Lifecycle
 
 Browser performance collection runs automatically while the Performance panel is selected. Closing the panel disconnects browser collectors, DOM observers, and live-update timers to minimize background overhead. Reopening the panel resumes collection without clearing the metrics already gathered for the current story. React Profiler callbacks remain attached so mount and render history is not lost before the panel opens.
@@ -203,7 +218,7 @@ The addon uses modular collector classes for metrics gathering. Each collector u
 | `LongAnimationFrameCollector` | LoAF API (`PerformanceObserver`) | **Optimal** |
 | `LayoutShiftCollector` | Layout Instability API (`PerformanceObserver`) | **Optimal** |
 | `MemoryCollector` | `performance.memory` | **Optimal** |
-| `PaintCollector` | Paint Timing API (`PerformanceObserver`) | **Optimal** |
+| `PaintCollector` | Paint + Resource Timing APIs, CSS heuristic | Mixed |
 | `StyleMutationCollector` | `MutationObserver` | Heuristic |
 | `ForcedReflowCollector` | Property getter instrumentation | Heuristic |
 | `ReactProfilerCollector` | React Profiler API | **Optimal** |
@@ -214,7 +229,7 @@ The addon uses modular collector classes for metrics gathering. Each collector u
 - **Firefox/Safari**: Most metrics supported, memory API and LoAF unavailable
 - **Memory API**: Requires `performance.memory` (Chrome-only)
 - **Long Animation Frames**: Requires Chrome 123+ or Edge 123+
-- **Compositor Layers**: Requires Chrome DevTools Protocol
+- **Layer-Promotion Candidates**: CSS heuristic available in all supported browsers; not a compositor-layer measurement
 
 ## Development
 
@@ -266,7 +281,7 @@ Start by scanning these key indicators:
 **Where to Look:**
 1. Check `Mount Duration` in React section
 2. Look at `Long Tasks` count and `Longest Task` duration
-3. Review `Script Eval Time` in Resources section
+3. Review script requests in the Network panel and the derived `scriptResourceLoadTime` metric
 
 **Common Causes:**
 - Heavy component initialization
