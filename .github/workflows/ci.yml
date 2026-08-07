@@ -93,6 +93,14 @@ jobs:
       - run: npx playwright install --with-deps chromium firefox webkit
       - run: npx vitest run --project browser
         working-directory: packages/storybook-addon-performance-panel
+      - run: npm run benchmark
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: addon-overhead-benchmark
+          path: packages/storybook-addon-performance-panel/benchmark-results.json
+          if-no-files-found: error
+          retention-days: 14
 
   ci:
     name: CI

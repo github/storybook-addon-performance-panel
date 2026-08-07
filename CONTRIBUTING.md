@@ -26,6 +26,7 @@ This is an npm workspaces monorepo with multiple packages:
 |---------|-------------|
 | `npm run build` | Build the addon |
 | `npm run build:watch` | Build the addon in watch mode |
+| `npm run benchmark` | Measure addon overhead in headless Chromium |
 | `npm test` | Run tests |
 | `npm run lint` | Lint with ESLint + Prettier |
 | `npm run tsc` | Type-check the addon |
@@ -34,6 +35,12 @@ This is an npm workspaces monorepo with multiple packages:
 | `npm run docs:build` | Build the addon and the React docs for production |
 | `npm run docs:html` | Build the addon and start the HTML docs storybook |
 | `npm run docs:html:build` | Build the HTML docs for production |
+
+### Overhead benchmarks
+
+Run `npm run benchmark` to measure the same lifecycle, raw DOM, and React workloads with the addon disabled, with the panel hidden, and with the panel visible. The command writes machine-readable results to `packages/storybook-addon-performance-panel/benchmark-results.json` for later comparison.
+
+Pass a previous result to `npm run benchmark -- --compare path/to/benchmark-results.json` to include relative results in the report. CI uploads each result as the `addon-overhead-benchmark` artifact. Benchmark results are diagnostic data, not pass/fail performance budgets. Run comparisons on the same machine and browser environment to reduce variance.
 
 #### Portless dev URLs
 

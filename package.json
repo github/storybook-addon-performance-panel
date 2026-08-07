@@ -8,6 +8,7 @@
   "scripts": {
     "build": "npm run build -w @github-ui/storybook-addon-performance-panel",
     "build:watch": "npm run build:watch -w @github-ui/storybook-addon-performance-panel",
+    "benchmark": "npm run benchmark -w @github-ui/storybook-addon-performance-panel --",
     "dev": "npm run build && concurrently -k --kill-signal SIGINT --kill-timeout 3000 -n watch,react,html,site -c blue,green,magenta,cyan \"npm:build:watch\" \"npm:docs:dev\" \"npm:docs:html:dev\" \"npm:site:dev\"",
     "docs:dev": "npm run storybook -w @github-ui/examples-react",
     "docs:html:dev": "npm run storybook -w @github-ui/examples-html",
