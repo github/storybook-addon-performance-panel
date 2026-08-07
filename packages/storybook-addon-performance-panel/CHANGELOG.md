@@ -1,5 +1,17 @@
 # @github-ui/storybook-addon-performance-panel
 
+## 1.2.0
+
+### Minor Changes
+
+- [#156](https://github.com/github/storybook-addon-performance-panel/pull/156) [`a77f3a6`](https://github.com/github/storybook-addon-performance-panel/commit/a77f3a6cddc09d90695471ff8ec15abc9ec932e1) Thanks [@mattcosta7](https://github.com/mattcosta7)! - Scope buffered browser performance entries to the active story and report Element Timing values relative to story start.
+
+- [#158](https://github.com/github/storybook-addon-performance-panel/pull/158) [`5b1ad35`](https://github.com/github/storybook-addon-performance-panel/commit/5b1ad352d72b95b2a38caaecee9da2f0dda94a1e) Thanks [@mattcosta7](https://github.com/mattcosta7)! - Pause browser collectors, DOM observation, metric transport, and sparkline sampling while the performance panel is hidden.
+
+### Patch Changes
+
+- [#157](https://github.com/github/storybook-addon-performance-panel/pull/157) [`68952f4`](https://github.com/github/storybook-addon-performance-panel/commit/68952f452534c9145503df0b6b24470e9ddf3585) Thanks [@mattcosta7](https://github.com/mattcosta7)! - Avoid synthetic first-frame samples and pause frame collection while the preview document is hidden.
+
 ## 1.1.4
 
 ### Patch Changes
