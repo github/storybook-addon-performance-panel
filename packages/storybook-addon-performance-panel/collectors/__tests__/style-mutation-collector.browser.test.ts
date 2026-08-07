@@ -22,6 +22,7 @@ describe('StyleMutationCollector', () => {
       expect(metrics.styleWrites).toBe(0)
       expect(metrics.cssVarChanges).toBe(0)
       expect(metrics.domMutationFrames).toEqual([])
+      expect(metrics.domMutationSampleDurationsMs).toEqual([])
       expect(metrics.thrashingScore).toBe(0)
     })
   })
@@ -166,6 +167,7 @@ describe('StyleMutationCollector', () => {
       expect(metrics.styleWrites).toBe(0)
       expect(metrics.cssVarChanges).toBe(0)
       expect(metrics.domMutationFrames).toEqual([])
+      expect(metrics.domMutationSampleDurationsMs).toEqual([])
       expect(metrics.thrashingScore).toBe(0)
 
       document.body.removeChild(el)

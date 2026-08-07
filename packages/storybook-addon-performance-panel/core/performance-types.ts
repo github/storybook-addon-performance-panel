@@ -267,9 +267,9 @@ export const THRESHOLDS = {
   OBSERVERS_DANGER: 25,
   /** CSS var changes above this is excessive */
   CSS_VAR_CHANGES_WARNING: 50,
-  /** Layer-promotion candidates above this needs attention */
+  /** Layer-promotion candidate count above this needs attention */
   LAYERS_WARNING: 20,
-  /** Layer-promotion candidates above this is concerning */
+  /** Layer-promotion candidate count above this is concerning */
   LAYERS_DANGER: 50,
 } as const
 

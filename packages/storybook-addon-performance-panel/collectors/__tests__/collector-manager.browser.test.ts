@@ -1,7 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {CollectorManager} from '../../collectors/collector-manager'
-import {DOM_MUTATION_SAMPLE_INTERVAL_MS} from '../../collectors/style-mutation-collector'
 import type {RenderInfo} from '../../core/performance-types'
 
 /**
@@ -396,6 +395,7 @@ describe('CollectorManager', () => {
       vi.spyOn(manager.collectors.style, 'getMetrics').mockReturnValue({
         ...styleMetrics,
         domMutationFrames: [2, 4],
+        domMutationSampleDurationsMs: [200, 400],
       })
 
       const metrics = manager.computeMetrics()
@@ -409,7 +409,7 @@ describe('CollectorManager', () => {
       expect(metrics.scriptResourceLoadTime).toBe(deprecatedMetrics.scriptEvalTime)
       expect(metrics.layerPromotionCandidates).toBe(deprecatedMetrics.compositorLayers)
       expect(deprecatedMetrics.domMutationsPerFrame).toBe(3)
-      expect(metrics.domMutationsPerSecond).toBe((3 * 1000) / DOM_MUTATION_SAMPLE_INTERVAL_MS)
+      expect(metrics.domMutationsPerSecond).toBe(10)
     })
 
     it('rounds numeric values appropriately', () => {

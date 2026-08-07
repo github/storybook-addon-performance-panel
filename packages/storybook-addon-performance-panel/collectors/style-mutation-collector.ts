@@ -13,6 +13,7 @@ export interface StyleMetrics {
   styleWrites: number
   cssVarChanges: number
   domMutationFrames: number[]
+  domMutationSampleDurationsMs: number[]
   thrashingScore: number
 }
 
@@ -33,6 +34,8 @@ export class StyleMutationCollector implements MetricCollector<StyleMetrics> {
   #styleWriteCount = 0
   #lastStyleWriteTime = 0
   #domMutationCount = 0
+  #domMutationSampleDurationsMs: number[] = []
+  #lastDomMutationSampleTime = 0
 
   #observer: MutationObserver | null = null
   #sampleInterval: ReturnType<typeof setInterval> | null = null
@@ -78,8 +81,13 @@ export class StyleMutationCollector implements MetricCollector<StyleMetrics> {
     })
 
     // Sample DOM mutations periodically
+    this.#lastDomMutationSampleTime = performance.now()
     this.#sampleInterval = setInterval(() => {
+      const now = performance.now()
+      const elapsedMs = Math.max(1, now - this.#lastDomMutationSampleTime)
+      this.#lastDomMutationSampleTime = now
       addToWindow(this.#domMutationFrames, this.#domMutationCount, 30)
+      addToWindow(this.#domMutationSampleDurationsMs, elapsedMs, 30)
       this.#domMutationCount = 0
     }, DOM_MUTATION_SAMPLE_INTERVAL_MS)
   }
@@ -98,6 +106,8 @@ export class StyleMutationCollector implements MetricCollector<StyleMetrics> {
     this.#thrashingScore = 0
     this.#styleWriteCount = 0
     this.#domMutationCount = 0
+    this.#domMutationSampleDurationsMs = []
+    this.#lastDomMutationSampleTime = 0
   }
 
   /** Call on each frame to check for thrashing */
@@ -118,6 +128,7 @@ export class StyleMutationCollector implements MetricCollector<StyleMetrics> {
       styleWrites: this.#styleWrites,
       cssVarChanges: this.#cssVarChanges,
       domMutationFrames: this.#domMutationFrames,
+      domMutationSampleDurationsMs: this.#domMutationSampleDurationsMs,
       thrashingScore: this.#thrashingScore,
     }
   }

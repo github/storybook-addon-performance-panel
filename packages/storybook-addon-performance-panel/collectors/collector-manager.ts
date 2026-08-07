@@ -296,8 +296,18 @@ export class CollectorManager {
     const maxPointerFrameInterval = Math.round(input.maxPaintTime * 10) / 10
     const scriptResourceLoadTime = Math.round(paint.scriptEvalTime * 10) / 10
     const averageDomMutationsPerSample = computeAverage(style.domMutationFrames)
+    const totalDomMutations = style.domMutationFrames.reduce((sum, count) => sum + count, 0)
+    const hasSampleDurations =
+      style.domMutationSampleDurationsMs.length === style.domMutationFrames.length &&
+      style.domMutationSampleDurationsMs.length > 0
+    const totalDomMutationSampleDurationMs = hasSampleDurations
+      ? style.domMutationSampleDurationsMs.reduce((sum, duration) => sum + duration, 0)
+      : style.domMutationFrames.length * DOM_MUTATION_SAMPLE_INTERVAL_MS
     const domMutationsPerSample = Math.round(averageDomMutationsPerSample)
-    const domMutationsPerSecond = Math.round((averageDomMutationsPerSample * 1000) / DOM_MUTATION_SAMPLE_INTERVAL_MS)
+    const domMutationsPerSecond =
+      totalDomMutationSampleDurationMs > 0
+        ? Math.round((totalDomMutations * 1000) / totalDomMutationSampleDurationMs)
+        : 0
     const memoryDeltaMB =
       memory.lastMemoryMB !== null && memory.baselineMemoryMB !== null
         ? Math.round((memory.lastMemoryMB - memory.baselineMemoryMB) * 10) / 10
