@@ -114,7 +114,7 @@
     "@vitejs/plugin-react": "^6.0.4",
     "@vitest/browser-playwright": "4.1.10",
     "esbuild": "0.28.1",
-    "publint": "^0.3.22",
+    "publint": "^0.3.23",
     "tsdown": "^0.22.14",
     "vitest": "4.1.10",
     "vitest-browser-react": "^2.2.0"
