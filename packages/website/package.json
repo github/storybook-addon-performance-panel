@@ -12,10 +12,10 @@
     "@fontsource-variable/mona-sans": "^5.3.0",
     "@github-ui/storybook-config": "*",
     "@primer/primitives": "^11.9.0",
-    "@primer/react": "^38.35.1",
+    "@primer/react": "^38.36.0",
     "@shikijs/vscode-textmate": "10.0.2",
-    "@tanstack/react-router": "^1.170.29",
-    "@tanstack/react-start": "^1.168.46",
+    "@tanstack/react-router": "^1.170.32",
+    "@tanstack/react-start": "^1.168.49",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
