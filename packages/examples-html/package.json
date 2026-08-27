@@ -10,7 +10,7 @@
     "@github-ui/storybook-addon-performance-panel": "*",
     "@github-ui/storybook-config": "*",
     "@storybook/html-vite": "^10.5.8",
-    "storybook": "^10.5.8"
+    "storybook": "^10.5.10"
   },
   "devDependencies": {
     "lightningcss": "^1.33.0"
