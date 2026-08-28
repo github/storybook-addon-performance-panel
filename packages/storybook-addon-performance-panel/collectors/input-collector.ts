@@ -8,7 +8,7 @@
  * - Uses browser-provided targetSelector for element identification
  *
  * Differences from web-vitals (intentional for Storybook use case):
- * - Tracks additional metrics: jitter, paint times, detailed breakdowns
+ * - Tracks additional metrics: jitter, pointer frame intervals, detailed breakdowns
  * - No soft-nav integration (not needed in Storybook)
  * - Simpler Map-based storage (stories are short-lived, not memory-constrained)
  *
@@ -95,7 +95,7 @@ export interface InputMetrics {
  * - INP (Interaction to Next Paint) - p98 of worst interactions
  * - Input delay breakdown (input delay, processing time, presentation delay)
  * - Input latency via pointermove (RAF-based for continuous tracking)
- * - Paint time estimation
+ * - Double-RAF pointer frame interval heuristic
  * - Input jitter
  *
  * @see https://web.dev/articles/inp
@@ -407,7 +407,7 @@ export class InputCollector implements MetricCollector<InputMetrics> {
       const latency = rafTime - eventTime
       this.#processInput(latency)
 
-      // Paint time measurement via double-RAF
+      // Measure the interval between consecutive RAFs after pointer movement.
       requestAnimationFrame(() => {
         const paintEnd = performance.now()
         const paintTime = paintEnd - rafTime

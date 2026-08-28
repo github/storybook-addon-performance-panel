@@ -7,6 +7,7 @@ import {
   getZeroIsGoodStatus,
   PANEL_ID,
   PERF_EVENTS,
+  PERFORMANCE_METRIC_METADATA,
   THRESHOLDS,
 } from '../../core/performance-types'
 
@@ -94,6 +95,14 @@ describe('THRESHOLDS', () => {
     expect(THRESHOLDS.TBT_WARNING).toBe(200)
     expect(THRESHOLDS.TBT_DANGER).toBe(600)
   })
+
+  it('normalizes deprecated DOM mutation thresholds to a per-second rate', () => {
+    const deprecatedThresholds = THRESHOLDS as unknown as Record<string, number>
+    expect(deprecatedThresholds.DOM_MUTATIONS_WARNING).toBe(50)
+    expect(deprecatedThresholds.DOM_MUTATIONS_DANGER).toBe(200)
+    expect(THRESHOLDS.DOM_MUTATIONS_PER_SECOND_WARNING).toBe(250)
+    expect(THRESHOLDS.DOM_MUTATIONS_PER_SECOND_DANGER).toBe(1000)
+  })
 })
 
 describe('DEFAULT_METRICS', () => {
@@ -115,6 +124,39 @@ describe('DEFAULT_METRICS', () => {
     expect(DEFAULT_METRICS.fpsHistory).toEqual([])
     expect(DEFAULT_METRICS.frameTimeHistory).toEqual([])
     expect(DEFAULT_METRICS.memoryHistory).toEqual([])
+  })
+
+  it('initializes corrected metric aliases', () => {
+    const deprecatedMetrics = DEFAULT_METRICS as unknown as Record<string, unknown>
+    expect(DEFAULT_METRICS.pointerFrameInterval).toBe(deprecatedMetrics.paintTime)
+    expect(DEFAULT_METRICS.maxPointerFrameInterval).toBe(deprecatedMetrics.maxPaintTime)
+    expect(DEFAULT_METRICS.pointerFrameJitter).toBe(deprecatedMetrics.paintJitter)
+    expect(DEFAULT_METRICS.initialPaintMilestones).toBe(deprecatedMetrics.paintCount)
+    expect(DEFAULT_METRICS.scriptResourceLoadTime).toBe(deprecatedMetrics.scriptEvalTime)
+    expect(DEFAULT_METRICS.layerPromotionCandidates).toBe(deprecatedMetrics.compositorLayers)
+    expect(DEFAULT_METRICS.domMutationsPerSecond).toBe(0)
+  })
+})
+
+describe('PERFORMANCE_METRIC_METADATA', () => {
+  it('has metadata for every public metric', () => {
+    expect(new Set(Object.keys(PERFORMANCE_METRIC_METADATA))).toEqual(new Set(Object.keys(DEFAULT_METRICS)))
+  })
+
+  it('identifies provenance, quality, and units', () => {
+    expect(PERFORMANCE_METRIC_METADATA.initialPaintMilestones).toEqual({
+      provenance: 'native',
+      quality: 'high',
+      unit: 'count',
+    })
+    expect(PERFORMANCE_METRIC_METADATA.domMutationsPerSecond).toEqual({
+      provenance: 'derived',
+      quality: 'medium',
+      unit: 'per-second',
+    })
+    expect(PERFORMANCE_METRIC_METADATA.layerPromotionCandidates.quality).toBe('low')
+    expect(PERFORMANCE_METRIC_METADATA.eventListenerCount.quality).toBe('unavailable')
+    expect(PERFORMANCE_METRIC_METADATA.observerCount.quality).toBe('unavailable')
   })
 })
 
