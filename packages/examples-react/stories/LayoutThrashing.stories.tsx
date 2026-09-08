@@ -35,7 +35,7 @@ function LayoutThrashing({boxCount = 50}: {boxCount?: number}) {
       // Write margin based on read
       box.style.marginLeft = `${String(w % 5)}px`
       // Read → forced reflow #3
-      void box.offsetTop
+      box.offsetTop.valueOf()
     }
 
     setBurstCount(c => c + 1)

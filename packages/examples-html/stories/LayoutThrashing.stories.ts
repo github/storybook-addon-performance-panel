@@ -54,7 +54,7 @@ function createLayoutThrashing(args: {boxCount: number}) {
       const h = box.offsetHeight // forced reflow + read current height
       box.style.width = `${String(80 + Math.round(Math.random() * 120))}px`
       box.style.height = `${String(Math.max(30, h + Math.round(Math.random() * 20 - 10)))}px`
-      void box.offsetWidth // another forced reflow
+      box.offsetWidth.valueOf() // another forced reflow
     }
 
     burstCount++
