@@ -103,7 +103,7 @@ function createDomWorkload(state: LifecycleState): WorkloadHarness {
 
       container.replaceChildren(fragment)
       container.style.paddingLeft = `${String(revision % 3)}px`
-      void container.offsetHeight
+      container.offsetHeight.valueOf()
       await yieldToMainThread()
     },
     options: {

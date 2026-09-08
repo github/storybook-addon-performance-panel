@@ -18,6 +18,7 @@ import './primer-base.css'
 import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel'
 import addonDocs from '@storybook/addon-docs'
 import {definePreview} from '@storybook/react-vite'
+import type {PreviewAddon} from 'storybook/internal/csf'
 import {MINIMAL_VIEWPORTS} from 'storybook/viewport'
 
 type PrimerTheme = 'system' | 'light' | 'light_high_contrast' | 'dark' | 'dark_dimmed' | 'dark_high_contrast'
@@ -42,7 +43,7 @@ function applyPrimerTheme(theme: PrimerTheme) {
 }
 
 const preview = definePreview({
-  addons: [addonDocs(), addonPerformancePanel()],
+  addons: [(addonDocs as () => PreviewAddon)(), addonPerformancePanel()],
   parameters: {
     controls: {expanded: true},
     docs: {codePanel: true},
