@@ -9,12 +9,12 @@
   "dependencies": {
     "@github-ui/storybook-addon-performance-panel": "*",
     "@github-ui/storybook-config": "*",
-    "@primer/primitives": "^11.9.0",
-    "@storybook/addon-docs": "^10.5.10",
+    "@primer/primitives": "^11.10.0",
+    "@storybook/addon-docs": "^10.6.0",
     "@storybook/react-vite": "^10",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "storybook": "^10.5.8"
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "storybook": "^10.6.0"
   },
   "devDependencies": {
     "@types/eslint-plugin-jsx-a11y": "^6.10.1",

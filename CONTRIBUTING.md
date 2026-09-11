@@ -38,9 +38,7 @@ This is an npm workspaces monorepo with multiple packages:
 
 ### Overhead benchmarks
 
-Run `npm run benchmark` to measure the same lifecycle, raw DOM, and React workloads with the addon disabled, with the panel hidden, and with the panel visible. The command writes machine-readable results to `packages/storybook-addon-performance-panel/benchmark-results.json` for later comparison.
-
-Pass a previous result to `npm run benchmark -- --compare path/to/benchmark-results.json` to include relative results in the report. CI uploads each result as the `addon-overhead-benchmark` artifact. Benchmark results are diagnostic data, not pass/fail performance budgets. Run comparisons on the same machine and browser environment to reduce variance.
+Run `npm run benchmark` to measure the same lifecycle, raw DOM, and React workloads with the addon disabled, with the panel hidden, and with the panel visible. The command writes machine-readable results to `packages/storybook-addon-performance-panel/benchmark-results.json`. CI uploads each result as the `addon-overhead-benchmark` artifact. Benchmark results are diagnostic data, not pass/fail performance budgets. Compare results from the same machine and browser environment to reduce variance.
 
 #### Portless dev URLs
 
@@ -53,7 +51,7 @@ When using `npm run dev`, each storybook is served at a stable `.localhost` URL 
 
 These are one time installations required to be able to test your changes locally as part of the pull request (PR) submission process.
 
-1. Install [Node.js](https://nodejs.org/) (v22 or later)
+1. Install [Node.js](https://nodejs.org/) v26 (the supported runtime minimum is v24)
 1. Install dependencies: `npm install`
 
 ## Submitting a pull request
