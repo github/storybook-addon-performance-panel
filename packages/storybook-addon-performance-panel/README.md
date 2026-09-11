@@ -4,23 +4,41 @@ A Storybook addon that provides real-time performance monitoring for stories. It
 
 ## Installation
 
-The addon is included in the `@github-ui/storybook` package and is already configured globally.
+### React projects
 
-To add the addon to your Storybook configuration, add it to the `addons` array in `.storybook/main.ts`:
+Add the addon preset to `.storybook/main.ts`:
 
 ```ts
 // .storybook/main.ts
 const config = {
-  addons: [
-    // ... other addons
-    '@github-ui/storybook-addon-performance-panel',
-  ],
+  addons: ['@github-ui/storybook-addon-performance-panel'],
 }
 ```
 
-This follows [Storybook addon best practices](https://storybook.js.org/docs/addons/writing-presets) by using a preset that automatically:
-- Registers the panel in Storybook's manager UI
-- Applies the performance monitoring decorator to all stories
+Register its preview annotations for CSF Next type safety:
+
+```ts
+// .storybook/preview.ts
+import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel'
+import {definePreview} from '@storybook/react-vite'
+
+export default definePreview({
+  addons: [addonPerformancePanel()],
+})
+```
+
+### Non-React projects
+
+Use the `./universal` subpath for HTML, Vue, Svelte, Web Components, and other frameworks:
+
+```ts
+// .storybook/main.ts
+const config = {
+  addons: ['@github-ui/storybook-addon-performance-panel/universal'],
+}
+```
+
+The preset registers the panel and applies the performance monitoring decorator globally. The universal entry omits React Profiler metrics.
 
 ## Usage
 

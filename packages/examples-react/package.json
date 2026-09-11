@@ -10,11 +10,11 @@
     "@github-ui/storybook-addon-performance-panel": "*",
     "@github-ui/storybook-config": "*",
     "@primer/primitives": "^11.10.0",
-    "@storybook/addon-docs": "^10.6.0",
-    "@storybook/react-vite": "^10",
+    "@storybook/addon-docs": "next",
+    "@storybook/react-vite": "next",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "storybook": "^10.6.0"
+    "storybook": "next"
   },
   "devDependencies": {
     "@types/eslint-plugin-jsx-a11y": "^6.10.1",

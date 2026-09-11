@@ -37,7 +37,7 @@
     "@changesets/changelog-github": "^1.0.1",
     "@changesets/cli": "^3.0.2",
     "@eslint/js": "^9.39.5",
-    "@storybook/react-vite": "^10",
+    "@storybook/react-vite": "next",
     "@vitejs/plugin-react": "^6.1.1",
     "concurrently": "^10.0.5",
     "eslint": "^9.0.0 <10",

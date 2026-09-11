@@ -42,16 +42,6 @@ const config = {
 }
 ```
 
-```ts
-// .storybook/preview.ts
-import addonPerformancePanel from '@github-ui/storybook-addon-performance-panel/universal'
-import {definePreview} from '@storybook/html-vite' // or vue-vite, svelte-vite, etc.
-
-export default definePreview({
-  addons: [addonPerformancePanel()],
-})
-```
-
 The universal entry collects all browser-level metrics (frame timing, CLS, INP, etc.) but omits React Profiler metrics. The React Performance section is automatically hidden in the panel.
 
 The performance panel appears as a "⚡ Performance" tab at the bottom of Storybook.
