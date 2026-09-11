@@ -1,4 +1,4 @@
-import {page, userEvent} from '@vitest/browser/context'
+import {page, userEvent} from 'vitest/browser'
 import React, {useEffect} from 'react'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {render} from 'vitest-browser-react'

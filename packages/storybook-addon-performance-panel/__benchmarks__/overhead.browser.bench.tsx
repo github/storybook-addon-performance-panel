@@ -1,7 +1,7 @@
 import {flushSync} from 'react-dom'
 import {createRoot, type Root} from 'react-dom/client'
 import {addons} from 'storybook/preview-api'
-import {bench, type BenchOptions, describe, vi} from 'vitest'
+import {type BenchCompareOptions, describe, test, vi} from 'vitest'
 
 import {PERF_EVENTS} from '../core/performance-types'
 import {PerformanceMonitorCore} from '../core/preview-core'
@@ -32,7 +32,7 @@ type LifecycleState = 'addon disabled' | 'panel hidden' | 'panel visible'
 
 interface WorkloadHarness {
   run: () => Promise<void>
-  options: BenchOptions
+  options: BenchCompareOptions
 }
 
 const LIFECYCLE_STATES: readonly LifecycleState[] = ['addon disabled', 'panel hidden', 'panel visible']
@@ -41,7 +41,7 @@ const BASE_OPTIONS = {
   time: 500,
   warmupIterations: 5,
   warmupTime: 100,
-} satisfies BenchOptions
+} satisfies BenchCompareOptions
 const DOM_ROW_COUNT = 60
 const REACT_ROW_COUNT = 60
 
@@ -200,20 +200,26 @@ function createReactWorkload(state: LifecycleState): WorkloadHarness {
 
 describe('preview lifecycle startup and teardown', () => {
   for (const state of LIFECYCLE_STATES) {
-    bench(state, createLifecycleBenchmark(state), BASE_OPTIONS)
+    test(state, async ({bench}) => {
+      await bench(state, createLifecycleBenchmark(state)).run(BASE_OPTIONS)
+    })
   }
 })
 
 describe('raw DOM mutation workload', () => {
   for (const state of LIFECYCLE_STATES) {
-    const workload = createDomWorkload(state)
-    bench(state, workload.run, workload.options)
+    test(state, async ({bench}) => {
+      const workload = createDomWorkload(state)
+      await bench(state, workload.run).run(workload.options)
+    })
   }
 })
 
 describe('React commit workload', () => {
   for (const state of LIFECYCLE_STATES) {
-    const workload = createReactWorkload(state)
-    bench(state, workload.run, workload.options)
+    test(state, async ({bench}) => {
+      const workload = createReactWorkload(state)
+      await bench(state, workload.run).run(workload.options)
+    })
   }
 })
