@@ -32,22 +32,22 @@ jobs:
       - run: npm run build
       - name: Create release PR or publish
         id: changesets
-        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1
+        uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2
         with:
-          version: npm run version-packages
-          publish: npx changeset publish
-          title: "chore: version packages"
-          commit: "chore: version packages"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          version-script: npm run version-packages
+          publish-script: npx changeset publish
+          pr-title: 'chore: version packages'
+          commit-message: 'chore: version packages'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ''
           NPM_CONFIG_PROVENANCE: true
       - name: Configure changeset PR
-        if: steps.changesets.outputs.pullRequestNumber
+        if: steps.changesets.outputs['pr-number']
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PR=${{ steps.changesets.outputs.pullRequestNumber }}
+          PR=${{ steps.changesets.outputs['pr-number'] }}
           gh pr edit "$PR" --add-label "skip changeset"
           sha=$(gh pr view "$PR" --json headRefOid -q .headRefOid)
           gh api repos/${{ github.repository }}/statuses/$sha \
