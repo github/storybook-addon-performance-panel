@@ -1,6 +1,6 @@
 {
   "name": "storybook-addon-performance-panel",
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:26",
   "hostRequirements": {
     "cpus": 16,
     "memory": "64gb"

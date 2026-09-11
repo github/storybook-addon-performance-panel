@@ -51,7 +51,7 @@ When using `npm run dev`, each storybook is served at a stable `.localhost` URL 
 
 These are one time installations required to be able to test your changes locally as part of the pull request (PR) submission process.
 
-1. Install [Node.js](https://nodejs.org/) (v22 or later)
+1. Install [Node.js](https://nodejs.org/) v26 (the supported runtime minimum is v24)
 1. Install dependencies: `npm install`
 
 ## Submitting a pull request
