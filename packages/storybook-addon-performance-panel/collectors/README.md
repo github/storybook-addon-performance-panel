@@ -195,7 +195,7 @@ this.#observer.observe({type: 'longtask'})
 - `p95LoafDuration` - 95th percentile LoAF duration
 - `loafsWithScripts` - Count of LoAFs with script attribution
 - `loafsWithForcedStyleAndLayout` - Count of LoAFs with native forced style/layout attribution
-- `forcedReflowCount` - Deprecated compatibility alias for `loafsWithForcedStyleAndLayout`
+- `forcedReflowCount` - Deprecated unsupported compatibility field; always `0`
 - `lastLoaf` - Details of most recent LoAF (for real-time debugging)
 - `worstLoaf` - Details of longest LoAF (for debugging)
   - `duration`, `blockingDuration`, `renderStart`, `styleAndLayoutStart`

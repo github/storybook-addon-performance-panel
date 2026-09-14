@@ -211,9 +211,13 @@ export const THRESHOLDS = {
   CLS_GOOD: 0.1,
   /** CLS above this is poor - Core Web Vital */
   CLS_WARNING: 0.25,
-  /** Forced reflows above this needs attention */
+  /** Forced-layout LoAFs above this need attention */
+  FORCED_LAYOUT_LOAF_WARNING: 5,
+  /** Forced-layout LoAFs above this are serious */
+  FORCED_LAYOUT_LOAF_DANGER: 20,
+  /** @deprecated Use FORCED_LAYOUT_LOAF_WARNING. */
   FORCED_REFLOW_WARNING: 5,
-  /** Forced reflows above this is serious */
+  /** @deprecated Use FORCED_LAYOUT_LOAF_DANGER. */
   FORCED_REFLOW_DANGER: 20,
   /** DOM mutations/second above this may cause jank */
   DOM_MUTATIONS_PER_SECOND_WARNING: 250,
@@ -535,7 +539,7 @@ export interface PerformanceMetrics {
   currentSessionCLS: number
   /** Recent layout shifts with bounded source selectors and geometry */
   layoutShiftAttribution: LayoutShiftAttribution[]
-  /** @deprecated Use loafsWithForcedStyleAndLayout. This compatibility field mirrors that native LoAF count. */
+  /** @deprecated Unsupported after removal of global DOM instrumentation; always 0. */
   forcedReflowCount: number
   /** Average DOM mutations normalized to a one-second rate */
   domMutationsPerSecond: number
@@ -693,7 +697,7 @@ export const PERFORMANCE_METRIC_METADATA = {
   layoutShiftCount: {provenance: 'native', quality: 'high', unit: 'count'},
   currentSessionCLS: {provenance: 'derived', quality: 'high', unit: 'score'},
   layoutShiftAttribution: {provenance: 'native', quality: 'high', unit: 'structured'},
-  forcedReflowCount: {provenance: 'derived', quality: 'high', unit: 'count'},
+  forcedReflowCount: {provenance: 'unsupported', quality: 'unavailable', unit: 'count'},
   domMutationsPerSecond: {provenance: 'derived', quality: 'medium', unit: 'per-second'},
   domMutationsPerFrame: {provenance: 'derived', quality: 'medium', unit: 'count'},
   cssVarChanges: {provenance: 'derived', quality: 'medium', unit: 'count'},

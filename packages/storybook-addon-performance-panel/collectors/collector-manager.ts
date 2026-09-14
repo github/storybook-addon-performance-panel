@@ -396,7 +396,7 @@ export class CollectorManager {
       renderCascades: react.nestedUpdateCount,
       domElements: state.domElements,
       // Deprecated compatibility field; global forced-reflow instrumentation was removed.
-      forcedReflowCount: loaf.loafsWithForcedStyleAndLayout,
+      forcedReflowCount: 0,
       eventListenerCount: 0, // Not currently tracked by collectors
       observerCount: 0, // Not currently tracked by collectors
       cssVarChanges: style.cssVarChanges,

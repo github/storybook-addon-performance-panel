@@ -1054,7 +1054,7 @@ const LayoutAndInternalsSection = React.memo(function LayoutAndInternalsSection(
   onInspectElement,
 }: LayoutAndInternalsSectionProps) {
   const clsStatus = getStatus(layoutShiftScore, THRESHOLDS.CLS_GOOD, THRESHOLDS.CLS_WARNING)
-  const reflowStatus = getStatus(loafsWithForcedStyleAndLayout, 0, THRESHOLDS.FORCED_REFLOW_WARNING)
+  const forcedLayoutStatus = getStatus(loafsWithForcedStyleAndLayout, 0, THRESHOLDS.FORCED_LAYOUT_LOAF_WARNING)
   const jitterStatus = getZeroStatus(inputJitter)
   const latestShift = layoutShiftAttribution.at(-1)
   const latestShiftSource = latestShift?.sources[0]
@@ -1110,7 +1110,7 @@ const LayoutAndInternalsSection = React.memo(function LayoutAndInternalsSection(
         tooltip="Long animation frames with native forced style and layout attribution. Chrome/Edge only."
       >
         {loafSupported ? (
-          <StatusBadge variant={reflowStatus}>
+          <StatusBadge variant={forcedLayoutStatus}>
             <span>{loafsWithForcedStyleAndLayout === 0 ? '✨ ' : '💥 '}</span>
             <span>{loafsWithForcedStyleAndLayout}</span>
           </StatusBadge>

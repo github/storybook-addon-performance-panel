@@ -3,8 +3,9 @@ import {createRoot, type Root} from 'react-dom/client'
 import {addons} from 'storybook/preview-api'
 import {afterAll, type BenchCompareOptions, describe, test, vi} from 'vitest'
 
+import {ATTRIBUTION_ENTRY_LIMIT, ATTRIBUTION_SOURCE_LIMIT} from '../collectors/attribution'
 import {OverheadTelemetry} from '../core/overhead-telemetry'
-import {PERF_EVENTS} from '../core/performance-types'
+import {DEFAULT_METRICS, PERF_EVENTS, type PerformanceMetrics} from '../core/performance-types'
 import {PerformanceMonitorCore} from '../core/preview-core'
 import {PerformanceProvider, ProfiledComponent} from '../react/performance-decorator'
 
@@ -83,6 +84,42 @@ function nextIdlePeriod(): Promise<void> {
       setTimeout(resolve, 0)
     }
   })
+}
+
+function createMaxAttributionPayload(): PerformanceMetrics {
+  const longUrl = `/assets/${'x'.repeat(480)}.js`
+  const rect = {x: 10, y: 20, width: 300, height: 200}
+
+  return {
+    ...DEFAULT_METRICS,
+    layoutShiftAttribution: Array.from({length: ATTRIBUTION_ENTRY_LIMIT}, (_, entryIndex) => ({
+      startTime: entryIndex,
+      score: 0.01,
+      sources: Array.from({length: ATTRIBUTION_SOURCE_LIMIT}, (_, sourceIndex) => ({
+        selector: `#layout-shift-source-${String(entryIndex)}-${String(sourceIndex)}`,
+        previousRect: rect,
+        currentRect: {...rect, x: rect.x + sourceIndex + 1},
+      })),
+    })),
+    scriptResourceCount: ATTRIBUTION_ENTRY_LIMIT,
+    scriptResources: Array.from({length: ATTRIBUTION_ENTRY_LIMIT}, (_, index) => ({
+      url: longUrl,
+      initiatorType: 'script',
+      startTime: index,
+      duration: index + 1,
+    })),
+    elementTimingCount: ATTRIBUTION_ENTRY_LIMIT,
+    elementTimings: Array.from({length: ATTRIBUTION_ENTRY_LIMIT}, (_, index) => ({
+      identifier: `element-${String(index)}`,
+      renderTime: index + 1,
+      rawRenderTime: index + 101,
+      loadTime: index,
+      rawLoadTime: index + 100,
+      selector: `#element-${String(index)}`,
+      tagName: 'img',
+      url: longUrl,
+    })),
+  }
 }
 
 async function runTelemetryProbe(): Promise<void> {
@@ -280,6 +317,17 @@ describe('React commit workload', () => {
   }
 })
 
+describe('maximum attribution payload', () => {
+  const payload = createMaxAttributionPayload()
+
+  test('serialization', async ({bench}) => {
+    await bench('bounded attribution payload', () => JSON.stringify(payload)).run(BASE_OPTIONS)
+  })
+})
+
 afterAll(async () => {
   await runTelemetryProbe()
+  const payloadTelemetry = new OverheadTelemetry()
+  payloadTelemetry.measureSerialization(createMaxAttributionPayload())
+  console.info('MAX_ATTRIBUTION_PAYLOAD_TELEMETRY', JSON.stringify(payloadTelemetry.snapshot().serialization))
 })

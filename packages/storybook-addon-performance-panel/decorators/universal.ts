@@ -75,7 +75,7 @@ function waitForStorybookRoot(core: PerformanceMonitorCore, onFound: (root: HTML
  * Framework-agnostic Storybook decorator for performance monitoring.
  *
  * Monitors all non-React metrics: frame timing, input latency, layout shifts,
- * long tasks, memory, style mutations, forced reflows, and more.
+ * long tasks, memory, style mutations, forced-layout LoAF attribution, and more.
  *
  * React render profiling (mount count, update duration, memoization efficiency)
  * is NOT available in this universal version — use the React-specific decorator

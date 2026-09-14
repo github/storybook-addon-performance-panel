@@ -267,14 +267,14 @@ npm run tsc -w @github-ui/storybook-addon-performance-panel
 # Lint
 npm run lint -w @github-ui/storybook-addon-performance-panel
 
-# Write a candidate benchmark without replacing the tracked baseline
+# Write a candidate benchmark without replacing the saved local baseline
 cd packages/storybook-addon-performance-panel
-../../node_modules/.bin/vitest bench --config vitest.benchmark.config.ts --outputJson .overhead-current.json
+../../node_modules/.bin/vitest bench --config vitest.benchmark.config.ts --reporter=default --reporter=json --outputFile.json=.overhead-current.json
 npm run benchmark:compare -- .overhead-current.json
 rm .overhead-current.json
 ```
 
-The benchmark also prints one internal `OVERHEAD_TELEMETRY_SNAPSHOT` after timed samples complete. It reports collector callback timing, `computeMetrics()` timing, serialization duration and bytes, scan counts, and current/peak pending work. This telemetry is opt-in benchmark instrumentation and is not part of `PerformanceMetrics` or live addon payloads.
+The benchmark also measures a fully populated bounded-attribution payload and prints `OVERHEAD_TELEMETRY_SNAPSHOT` and `MAX_ATTRIBUTION_PAYLOAD_TELEMETRY` after timed samples complete. They report collector callback timing, `computeMetrics()` timing, serialization duration and bytes, scan counts, and current/peak pending work. This telemetry is opt-in benchmark instrumentation and is not part of `PerformanceMetrics` or live addon payloads.
 
 ## Related Files
 

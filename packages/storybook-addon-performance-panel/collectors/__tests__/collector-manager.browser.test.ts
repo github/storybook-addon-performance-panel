@@ -1,7 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {CollectorManager} from '../../collectors/collector-manager'
-import {DOM_MUTATION_SAMPLE_INTERVAL_MS} from '../../collectors/style-mutation-collector'
 import {OverheadTelemetry} from '../../core/overhead-telemetry'
 import type {RenderInfo} from '../../core/performance-types'
 
@@ -467,9 +466,21 @@ describe('CollectorManager', () => {
       expect(metrics.scriptResourceLoadTime).toBe(deprecatedMetrics.scriptEvalTime)
       expect(metrics.layerPromotionCandidates).toBe(deprecatedMetrics.compositorLayers)
       expect(metrics.inferredDroppedFrames).toBe(deprecatedMetrics.droppedFrames)
-      expect(metrics.loafsWithForcedStyleAndLayout).toBe(deprecatedMetrics.forcedReflowCount)
+      expect(deprecatedMetrics.forcedReflowCount).toBe(0)
       expect(deprecatedMetrics.domMutationsPerFrame).toBe(3)
       expect(metrics.domMutationsPerSecond).toBe(10)
+    })
+
+    it('does not report native LoAF evidence as the removed forced-reflow metric', () => {
+      const loafMetrics = manager.collectors.loaf.getMetrics()
+      vi.spyOn(manager.collectors.loaf, 'getMetrics').mockReturnValue({
+        ...loafMetrics,
+        loafsWithForcedStyleAndLayout: 2,
+      })
+
+      const metrics = manager.computeMetrics()
+      expect(metrics.loafsWithForcedStyleAndLayout).toBe(2)
+      expect((metrics as unknown as Record<string, unknown>).forcedReflowCount).toBe(0)
     })
 
     it('rounds numeric values appropriately', () => {

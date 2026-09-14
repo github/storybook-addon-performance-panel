@@ -20,32 +20,66 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 async function readBenchmarks(filePath: string): Promise<Map<string, BenchmarkSummary>> {
   const parsed: unknown = JSON.parse(await readFile(filePath, 'utf8'))
-  if (!isRecord(parsed) || !Array.isArray(parsed.files)) {
+  if (!isRecord(parsed)) {
     throw new Error(`${filePath} is not a Vitest benchmark result`)
   }
 
   const benchmarks = new Map<string, BenchmarkSummary>()
-  for (const file of parsed.files) {
-    if (!isRecord(file) || !Array.isArray(file.groups)) continue
-    for (const group of file.groups) {
-      if (!isRecord(group) || typeof group.fullName !== 'string' || !Array.isArray(group.benchmarks)) continue
-      for (const benchmark of group.benchmarks) {
-        if (
-          !isRecord(benchmark) ||
-          typeof benchmark.name !== 'string' ||
-          typeof benchmark.mean !== 'number' ||
-          typeof benchmark.p99 !== 'number'
-        ) {
-          continue
+  if (Array.isArray(parsed.files)) {
+    for (const file of parsed.files) {
+      if (!isRecord(file) || !Array.isArray(file.groups)) continue
+      for (const group of file.groups) {
+        if (!isRecord(group) || typeof group.fullName !== 'string' || !Array.isArray(group.benchmarks)) continue
+        for (const benchmark of group.benchmarks) {
+          if (
+            !isRecord(benchmark) ||
+            typeof benchmark.name !== 'string' ||
+            typeof benchmark.mean !== 'number' ||
+            typeof benchmark.p99 !== 'number'
+          ) {
+            continue
+          }
+          benchmarks.set(`${group.fullName}::${benchmark.name}`, {
+            group: group.fullName.split(' > ').at(-1) ?? group.fullName,
+            name: benchmark.name,
+            mean: benchmark.mean,
+            p99: benchmark.p99,
+          })
         }
-        benchmarks.set(`${group.fullName}::${benchmark.name}`, {
-          group: group.fullName.split(' > ').at(-1) ?? group.fullName,
-          name: benchmark.name,
-          mean: benchmark.mean,
-          p99: benchmark.p99,
-        })
       }
     }
+  }
+
+  if (Array.isArray(parsed.testResults)) {
+    for (const testResult of parsed.testResults) {
+      if (!isRecord(testResult) || !Array.isArray(testResult.assertionResults)) continue
+      for (const assertion of testResult.assertionResults) {
+        if (!isRecord(assertion) || !Array.isArray(assertion.benchmarks)) continue
+        const ancestorTitles = Array.isArray(assertion.ancestorTitles)
+          ? assertion.ancestorTitles.filter((title): title is string => typeof title === 'string')
+          : []
+        const groupName = ancestorTitles.at(-1) ?? 'benchmark'
+        const groupKey = ancestorTitles.join(' > ') || groupName
+
+        for (const benchmark of assertion.benchmarks) {
+          if (!isRecord(benchmark) || !Array.isArray(benchmark.tasks)) continue
+          for (const task of benchmark.tasks) {
+            if (!isRecord(task) || typeof task.name !== 'string' || !isRecord(task.latency)) continue
+            if (typeof task.latency.mean !== 'number' || typeof task.latency.p99 !== 'number') continue
+            benchmarks.set(`${groupKey}::${task.name}`, {
+              group: groupName,
+              name: task.name,
+              mean: task.latency.mean,
+              p99: task.latency.p99,
+            })
+          }
+        }
+      }
+    }
+  }
+
+  if (benchmarks.size === 0) {
+    throw new Error(`${filePath} does not contain benchmark measurements`)
   }
   return benchmarks
 }
