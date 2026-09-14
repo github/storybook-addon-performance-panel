@@ -1,5 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {ATTRIBUTION_ENTRY_LIMIT} from '../attribution'
 import {PaintCollector} from '../paint-collector'
 
 /** Poll until a condition is met (MutationObserver + idle callback) */
@@ -82,6 +83,8 @@ describe('PaintCollector', () => {
       const metrics = collector.getMetrics()
       expect(metrics.paintCount).toBe(0)
       expect(metrics.scriptEvalTime).toBe(0)
+      expect(metrics.scriptResourceCount).toBe(0)
+      expect(metrics.scriptResources).toEqual([])
       expect(metrics.compositorLayers).toBeNull()
     })
 
@@ -103,13 +106,13 @@ describe('PaintCollector', () => {
       expect(metrics.paintCount).toBe(2)
     })
 
-    it('accumulates initial paint milestones', () => {
+    it('deduplicates initial paint milestones across observer deliveries', () => {
       collector.start()
-      const startTime = performance.now()
+      const startTime = performance.now() - 1
 
       paintObserverCallback?.(
         {
-          getEntries: () => [{entryType: 'paint', startTime}],
+          getEntries: () => [{entryType: 'paint', name: 'first-paint', startTime}],
         } as unknown as PerformanceObserverEntryList,
         {} as PerformanceObserver,
       )
@@ -117,15 +120,15 @@ describe('PaintCollector', () => {
       paintObserverCallback?.(
         {
           getEntries: () => [
-            {entryType: 'paint', startTime},
-            {entryType: 'paint', startTime},
+            {entryType: 'paint', name: 'first-paint', startTime},
+            {entryType: 'paint', name: 'first-contentful-paint', startTime: startTime + 1},
           ],
         } as unknown as PerformanceObserverEntryList,
         {} as PerformanceObserver,
       )
 
       const metrics = collector.getMetrics()
-      expect(metrics.paintCount).toBe(3)
+      expect(metrics.paintCount).toBe(2)
     })
 
     it('tracks script resource loading time', () => {
@@ -137,6 +140,7 @@ describe('PaintCollector', () => {
           getEntries: () => [
             {
               entryType: 'resource',
+              name: '/assets/story.js',
               startTime,
               initiatorType: 'script',
               fetchStart: 100,
@@ -149,6 +153,10 @@ describe('PaintCollector', () => {
 
       const metrics = collector.getMetrics()
       expect(metrics.scriptEvalTime).toBe(50)
+      expect(metrics.scriptResourceCount).toBe(1)
+      expect(metrics.scriptResources).toEqual([
+        expect.objectContaining({url: '/assets/story.js', initiatorType: 'script', duration: 50}),
+      ])
     })
 
     it('accumulates script time from multiple scripts', () => {
@@ -169,6 +177,57 @@ describe('PaintCollector', () => {
       expect(metrics.scriptEvalTime).toBe(80) // 30 + 50
     })
 
+    it('counts script resources with zero-duration timing', () => {
+      collector.start()
+      const startTime = performance.now()
+
+      resourceObserverCallback?.(
+        {
+          getEntries: () => [
+            {
+              entryType: 'resource',
+              name: '/assets/cached.js',
+              initiatorType: 'script',
+              startTime,
+              fetchStart: 100,
+              responseEnd: 100,
+            },
+          ],
+        } as unknown as PerformanceObserverEntryList,
+        {} as PerformanceObserver,
+      )
+
+      expect(collector.getMetrics()).toMatchObject({
+        scriptEvalTime: 0,
+        scriptResourceCount: 1,
+        scriptResources: [expect.objectContaining({url: '/assets/cached.js', duration: 0})],
+      })
+    })
+
+    it('retains only the slowest bounded script resources', () => {
+      collector.start()
+      const startTime = performance.now()
+      const entries = Array.from({length: ATTRIBUTION_ENTRY_LIMIT + 5}, (_, index) => ({
+        entryType: 'resource',
+        name: `/script-${String(index)}.js`,
+        initiatorType: 'script',
+        startTime,
+        fetchStart: 100,
+        responseEnd: 101 + index,
+      }))
+
+      resourceObserverCallback?.(
+        {getEntries: () => entries} as unknown as PerformanceObserverEntryList,
+        {} as PerformanceObserver,
+      )
+
+      const metrics = collector.getMetrics()
+      expect(metrics.scriptResourceCount).toBe(ATTRIBUTION_ENTRY_LIMIT + 5)
+      expect(metrics.scriptResources).toHaveLength(ATTRIBUTION_ENTRY_LIMIT)
+      expect(metrics.scriptResources[0]?.url).toBe('/script-24.js')
+      expect(metrics.scriptResources.at(-1)?.url).toBe('/script-5.js')
+    })
+
     it('ignores non-script resources', () => {
       collector.start()
       const startTime = performance.now()
@@ -187,13 +246,13 @@ describe('PaintCollector', () => {
       expect(metrics.scriptEvalTime).toBe(0)
     })
 
-    it('ignores buffered entries from before the collector started', () => {
+    it('includes buffered paint milestones but ignores stale resource entries', () => {
       const staleStartTime = performance.now() - 1
       collector.start()
 
       paintObserverCallback?.(
         {
-          getEntries: () => [{entryType: 'paint', startTime: staleStartTime}],
+          getEntries: () => [{entryType: 'paint', name: 'first-paint', startTime: staleStartTime}],
         } as unknown as PerformanceObserverEntryList,
         {} as PerformanceObserver,
       )
@@ -212,7 +271,7 @@ describe('PaintCollector', () => {
         {} as PerformanceObserver,
       )
 
-      expect(collector.getMetrics()).toMatchObject({paintCount: 0, scriptEvalTime: 0})
+      expect(collector.getMetrics()).toMatchObject({paintCount: 1, scriptEvalTime: 0, scriptResourceCount: 0})
     })
   })
 
