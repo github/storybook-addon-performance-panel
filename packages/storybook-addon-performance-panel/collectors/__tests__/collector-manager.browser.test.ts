@@ -326,6 +326,32 @@ describe('CollectorManager', () => {
       expect(metrics.domElements).toBe(150)
     })
 
+    it('preserves raw Element Timing timestamps', () => {
+      vi.spyOn(manager.collectors.elementTiming, 'getMetrics').mockReturnValue({
+        elementTimingSupported: true,
+        elementCount: 1,
+        largestRenderTime: 125.678,
+        elements: [
+          {
+            identifier: 'hero',
+            renderTime: 125.678,
+            rawRenderTime: 1_125.6789,
+            loadTime: 100.123,
+            rawLoadTime: 1_100.1234,
+            selector: '#hero',
+            tagName: 'img',
+          },
+        ],
+      })
+
+      expect(manager.computeMetrics().elementTimings[0]).toMatchObject({
+        renderTime: 125.7,
+        rawRenderTime: 1_125.6789,
+        loadTime: 100.1,
+        rawLoadTime: 1_100.1234,
+      })
+    })
+
     it('copies sparkline arrays to avoid external mutation', () => {
       manager.start()
 

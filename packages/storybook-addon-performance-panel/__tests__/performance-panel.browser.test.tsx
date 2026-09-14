@@ -107,6 +107,18 @@ describe('PerformancePanel visibility', () => {
       scriptResourceLoadTime: 42,
       scriptResourceCount: 1,
       scriptResources: [{url: '/assets/story.js', initiatorType: 'script', startTime: 5, duration: 42}],
+      elementTimingSupported: true,
+      elementTimingCount: 25,
+      largestElementRenderTime: 25,
+      elementTimings: Array.from({length: 20}, (_, index) => ({
+        identifier: `element-${String(index)}`,
+        renderTime: index + 1,
+        rawRenderTime: index + 1,
+        loadTime: 0,
+        rawLoadTime: 0,
+        selector: `#element-${String(index)}`,
+        tagName: 'div',
+      })),
     })
 
     await expect.poll(() => document.body.textContent).toContain('Pointer Frame Interval')
@@ -122,5 +134,6 @@ describe('PerformancePanel visibility', () => {
     await expect.poll(() => document.body.textContent).toContain('120 Hz estimate')
     await expect.poll(() => document.body.textContent).toContain('Latest Shift Source')
     await expect.poll(() => document.body.textContent).toContain('Script Resources')
+    await expect.poll(() => document.body.textContent).toMatch(/Elements[\s\S]*25[\s\S]*20 retained/)
   })
 })

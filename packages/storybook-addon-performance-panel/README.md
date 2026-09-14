@@ -143,7 +143,7 @@ The addon consists of two main parts:
 - **Heap Usage**: Current JS heap size
 - **Memory Delta**: Change from baseline since last reset
 - **GC Pressure**: Memory allocation rate (MB/s)
-- **Document Paint Milestones**: Native first-paint and first-contentful-paint entries observed after collection starts (not component paint timings)
+- **Document Paint Milestones**: Native first-paint and first-contentful-paint entries available from the current document's Performance Timeline (not component paint timings)
 - **Script Resource Load Time**: Cumulative loading duration derived from script Resource Timing entries
 - **Script Resource Attribution**: Bounded slowest-resource URLs, initiator types, relative start times, and durations
 - **Layer-Promotion Candidates**: Elements matching CSS layer-promotion heuristics (not the browser's compositor layer count)

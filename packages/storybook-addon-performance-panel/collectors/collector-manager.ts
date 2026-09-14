@@ -400,9 +400,9 @@ export class CollectorManager {
       elementTimings: elementTiming.elements.map(e => ({
         identifier: e.identifier,
         renderTime: Math.round(e.renderTime * 10) / 10,
-        rawRenderTime: Math.round(e.rawRenderTime * 10) / 10,
+        rawRenderTime: e.rawRenderTime,
         loadTime: Math.round(e.loadTime * 10) / 10,
-        rawLoadTime: Math.round(e.rawLoadTime * 10) / 10,
+        rawLoadTime: e.rawLoadTime,
         selector: e.selector,
         tagName: e.tagName,
         ...(e.url ? {url: e.url} : {}),

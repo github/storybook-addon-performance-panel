@@ -451,7 +451,7 @@ export interface PerformanceMetrics {
   maxPointerFrameInterval: number
   /** Pointer frame interval jitter count */
   pointerFrameJitter: number
-  /** Number of document-level initial paint milestones observed after collection starts */
+  /** Number of initial paint milestones available from the current document's Performance Timeline */
   initialPaintMilestones: number
   /** @deprecated Use pointerFrameInterval. */
   paintTime: number

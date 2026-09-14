@@ -979,8 +979,8 @@ const ElementTimingSection = React.memo(function ElementTimingSection({
     <MetricsSection icon="🎯" title="Element Timing">
       <Metric
         label="Elements"
-        tooltip="Number of elements with `elementtiming` attribute tracked"
-        detail={sortedElements.length > 3 ? <>{sortedElements.length} total</> : null}
+        tooltip="Total elements with `elementtiming` observed; attribution details retain a bounded recent set"
+        detail={sortedElements.length > 3 ? <>{sortedElements.length} retained</> : null}
       >
         <StatusBadge variant="success">
           <span>📍 </span>
@@ -1375,7 +1375,7 @@ const MemoryAndRenderingSection = React.memo(function MemoryAndRenderingSection(
         </Metric>
         <Metric
           label="Document Paint Milestones"
-          tooltip="Document-level first-paint and first-contentful-paint entries observed after collection starts. These are not component paint timings."
+          tooltip="Document-level first-paint and first-contentful-paint entries available from the current document's Performance Timeline. These are not component paint timings."
         >
           {initialPaintMilestones}
         </Metric>
@@ -1430,7 +1430,7 @@ const MemoryAndRenderingSection = React.memo(function MemoryAndRenderingSection(
 
       <Metric
         label="Document Paints / Layer Candidates"
-        tooltip="Document-level paint milestones observed after collection starts and heuristic CSS layer-promotion candidates."
+        tooltip="Document-level paint milestones available from the current document's Performance Timeline and heuristic CSS layer-promotion candidates."
       >
         <span>{initialPaintMilestones}</span>
         <SecondaryValue>
