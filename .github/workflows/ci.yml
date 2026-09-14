@@ -102,10 +102,39 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  storybook-compatibility:
+    name: Storybook ${{ matrix.storybook-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        storybook-version: ['10.6.0', 'next']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+      - name: Configure Storybook ${{ matrix.storybook-version }}
+        run: |
+          npm pkg set 'devDependencies.@storybook/react-vite=${{ matrix.storybook-version }}'
+          npm pkg set 'dependencies.@storybook/addon-docs=${{ matrix.storybook-version }}' 'dependencies.@storybook/react-vite=${{ matrix.storybook-version }}' 'dependencies.storybook=${{ matrix.storybook-version }}' -w @github-ui/examples-react
+          npm pkg set 'dependencies.@storybook/html-vite=${{ matrix.storybook-version }}' 'dependencies.storybook=${{ matrix.storybook-version }}' -w @github-ui/examples-html
+          npm pkg set 'dependencies.storybook=${{ matrix.storybook-version }}' -w @github-ui/storybook-config
+      - run: npm install --package-lock=false
+      - run: npm run tsc
+      - run: npm run build
+      - run: npm run build-storybook -w @github-ui/examples-react
+        env:
+          STORYBOOK_DISABLE_TELEMETRY: 1
+      - run: npm run build-storybook -w @github-ui/examples-html
+        env:
+          STORYBOOK_DISABLE_TELEMETRY: 1
+
   ci:
     name: CI
     if: always()
-    needs: [install, lint, typecheck, test]
+    needs: [install, lint, typecheck, test, storybook-compatibility]
     runs-on: ubuntu-latest
     steps:
       - run: |

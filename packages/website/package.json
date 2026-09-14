@@ -11,6 +11,7 @@
   "dependencies": {
     "@fontsource-variable/mona-sans": "^5.3.0",
     "@github-ui/storybook-config": "*",
+    "@primer/octicons-react": "^19.35.0",
     "@primer/primitives": "^11.10.0",
     "@primer/react": "^38.39.0",
     "@shikijs/vscode-textmate": "10.0.2",
