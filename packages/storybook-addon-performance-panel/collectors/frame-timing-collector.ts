@@ -222,10 +222,7 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
 
   #trackSlowerCadence(interval: number, provisionalDrops: number): void {
     const candidateAverage = computeAverage(this.#slowerCadenceCandidates.map(candidate => candidate.interval))
-    if (
-      candidateAverage > 0 &&
-      Math.abs(interval - candidateAverage) / candidateAverage > FRAME_CADENCE_TOLERANCE
-    ) {
+    if (candidateAverage > 0 && Math.abs(interval - candidateAverage) / candidateAverage > FRAME_CADENCE_TOLERANCE) {
       this.#slowerCadenceCandidates = []
     }
 
