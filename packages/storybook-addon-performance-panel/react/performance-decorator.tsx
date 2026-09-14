@@ -52,7 +52,7 @@
  *
  * ### Layout Stability
  * - **CLS (Cumulative Layout Shift)**: Layout shift score without user input
- * - **Forced Reflows**: Layout property reads after style writes
+ * - **Forced Layout LoAFs**: Native forced style/layout attribution on long animation frames
  * - **Style Writes**: Inline style mutations observed via MutationObserver
  * - **CSS Variable Changes**: Custom property changes in inline styles
  *
@@ -119,10 +119,9 @@ interface PerformanceProviderProps {
  * 1. Setting up PerformanceObserver for long tasks, layout shifts, paints, resources
  * 2. Running a requestAnimationFrame loop for frame timing
  * 3. Installing a MutationObserver for style writes and DOM mutation tracking
- * 4. Patching HTMLElement getters to detect forced reflows
- * 5. Listening for input events to measure latency
- * 6. Providing context for React Profiler integration
- * 7. Emitting metrics to the panel via Storybook channel
+ * 4. Listening for input events to measure latency
+ * 5. Providing context for React Profiler integration
+ * 6. Emitting metrics to the panel via Storybook channel
  *
  * @component
  * @param props - Component props
@@ -284,7 +283,7 @@ export const ProfiledComponent = memo(function ProfiledComponent({
  * When applied, this decorator:
  * 1. Wraps the story in a PerformanceProvider (starts all metric collection)
  * 2. Wraps the story in a ProfiledComponent (captures React render timing)
- * 3. Emits metrics to the addon panel every 50ms
+ * 3. Emits metrics to the addon panel every 250ms while visible
  *
  * Apply to individual stories or globally in preview.tsx.
  *

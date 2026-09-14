@@ -41,6 +41,7 @@ describe('LongAnimationFrameCollector', () => {
       expect(metrics.avgLoafDuration).toBe(0)
       expect(metrics.p95LoafDuration).toBe(0)
       expect(metrics.loafsWithScripts).toBe(0)
+      expect(metrics.loafsWithForcedStyleAndLayout).toBe(0)
       expect(metrics.lastLoaf).toBeNull()
       expect(metrics.worstLoaf).toBeNull()
     })
@@ -122,6 +123,7 @@ describe('LongAnimationFrameCollector', () => {
       forcedStyleAndLayoutDuration: 15,
       topScript: {sourceURL: '/story.js', forcedStyleAndLayoutDuration: 12},
     })
+    expect(collector.getMetrics().loafsWithForcedStyleAndLayout).toBe(1)
   })
 
   describe('start/stop', () => {

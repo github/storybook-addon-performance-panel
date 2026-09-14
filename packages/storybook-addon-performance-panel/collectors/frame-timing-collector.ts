@@ -3,6 +3,7 @@
  * @module collectors/FrameTimingCollector
  */
 
+import type {OverheadTelemetry} from '../core/overhead-telemetry'
 import {
   FRAME_INTERVAL_MAX_MS,
   FRAME_INTERVAL_MIN_MS,
@@ -66,9 +67,11 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
   #animationId: number | null = null
   #onFrame?: (delta: number) => void
   #running = false
+  #overheadTelemetry: OverheadTelemetry | undefined
 
-  constructor(onFrame?: (delta: number) => void) {
+  constructor(onFrame?: (delta: number) => void, overheadTelemetry?: OverheadTelemetry) {
     this.#onFrame = onFrame
+    this.#overheadTelemetry = overheadTelemetry
   }
 
   start(): void {
@@ -79,7 +82,7 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
     this.#resetCalibration()
     document.addEventListener('visibilitychange', this.#handleVisibilityChange)
     if (!document.hidden) {
-      this.#animationId = requestAnimationFrame(this.#measure)
+      this.#scheduleFrame()
     }
   }
 
@@ -91,6 +94,7 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
     if (this.#animationId !== null) {
       cancelAnimationFrame(this.#animationId)
       this.#animationId = null
+      this.#overheadTelemetry?.setPendingWork('frame.raf', 0)
     }
     this.#lastTime = null
   }
@@ -125,36 +129,57 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
 
   #measure = (timestamp: DOMHighResTimeStamp): void => {
     this.#animationId = null
-    if (!this.#running || document.hidden) return
+    this.#overheadTelemetry?.setPendingWork('frame.raf', 0)
+    const processFrame = () => {
+      if (!this.#running || document.hidden) return
 
-    if (this.#lastTime !== null) {
-      const delta = timestamp - this.#lastTime
+      if (this.#lastTime !== null) {
+        const delta = timestamp - this.#lastTime
 
-      if (delta > 0) {
-        this.#processFrame(delta)
-        this.#onFrame?.(delta)
+        if (delta > 0) {
+          this.#processFrame(delta)
+          this.#onFrame?.(delta)
+        }
       }
-    }
-    this.#lastTime = timestamp
+      this.#lastTime = timestamp
 
-    this.#animationId = requestAnimationFrame(this.#measure)
+      this.#scheduleFrame()
+    }
+    if (this.#overheadTelemetry) {
+      this.#overheadTelemetry.measureCallback('frame.raf', processFrame)
+    } else {
+      processFrame()
+    }
   }
 
   #handleVisibilityChange = (): void => {
-    if (document.hidden && this.#lastTime !== null) {
-      this.#excludedFrameIntervals++
-    }
-    this.#lastTime = null
-    this.#resetCalibration()
-
-    if (document.hidden) {
-      if (this.#animationId !== null) {
-        cancelAnimationFrame(this.#animationId)
-        this.#animationId = null
+    const processVisibilityChange = () => {
+      if (document.hidden && this.#lastTime !== null) {
+        this.#excludedFrameIntervals++
       }
-    } else if (this.#running && this.#animationId === null) {
-      this.#animationId = requestAnimationFrame(this.#measure)
+      this.#lastTime = null
+      this.#resetCalibration()
+
+      if (document.hidden) {
+        if (this.#animationId !== null) {
+          cancelAnimationFrame(this.#animationId)
+          this.#animationId = null
+          this.#overheadTelemetry?.setPendingWork('frame.raf', 0)
+        }
+      } else if (this.#running && this.#animationId === null) {
+        this.#scheduleFrame()
+      }
     }
+    if (this.#overheadTelemetry) {
+      this.#overheadTelemetry.measureCallback('frame.visibility', processVisibilityChange)
+    } else {
+      processVisibilityChange()
+    }
+  }
+
+  #scheduleFrame(): void {
+    this.#animationId = requestAnimationFrame(this.#measure)
+    this.#overheadTelemetry?.setPendingWork('frame.raf', 1)
   }
 
   #processFrame(delta: number): void {

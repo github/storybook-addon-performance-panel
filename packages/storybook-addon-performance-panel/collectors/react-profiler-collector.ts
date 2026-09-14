@@ -3,6 +3,7 @@
  * @module collectors/ReactProfilerCollector
  */
 
+import type {OverheadTelemetry} from '../core/overhead-telemetry'
 import type {ReactMetrics, RenderInfo} from '../core/performance-types'
 import type {MetricCollector} from './types'
 import {addToWindow} from './utils'
@@ -63,6 +64,11 @@ export class ReactProfilerCollector implements MetricCollector<ReactMetrics> {
 
   // Callback for external listeners (e.g., store updates)
   #onProfilerUpdate?: (storyId: string, profilerId: string, metrics: ReactMetrics) => void
+  #overheadTelemetry: OverheadTelemetry | undefined
+
+  constructor(overheadTelemetry?: OverheadTelemetry) {
+    this.#overheadTelemetry = overheadTelemetry
+  }
 
   start(): void {
     // No setup needed - metrics come from reportRender calls
@@ -135,6 +141,16 @@ export class ReactProfilerCollector implements MetricCollector<ReactMetrics> {
    * @param info - Render information from React Profiler callback
    */
   reportRender = (info: RenderInfo): void => {
+    if (this.#overheadTelemetry) {
+      this.#overheadTelemetry.measureCallback('react.profiler', () => {
+        this.#processRender(info)
+      })
+    } else {
+      this.#processRender(info)
+    }
+  }
+
+  #processRender(info: RenderInfo): void {
     // Calculate commit lag: time from render start to commit, minus actual render time
     // This represents time spent waiting (e.g., for other work, Suspense, etc.)
     const commitLag = Math.max(0, info.commitTime - info.startTime - info.actualDuration)

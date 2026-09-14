@@ -8,6 +8,7 @@
  * @see https://w3c.github.io/long-animation-frames/
  */
 
+import type {OverheadTelemetry} from '../core/overhead-telemetry'
 import type {LoAFDetails, LoAFScriptAttribution} from '../core/performance-types'
 import {ATTRIBUTION_LABEL_MAX_LENGTH, ATTRIBUTION_URL_MAX_LENGTH, limitAttributionString} from './attribution'
 import type {MetricCollector} from './types'
@@ -79,6 +80,8 @@ export interface LongAnimationFrameMetrics {
   p95LoafDuration: number
   /** Count of LoAFs with script attribution */
   loafsWithScripts: number
+  /** Count of LoAFs with native forced style/layout attribution */
+  loafsWithForcedStyleAndLayout: number
   /** Most recent LoAF details for debugging */
   lastLoaf: LoAFDetails | null
   /** Details about the worst (longest) LoAF */
@@ -107,14 +110,17 @@ export class LongAnimationFrameCollector implements MetricCollector<LongAnimatio
   #longestLoafBlockingDuration = 0
   #loafDurations: number[] = []
   #loafsWithScripts = 0
+  #loafsWithForcedStyleAndLayout = 0
   #lastLoaf: LongAnimationFrameMetrics['lastLoaf'] = null
   #worstLoaf: LongAnimationFrameMetrics['worstLoaf'] = null
   /** Entries before this timestamp belong to an earlier story or reset. */
   #epochMs = 0
 
   #observer: PerformanceObserver | null = null
+  #overheadTelemetry: OverheadTelemetry | undefined
 
-  constructor() {
+  constructor(overheadTelemetry?: OverheadTelemetry) {
+    this.#overheadTelemetry = overheadTelemetry
     this.#loafSupported = this.#checkSupport()
   }
 
@@ -132,8 +138,15 @@ export class LongAnimationFrameCollector implements MetricCollector<LongAnimatio
     this.#epochMs = performance.now()
     try {
       this.#observer = new PerformanceObserver(list => {
-        for (const entry of list.getEntries()) {
-          this.#processEntry(entry as PerformanceLongAnimationFrameTiming)
+        const processEntries = () => {
+          for (const entry of list.getEntries()) {
+            this.#processEntry(entry as PerformanceLongAnimationFrameTiming)
+          }
+        }
+        if (this.#overheadTelemetry) {
+          this.#overheadTelemetry.measureCallback('loaf.entries', processEntries)
+        } else {
+          processEntries()
         }
       })
       this.#observer.observe({type: 'long-animation-frame', buffered: true})
@@ -180,6 +193,9 @@ export class LongAnimationFrameCollector implements MetricCollector<LongAnimatio
       (total, script) => total + (script.forcedStyleAndLayoutDuration ?? 0),
       0,
     )
+    if (forcedStyleAndLayoutDuration > 0) {
+      this.#loafsWithForcedStyleAndLayout++
+    }
 
     // Build frame details
     const frameDetails = {
@@ -215,6 +231,7 @@ export class LongAnimationFrameCollector implements MetricCollector<LongAnimatio
     this.#longestLoafBlockingDuration = 0
     this.#loafDurations = []
     this.#loafsWithScripts = 0
+    this.#loafsWithForcedStyleAndLayout = 0
     this.#lastLoaf = null
     this.#worstLoaf = null
     this.#epochMs = performance.now()
@@ -230,6 +247,7 @@ export class LongAnimationFrameCollector implements MetricCollector<LongAnimatio
       avgLoafDuration: Math.round(computeAverage(this.#loafDurations)),
       p95LoafDuration: Math.round(computeP95(this.#loafDurations)),
       loafsWithScripts: this.#loafsWithScripts,
+      loafsWithForcedStyleAndLayout: this.#loafsWithForcedStyleAndLayout,
       lastLoaf: this.#lastLoaf,
       worstLoaf: this.#worstLoaf,
     }

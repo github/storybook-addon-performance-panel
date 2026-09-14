@@ -1,9 +1,11 @@
 import {flushSync} from 'react-dom'
 import {createRoot, type Root} from 'react-dom/client'
 import {addons} from 'storybook/preview-api'
-import {type BenchCompareOptions, describe, test, vi} from 'vitest'
+import {afterAll, type BenchCompareOptions, describe, test, vi} from 'vitest'
 
-import {PERF_EVENTS} from '../core/performance-types'
+import {ATTRIBUTION_ENTRY_LIMIT, ATTRIBUTION_SOURCE_LIMIT} from '../collectors/attribution'
+import {OverheadTelemetry} from '../core/overhead-telemetry'
+import {DEFAULT_METRICS, PERF_EVENTS, type PerformanceMetrics} from '../core/performance-types'
 import {PerformanceMonitorCore} from '../core/preview-core'
 import {PerformanceProvider, ProfiledComponent} from '../react/performance-decorator'
 
@@ -62,6 +64,97 @@ function yieldToMainThread(): Promise<void> {
 
 function setPanelVisibility(visible: boolean): void {
   addons.getChannel().emit(PERF_EVENTS.PANEL_VISIBILITY, visible)
+}
+
+function nextAnimationFrame(): Promise<void> {
+  return new Promise(resolve => {
+    requestAnimationFrame(() => {
+      resolve()
+    })
+  })
+}
+
+function nextIdlePeriod(): Promise<void> {
+  return new Promise(resolve => {
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(() => {
+        resolve()
+      })
+    } else {
+      setTimeout(resolve, 0)
+    }
+  })
+}
+
+function createMaxAttributionPayload(): PerformanceMetrics {
+  const longUrl = `/assets/${'x'.repeat(480)}.js`
+  const rect = {x: 10, y: 20, width: 300, height: 200}
+
+  return {
+    ...DEFAULT_METRICS,
+    layoutShiftAttribution: Array.from({length: ATTRIBUTION_ENTRY_LIMIT}, (_, entryIndex) => ({
+      startTime: entryIndex,
+      score: 0.01,
+      sources: Array.from({length: ATTRIBUTION_SOURCE_LIMIT}, (_, sourceIndex) => ({
+        selector: `#layout-shift-source-${String(entryIndex)}-${String(sourceIndex)}`,
+        previousRect: rect,
+        currentRect: {...rect, x: rect.x + sourceIndex + 1},
+      })),
+    })),
+    scriptResourceCount: ATTRIBUTION_ENTRY_LIMIT,
+    scriptResources: Array.from({length: ATTRIBUTION_ENTRY_LIMIT}, (_, index) => ({
+      url: longUrl,
+      initiatorType: 'script',
+      startTime: index,
+      duration: index + 1,
+    })),
+    elementTimingCount: ATTRIBUTION_ENTRY_LIMIT,
+    elementTimings: Array.from({length: ATTRIBUTION_ENTRY_LIMIT}, (_, index) => ({
+      identifier: `element-${String(index)}`,
+      renderTime: index + 1,
+      rawRenderTime: index + 101,
+      loadTime: index,
+      rawLoadTime: index + 100,
+      selector: `#element-${String(index)}`,
+      tagName: 'img',
+      url: longUrl,
+    })),
+  }
+}
+
+async function runTelemetryProbe(): Promise<void> {
+  const telemetry = new OverheadTelemetry()
+  const container = document.createElement('div')
+  document.body.appendChild(container)
+  const core = new PerformanceMonitorCore('benchmark-telemetry', {overheadTelemetry: telemetry})
+
+  try {
+    core.start()
+    core.observeContainer(container)
+    setPanelVisibility(true)
+
+    const fragment = document.createDocumentFragment()
+    for (let index = 0; index < DOM_ROW_COUNT; index++) {
+      const row = document.createElement('div')
+      row.style.willChange = index % 4 === 0 ? 'transform' : 'auto'
+      row.textContent = `Telemetry row ${String(index)}`
+      fragment.appendChild(row)
+    }
+    container.replaceChildren(fragment)
+    window.dispatchEvent(new PointerEvent('pointermove'))
+
+    await yieldToMainThread()
+    await nextAnimationFrame()
+    await nextAnimationFrame()
+    await nextIdlePeriod()
+    await nextIdlePeriod()
+    addons.getChannel().emit(PERF_EVENTS.REQUEST_METRICS)
+  } finally {
+    core.stop()
+    container.remove()
+  }
+
+  console.info('OVERHEAD_TELEMETRY_SNAPSHOT', JSON.stringify(telemetry.snapshot()))
 }
 
 function createLifecycleBenchmark(state: LifecycleState): () => void {
@@ -222,4 +315,19 @@ describe('React commit workload', () => {
       await bench(state, workload.run).run(workload.options)
     })
   }
+})
+
+describe('maximum attribution payload', () => {
+  const payload = createMaxAttributionPayload()
+
+  test('serialization', async ({bench}) => {
+    await bench('bounded attribution payload', () => JSON.stringify(payload)).run(BASE_OPTIONS)
+  })
+})
+
+afterAll(async () => {
+  await runTelemetryProbe()
+  const payloadTelemetry = new OverheadTelemetry()
+  payloadTelemetry.measureSerialization(createMaxAttributionPayload())
+  console.info('MAX_ATTRIBUTION_PAYLOAD_TELEMETRY', JSON.stringify(payloadTelemetry.snapshot().serialization))
 })

@@ -158,6 +158,11 @@ describe('PERFORMANCE_METRIC_METADATA', () => {
     expect(PERFORMANCE_METRIC_METADATA.layerPromotionCandidates.quality).toBe('low')
     expect(PERFORMANCE_METRIC_METADATA.estimatedRefreshRate.unit).toBe('hertz')
     expect(PERFORMANCE_METRIC_METADATA.inferredDroppedFrames.provenance).toBe('heuristic')
+    expect(PERFORMANCE_METRIC_METADATA.forcedReflowCount).toEqual({
+      provenance: 'unsupported',
+      quality: 'unavailable',
+      unit: 'count',
+    })
     expect(PERFORMANCE_METRIC_METADATA.eventListenerCount.quality).toBe('unavailable')
     expect(PERFORMANCE_METRIC_METADATA.observerCount.quality).toBe('unavailable')
   })
