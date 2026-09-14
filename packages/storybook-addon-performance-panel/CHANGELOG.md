@@ -1,5 +1,19 @@
 # @github-ui/storybook-addon-performance-panel
 
+## 1.3.0
+
+### Minor Changes
+
+- [#164](https://github.com/github/storybook-addon-performance-panel/pull/164) [`726cf2e`](https://github.com/github/storybook-addon-performance-panel/commit/726cf2eacd81dcfe303776e0d4b52015d15d46b6) Thanks [@mattcosta7](https://github.com/mattcosta7)! - Add bounded native attribution for layout-shift sources, forced style and layout work, Element Timing raw timestamps and URLs, and script Resource Timing URLs and initiators.
+
+- [#188](https://github.com/github/storybook-addon-performance-panel/pull/188) [`9951095`](https://github.com/github/storybook-addon-performance-panel/commit/9951095b0871520e51979260529cc33cd3662a70) Thanks [@mattcosta7](https://github.com/mattcosta7)! - Add Storybook 11 support while retaining compatibility with Storybook 10.
+
+- [#162](https://github.com/github/storybook-addon-performance-panel/pull/162) [`c8eccc3`](https://github.com/github/storybook-addon-performance-panel/commit/c8eccc334b118711a62b44999c7b37382d874acc) Thanks [@mattcosta7](https://github.com/mattcosta7)! - Add accurately named metric aliases, normalized units, and exhaustive provenance and quality metadata while deprecating misleading legacy fields. Update the panel to report pointer frame intervals, document paint milestones, script resource loading time, layer-promotion candidates, and DOM mutations per second.
+
+- [#163](https://github.com/github/storybook-addon-performance-panel/pull/163) [`27b8fdd`](https://github.com/github/storybook-addon-performance-panel/commit/27b8fddab5077dfe94b02721789753c22f690964) Thanks [@mattcosta7](https://github.com/mattcosta7)! - Calibrate frame budgets to the display refresh rate, report observed intervals separately from inferred dropped frames, and exclude inactive iframe gaps from frame metrics.
+
+- [#165](https://github.com/github/storybook-addon-performance-panel/pull/165) [`9ee621c`](https://github.com/github/storybook-addon-performance-panel/commit/9ee621caaf0a93ab588d14e6a22dc6b4b4bf0625) Thanks [@mattcosta7](https://github.com/mattcosta7)! - Reduce open-panel overhead by scoping DOM work to the story root, coalescing pointer RAFs, chunking layer scans, replacing global forced-reflow patches with separately named native LoAF evidence, and adding benchmark-only overhead telemetry. The deprecated `forcedReflowCount` field is now unsupported and remains `0` rather than changing meaning.
+
 ## 1.2.0
 
 ### Minor Changes
