@@ -228,8 +228,8 @@ describe('CollectorManager', () => {
       expect(updateSpy).toHaveBeenCalled()
     })
 
-    it('compositor layers are tracked automatically via MutationObserver', () => {
-      // Compositor layer tracking is now handled internally by PaintCollector
+    it('layer-promotion candidates are tracked automatically via MutationObserver', () => {
+      // Candidate tracking is handled internally by PaintCollector.
       // via MutationObserver — no manual updateCompositorLayers() call needed
       manager.updateSparklineData()
       // Just verify no error is thrown
@@ -376,6 +376,42 @@ describe('CollectorManager', () => {
       expect(metrics.slowReactUpdates).toBe(1) // 20ms > 16ms
     })
 
+    it('exposes corrected metric aliases without changing deprecated values', () => {
+      const inputMetrics = manager.collectors.input.getMetrics()
+      vi.spyOn(manager.collectors.input, 'getMetrics').mockReturnValue({
+        ...inputMetrics,
+        paintTimes: [8, 12],
+        maxPaintTime: 14,
+        paintJitter: 2,
+      })
+      const paintMetrics = manager.collectors.paint.getMetrics()
+      vi.spyOn(manager.collectors.paint, 'getMetrics').mockReturnValue({
+        ...paintMetrics,
+        paintCount: 2,
+        scriptEvalTime: 33.3,
+        compositorLayers: 4,
+      })
+      const styleMetrics = manager.collectors.style.getMetrics()
+      vi.spyOn(manager.collectors.style, 'getMetrics').mockReturnValue({
+        ...styleMetrics,
+        domMutationFrames: [2, 4],
+        domMutationSampleDurationsMs: [200, 400],
+      })
+
+      const metrics = manager.computeMetrics()
+      const deprecatedMetrics = metrics as unknown as Record<string, unknown>
+
+      expect(metrics.pointerFrameInterval).toBe(10)
+      expect(metrics.pointerFrameInterval).toBe(deprecatedMetrics.paintTime)
+      expect(metrics.maxPointerFrameInterval).toBe(deprecatedMetrics.maxPaintTime)
+      expect(metrics.pointerFrameJitter).toBe(deprecatedMetrics.paintJitter)
+      expect(metrics.initialPaintMilestones).toBe(deprecatedMetrics.paintCount)
+      expect(metrics.scriptResourceLoadTime).toBe(deprecatedMetrics.scriptEvalTime)
+      expect(metrics.layerPromotionCandidates).toBe(deprecatedMetrics.compositorLayers)
+      expect(deprecatedMetrics.domMutationsPerFrame).toBe(3)
+      expect(metrics.domMutationsPerSecond).toBe(10)
+    })
+
     it('rounds numeric values appropriately', () => {
       const metrics = manager.computeMetrics()
 
@@ -383,7 +419,7 @@ describe('CollectorManager', () => {
       expect(metrics.frameTime).toBe(Math.round(metrics.frameTime * 10) / 10)
       expect(metrics.maxFrameTime).toBe(Math.round(metrics.maxFrameTime * 10) / 10)
       expect(metrics.inputLatency).toBe(Math.round(metrics.inputLatency * 10) / 10)
-      expect(metrics.paintTime).toBe(Math.round(metrics.paintTime * 10) / 10)
+      expect(metrics.pointerFrameInterval).toBe(Math.round(metrics.pointerFrameInterval * 10) / 10)
     })
   })
 

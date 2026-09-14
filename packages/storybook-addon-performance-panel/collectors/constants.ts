@@ -32,7 +32,7 @@ export const FRAME_TIMES_WINDOW = 60
 /** Rolling window size for input latency samples */
 export const INPUT_LATENCIES_WINDOW = 30
 
-/** Rolling window size for paint time samples */
+/** Rolling window size for double-RAF pointer frame interval samples */
 export const PAINT_TIMES_WINDOW = 30
 
 /** Number of data points to keep for sparkline charts */
@@ -60,10 +60,10 @@ export const JITTER_FRAME_DELTA = 20
 /** Minimum absolute value (ms) to count as frame jitter */
 export const JITTER_FRAME_ABSOLUTE = 40
 
-/** Minimum delta (ms) from baseline to count as paint jitter */
+/** Minimum delta (ms) from baseline to count as pointer frame interval jitter */
 export const JITTER_PAINT_DELTA = 20
 
-/** Minimum absolute value (ms) to count as paint jitter */
+/** Minimum absolute value (ms) to count as pointer frame interval jitter */
 export const JITTER_PAINT_ABSOLUTE = 35
 
 // ============================================================================
@@ -82,8 +82,8 @@ export const MAX_INPUT_DECAY_THRESHOLD = 20
 /** Decay rate per frame for max input latency */
 export const MAX_INPUT_DECAY_RATE = 0.98
 
-/** Threshold below which max paint time starts to decay */
+/** Threshold below which the max pointer frame interval starts to decay */
 export const MAX_PAINT_DECAY_THRESHOLD = 10
 
-/** Decay rate per frame for max paint time */
+/** Decay rate per frame for the max pointer frame interval */
 export const MAX_PAINT_DECAY_RATE = 0.98

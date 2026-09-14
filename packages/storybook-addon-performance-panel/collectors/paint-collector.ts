@@ -1,5 +1,5 @@
 /**
- * @fileoverview Paint and resource timing metrics collector
+ * @fileoverview Initial paint milestones, script resource timing, and layer-promotion heuristics
  * @module collectors/PaintCollector
  */
 
@@ -31,9 +31,9 @@ function cancelIdle(id: number): void {
 }
 
 /**
- * Collects paint and resource timing metrics.
+ * Collects initial paint milestones, script resource loading time, and layer-promotion candidates.
  *
- * Compositor layer tracking uses a MutationObserver to incrementally detect
+ * Layer-promotion candidate tracking uses a MutationObserver to incrementally detect
  * style/class/childList changes and defers getComputedStyle checks to idle
  * periods via requestIdleCallback, avoiding the observer effect of inflating
  * frame timing and main thread metrics.
@@ -73,7 +73,7 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
       /* Not supported */
     }
 
-    // Resource observer for script timing
+    // Resource observer for script loading duration
     try {
       this.#resourceObserver = new PerformanceObserver(list => {
         for (const entry of list.getEntries()) {
@@ -94,7 +94,7 @@ export class PaintCollector implements MetricCollector<PaintMetrics> {
       /* Not supported */
     }
 
-    // Start incremental compositor layer tracking
+    // Start incremental layer-promotion candidate tracking
     this.#startLayerTracking()
   }
 
