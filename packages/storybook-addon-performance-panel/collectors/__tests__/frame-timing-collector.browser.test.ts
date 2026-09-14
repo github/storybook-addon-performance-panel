@@ -191,6 +191,28 @@ describe('FrameTimingCollector', () => {
       expect(collector.getMetrics().inferredDroppedFrames).toBe(1)
     })
 
+    it('recalibrates a sustained slower cadence without retaining false drops', () => {
+      collector.start()
+
+      let timestamp = runSteadyFrames(120, 8)
+      const slowerInterval = 1000 / 60
+
+      timestamp += slowerInterval
+      runFrame(timestamp)
+      expect(collector.getMetrics().inferredDroppedFrames).toBe(1)
+
+      for (let index = 1; index < 8; index++) {
+        timestamp += slowerInterval
+        runFrame(timestamp)
+      }
+
+      const metrics = collector.getMetrics()
+      expect(metrics.estimatedRefreshRate).toBe(60)
+      expect(metrics.frameBudget).toBeCloseTo(slowerInterval, 2)
+      expect(metrics.observedFrameIntervals).toBe(16)
+      expect(metrics.inferredDroppedFrames).toBe(0)
+    })
+
     it('excludes throttled iframe gaps and recalibrates', () => {
       collector.start()
 

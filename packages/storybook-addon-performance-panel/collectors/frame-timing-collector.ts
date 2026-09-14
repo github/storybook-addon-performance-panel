@@ -21,6 +21,12 @@ import type {MetricCollector} from './types'
 import {addToWindow, computeAverage, computeFrameStability, updateMaxWithDecay} from './utils'
 
 const FRAME_RATIO_EPSILON = 0.01
+const FRAME_CADENCE_TOLERANCE = 0.1
+
+interface CadenceCandidate {
+  interval: number
+  provisionalDrops: number
+}
 
 export interface FrameTimingMetrics {
   frameTimes: number[]
@@ -52,6 +58,7 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
   #calibrationIntervals: number[] = []
   #estimatedRefreshRate: number | null = null
   #frameBudget: number | null = null
+  #slowerCadenceCandidates: CadenceCandidate[] = []
   #observedFrameIntervals = 0
   #inferredDroppedFrames = 0
   #excludedFrameIntervals = 0
@@ -95,6 +102,7 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
     this.#calibrationIntervals = []
     this.#estimatedRefreshRate = null
     this.#frameBudget = null
+    this.#slowerCadenceCandidates = []
     this.#observedFrameIntervals = 0
     this.#inferredDroppedFrames = 0
     this.#excludedFrameIntervals = 0
@@ -160,20 +168,26 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
     // Update max with decay
     this.#maxFrameTime = updateMaxWithDecay(this.#maxFrameTime, delta, MAX_DECAY_THRESHOLD, MAX_DECAY_RATE)
 
-    if (delta >= FRAME_INTERVAL_MIN_MS && delta <= FRAME_INTERVAL_MAX_MS) {
+    const isCalibrationInterval = delta >= FRAME_INTERVAL_MIN_MS && delta <= FRAME_INTERVAL_MAX_MS
+    const inferredDrops = hadFrameBudget ? this.#inferDroppedFrames(delta) : 0
+    const isSlowerCadenceCandidate = inferredDrops > 0 && isCalibrationInterval
+
+    if (isSlowerCadenceCandidate) {
+      this.#inferredDroppedFrames += inferredDrops
+      this.#trackSlowerCadence(delta, inferredDrops)
+    } else if (isCalibrationInterval) {
+      this.#slowerCadenceCandidates = []
       addToWindow(this.#calibrationIntervals, delta, FRAME_RATE_CALIBRATION_WINDOW)
       this.#updateFrameBudget()
-    }
-
-    if (this.#frameBudget !== null) {
-      if (hadFrameBudget) {
-        this.#inferredDroppedFrames += this.#inferDroppedFrames(delta)
-      } else {
+      if (!hadFrameBudget && this.#frameBudget !== null) {
         this.#inferredDroppedFrames += this.#calibrationIntervals.reduce(
           (total, interval) => total + this.#inferDroppedFrames(interval),
           0,
         )
       }
+    } else {
+      this.#slowerCadenceCandidates = []
+      this.#inferredDroppedFrames += inferredDrops
     }
 
     // Frame jitter detection
@@ -206,9 +220,32 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
     return Math.max(0, completeRefreshIntervals - 1)
   }
 
+  #trackSlowerCadence(interval: number, provisionalDrops: number): void {
+    const candidateAverage = computeAverage(this.#slowerCadenceCandidates.map(candidate => candidate.interval))
+    if (
+      candidateAverage > 0 &&
+      Math.abs(interval - candidateAverage) / candidateAverage > FRAME_CADENCE_TOLERANCE
+    ) {
+      this.#slowerCadenceCandidates = []
+    }
+
+    this.#slowerCadenceCandidates.push({interval, provisionalDrops})
+    if (this.#slowerCadenceCandidates.length < FRAME_RATE_CALIBRATION_SAMPLES) return
+
+    const reclassifiedDrops = this.#slowerCadenceCandidates.reduce(
+      (total, candidate) => total + candidate.provisionalDrops,
+      0,
+    )
+    this.#inferredDroppedFrames = Math.max(0, this.#inferredDroppedFrames - reclassifiedDrops)
+    this.#calibrationIntervals = this.#slowerCadenceCandidates.map(candidate => candidate.interval)
+    this.#slowerCadenceCandidates = []
+    this.#updateFrameBudget()
+  }
+
   #resetCalibration(): void {
     this.#calibrationIntervals = []
     this.#estimatedRefreshRate = null
     this.#frameBudget = null
+    this.#slowerCadenceCandidates = []
   }
 }
