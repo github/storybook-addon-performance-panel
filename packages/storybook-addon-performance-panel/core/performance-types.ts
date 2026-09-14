@@ -374,7 +374,7 @@ export interface PerformanceMetrics {
   eventTimingSupported: boolean
   /** Total user interactions tracked */
   interactionCount: number
-  /** Interaction to Next Paint (ms) - 75th percentile. Core Web Vital */
+  /** Interaction to Next Paint (ms), using the p98 worst-interaction approximation */
   inpMs: number
   /** First Input Delay (ms) - latency of the very first interaction */
   firstInputDelay: number | null
@@ -396,7 +396,7 @@ export interface PerformanceMetrics {
   maxPointerFrameInterval: number
   /** Pointer frame interval jitter count */
   pointerFrameJitter: number
-  /** Number of native initial paint milestones observed */
+  /** Number of document-level initial paint milestones observed after collection starts */
   initialPaintMilestones: number
   /** @deprecated Use pointerFrameInterval. */
   paintTime: number

@@ -1297,8 +1297,8 @@ const MemoryAndRenderingSection = React.memo(function MemoryAndRenderingSection(
           <SecondaryValue>Not available (Chrome only)</SecondaryValue>
         </Metric>
         <Metric
-          label="Initial Paint Milestones"
-          tooltip="Native Paint Timing milestones such as first-paint and first-contentful-paint."
+          label="Document Paint Milestones"
+          tooltip="Document-level first-paint and first-contentful-paint entries observed after collection starts. These are not component paint timings."
         >
           {initialPaintMilestones}
         </Metric>
@@ -1344,8 +1344,8 @@ const MemoryAndRenderingSection = React.memo(function MemoryAndRenderingSection(
       </Metric>
 
       <Metric
-        label="Paint Milestones / Layer Candidates"
-        tooltip="Native initial paint milestones and heuristic CSS layer-promotion candidates."
+        label="Document Paints / Layer Candidates"
+        tooltip="Document-level paint milestones observed after collection starts and heuristic CSS layer-promotion candidates."
       >
         <span>{initialPaintMilestones}</span>
         <SecondaryValue>

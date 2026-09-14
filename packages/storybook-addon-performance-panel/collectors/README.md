@@ -399,7 +399,7 @@ export function getMemoryMB(): number | null {
 **File:** [paint-collector.ts](./paint-collector.ts)
 
 ### Metrics
-- `paintCount` - Internal name for native initial paint milestones; exposed publicly as `initialPaintMilestones`
+- `paintCount` - Internal name for document-level initial paint milestones observed after collection starts; exposed publicly as `initialPaintMilestones`
 - `scriptEvalTime` - Internal name for derived script resource loading time; exposed as `scriptResourceLoadTime`
 - `compositorLayers` - Internal heuristic count; exposed as `layerPromotionCandidates`
 
