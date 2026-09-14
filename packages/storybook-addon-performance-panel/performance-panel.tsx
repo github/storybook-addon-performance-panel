@@ -432,7 +432,7 @@ const FrameTimingSection = React.memo(function FrameTimingSection({
 
       <Metric
         label="Inferred Drops"
-        tooltip="Missed refresh opportunities inferred from observed RAF intervals and the calibrated display budget. Inactive or throttled iframe gaps are excluded."
+        tooltip="Missed refresh opportunities inferred from observed RAF intervals and the calibrated display budget. Visibility-signaled interruptions are excluded."
         detail={
           <>
             {observedFrameIntervals} observed

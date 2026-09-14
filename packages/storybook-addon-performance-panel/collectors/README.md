@@ -36,7 +36,7 @@ This directory contains modular metric collector classes used by the performance
 - `frameBudget` - Milliseconds available per refresh at the estimated rate
 - `observedFrameIntervals` - Valid consecutive RAF intervals
 - `inferredDroppedFrames` - Missed refresh opportunities inferred from observed intervals
-- `excludedFrameIntervals` - Inactive or throttled iframe gaps excluded from metrics
+- `excludedFrameIntervals` - RAF interruptions excluded after document visibility explicitly signals inactivity
 - `frameJitter` - Count of sudden frame time spikes
 - `frameStability` - Consistency score (0-100%)
 

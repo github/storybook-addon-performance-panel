@@ -362,7 +362,7 @@ export interface PerformanceMetrics {
   observedFrameIntervals: number
   /** Missed refresh opportunities inferred from observed intervals and the calibrated frame budget */
   inferredDroppedFrames: number
-  /** Long intervals excluded because the document or iframe appeared inactive/throttled */
+  /** RAF intervals excluded after document visibility explicitly signaled inactivity */
   excludedFrameIntervals: number
   /** @deprecated Use inferredDroppedFrames. This value is inferred rather than directly observed. */
   droppedFrames: number

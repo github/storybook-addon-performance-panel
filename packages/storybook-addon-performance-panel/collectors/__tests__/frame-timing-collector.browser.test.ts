@@ -213,18 +213,21 @@ describe('FrameTimingCollector', () => {
       expect(metrics.inferredDroppedFrames).toBe(0)
     })
 
-    it('excludes throttled iframe gaps and recalibrates', () => {
+    it('reports long visible stalls as jank', () => {
+      const onFrame = vi.fn()
+      collector = new FrameTimingCollector(onFrame)
       collector.start()
 
       const timestamp = runSteadyFrames(60, 8)
-      runFrame(timestamp + 1_000)
+      runFrame(timestamp + 300)
 
       const metrics = collector.getMetrics()
-      expect(metrics.observedFrameIntervals).toBe(8)
-      expect(metrics.inferredDroppedFrames).toBe(0)
-      expect(metrics.excludedFrameIntervals).toBe(1)
-      expect(metrics.estimatedRefreshRate).toBeNull()
-      expect(metrics.frameBudget).toBeNull()
+      expect(metrics.observedFrameIntervals).toBe(9)
+      expect(metrics.frameTimes.at(-1)).toBeCloseTo(300)
+      expect(metrics.maxFrameTime).toBe(300)
+      expect(metrics.inferredDroppedFrames).toBe(17)
+      expect(metrics.excludedFrameIntervals).toBe(0)
+      expect(onFrame).toHaveBeenLastCalledWith(300)
     })
 
     it('starts a fresh baseline after the document becomes visible', () => {
@@ -244,6 +247,7 @@ describe('FrameTimingCollector', () => {
 
       expect(collector.getMetrics().frameTimes[0]).toBeCloseTo(16.67, 1)
       expect(collector.getMetrics().inferredDroppedFrames).toBe(0)
+      expect(collector.getMetrics().excludedFrameIntervals).toBe(1)
     })
   })
 

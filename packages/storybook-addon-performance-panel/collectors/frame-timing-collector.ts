@@ -4,7 +4,6 @@
  */
 
 import {
-  FRAME_INACTIVE_GAP_MS,
   FRAME_INTERVAL_MAX_MS,
   FRAME_INTERVAL_MIN_MS,
   FRAME_RATE_CALIBRATION_SAMPLES,
@@ -48,7 +47,7 @@ export interface FrameTimingMetrics {
  * - Frame duration via RAF delta
  * - Display refresh rate and frame budget estimated from stable RAF intervals
  * - Inferred dropped frames kept separate from observed RAF intervals
- * - Inactive or throttled iframe gaps excluded from frame metrics
+ * - Visibility-signaled interruptions excluded from frame metrics
  * - Max frame time with decay
  * - Frame jitter (sudden spikes)
  */
@@ -131,10 +130,7 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
     if (this.#lastTime !== null) {
       const delta = timestamp - this.#lastTime
 
-      if (delta >= FRAME_INACTIVE_GAP_MS) {
-        this.#excludedFrameIntervals++
-        this.#resetCalibration()
-      } else if (delta > 0) {
+      if (delta > 0) {
         this.#processFrame(delta)
         this.#onFrame?.(delta)
       }
@@ -145,6 +141,9 @@ export class FrameTimingCollector implements MetricCollector<FrameTimingMetrics>
   }
 
   #handleVisibilityChange = (): void => {
+    if (document.hidden && this.#lastTime !== null) {
+      this.#excludedFrameIntervals++
+    }
     this.#lastTime = null
     this.#resetCalibration()
 

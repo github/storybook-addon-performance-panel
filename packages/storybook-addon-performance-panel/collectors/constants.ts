@@ -13,9 +13,6 @@ export const FRAME_RATE_CALIBRATION_SAMPLES = 8
 /** Rolling window used to adapt when the story moves between displays */
 export const FRAME_RATE_CALIBRATION_WINDOW = 30
 
-/** RAF gaps at or above this duration are treated as inactive/throttled iframe periods */
-export const FRAME_INACTIVE_GAP_MS = 250
-
 /** Fastest plausible display interval used during refresh-rate calibration */
 export const FRAME_INTERVAL_MIN_MS = 1000 / 300
 
