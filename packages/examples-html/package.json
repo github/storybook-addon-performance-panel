@@ -9,8 +9,8 @@
   "dependencies": {
     "@github-ui/storybook-addon-performance-panel": "*",
     "@github-ui/storybook-config": "*",
-    "@storybook/html-vite": "next",
-    "storybook": "next"
+    "@storybook/html-vite": "^11.0.0-alpha.6",
+    "storybook": "*"
   },
   "devDependencies": {
     "lightningcss": "^1.33.0"
