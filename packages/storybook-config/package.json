@@ -7,7 +7,7 @@
     ".": "./index.ts"
   },
   "dependencies": {
-    "storybook": "next"
+    "storybook": "^11.0.0-alpha.6"
   },
   "devDependencies": {
     "lightningcss": "^1.33.0"
