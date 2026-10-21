@@ -39,7 +39,7 @@
     "@eslint/js": "^9.39.5",
     "@storybook/react-vite": "next",
     "@vitejs/plugin-react": "^6.1.1",
-    "@vitest/browser-playwright": "5.0.3",
+    "@vitest/browser-playwright": "5.0.5",
     "concurrently": "^10.0.5",
     "eslint": "^9.0.0 <10",
     "eslint-config-prettier": "^10.1.8",
