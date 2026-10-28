@@ -60,7 +60,7 @@ These are one time installations required to be able to test your changes locall
 1. Install the dependencies: `npm install`
 1. Build the addon: `npm run build`
 1. Make sure the tests pass on your machine: `npm test`
-1. Make sure the linter passes: `npm run lint`
+1. Make sure the linter passes with `npm run lint`; for unresolved-type errors at `addonPerformancePanel()` after installing dependencies, run `npm run build && npm run lint -- --no-cache`.
 1. Create a new branch: `git checkout -b my-branch-name`
 1. Make your change, add tests, and make sure the tests and linter still pass
 1. Push to your fork and [submit a pull request][pr]
