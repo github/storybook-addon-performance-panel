@@ -63,10 +63,11 @@ jobs:
       github.event_name == 'pull_request' &&
       contains(github.event.pull_request.labels.*.name, 'canary')
     runs-on: ubuntu-latest
+    concurrency:
+      group: canary-build-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     permissions:
       contents: read
-    outputs:
-      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -77,14 +78,12 @@ jobs:
       - run: npm run build
 
       - name: Set canary version
-        id: version
         working-directory: packages/storybook-addon-performance-panel
         run: |
           base_version=$(node -p "require('./package.json').version")
           short_sha=$(echo "${{ github.event.pull_request.head.sha }}" | cut -c1-7)
           canary_version="${base_version}-canary.${short_sha}"
           npm version "$canary_version" --no-git-tag-version
-          echo "version=$canary_version" >> "$GITHUB_OUTPUT"
 
       - run: npm pack --pack-destination "$RUNNER_TEMP"
         working-directory: packages/storybook-addon-performance-panel
@@ -105,7 +104,7 @@ jobs:
       issues: write
     environment: production
     concurrency:
-      group: canary-${{ github.event.pull_request.number }}
+      group: canary-publish-${{ github.event.pull_request.number }}
       cancel-in-progress: true
     steps:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -116,16 +115,50 @@ jobs:
         with:
           name: canary-package
           path: ${{ runner.temp }}/canary-package
-      - name: Publish canary
-        run: npm publish "$RUNNER_TEMP"/canary-package/*.tgz --ignore-scripts --tag canary --provenance --access public
+      - name: Validate canary package
+        id: package
         env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          shopt -s nullglob
+          archives=("$RUNNER_TEMP"/canary-package/*.tgz)
+          if [[ ${#archives[@]} -ne 1 ]]; then
+            echo "::error::Expected exactly one canary package archive"
+            exit 1
+          fi
+
+          package_json=$(tar -xOzf "${archives[0]}" package/package.json)
+          version=$(node -e '
+            const pkg = JSON.parse(process.argv[1]);
+            const headSha = process.env.PR_HEAD_SHA;
+            const semverPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+            const expectedSuffix = `-canary.${headSha.slice(0, 7)}`;
+
+            if (
+              pkg.name !== "@github-ui/storybook-addon-performance-panel" ||
+              !/^[a-f0-9]{40}$/.test(headSha) ||
+              !semverPattern.test(pkg.version) ||
+              !pkg.version.endsWith(expectedSuffix)
+            ) {
+              console.error("Canary archive has an unexpected package name or version");
+              process.exit(1);
+            }
+
+            process.stdout.write(pkg.version);
+          ' "$package_json")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "archive=${archives[0]}" >> "$GITHUB_OUTPUT"
+      - name: Publish canary
+        run: npm publish "$CANARY_ARCHIVE" --ignore-scripts --tag canary --provenance --access public
+        env:
+          CANARY_ARCHIVE: ${{ steps.package.outputs.archive }}
           NPM_TOKEN: ''
           NPM_CONFIG_PROVENANCE: true
 
       - name: Comment on PR
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
-          CANARY_VERSION: ${{ needs.canary.outputs.version }}
+          CANARY_VERSION: ${{ steps.package.outputs.version }}
         with:
           script: |
             const pkg = '@github-ui/storybook-addon-performance-panel';
