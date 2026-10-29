@@ -115,7 +115,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "esbuild": "0.28.2",
     "publint": "^0.3.25",
-    "tsdown": "^0.23.1",
+    "tsdown": "^0.23.2",
     "vitest": "5.0.5",
     "vitest-browser-react": "^2.3.0"
   },
