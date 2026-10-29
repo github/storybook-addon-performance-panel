@@ -131,14 +131,15 @@ jobs:
           version=$(node -e '
             const pkg = JSON.parse(process.argv[1]);
             const headSha = process.env.PR_HEAD_SHA;
-            const semverPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
-            const expectedSuffix = `-canary.${headSha.slice(0, 7)}`;
+            const canaryVersion = typeof pkg.version === "string"
+              ? pkg.version.match(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)-canary\.([a-f0-9]{7})$/)
+              : null;
 
             if (
               pkg.name !== "@github-ui/storybook-addon-performance-panel" ||
               !/^[a-f0-9]{40}$/.test(headSha) ||
-              !semverPattern.test(pkg.version) ||
-              !pkg.version.endsWith(expectedSuffix)
+              !canaryVersion ||
+              canaryVersion[4] !== headSha.slice(0, 7)
             ) {
               console.error("Canary archive has an unexpected package name or version");
               process.exit(1);
