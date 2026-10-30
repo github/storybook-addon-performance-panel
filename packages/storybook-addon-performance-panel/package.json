@@ -63,6 +63,10 @@
     "./preview": {
       "types": "./dist/preview.d.ts",
       "default": "./dist/preview.js"
+    },
+    "./test": {
+      "types": "./dist/test.d.ts",
+      "default": "./dist/test.js"
     }
   },
   "files": [
@@ -87,7 +91,8 @@
       "preview-universal.ts",
       "index.ts",
       "index-universal.ts",
-      "index-react.ts"
+      "index-react.ts",
+      "test.ts"
     ],
     "nodeEntries": [
       "preset.ts",
