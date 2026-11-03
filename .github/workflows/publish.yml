@@ -3,21 +3,23 @@ name: Release
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened, labeled]
+  workflow_run:
+    workflows: [Canary Build]
+    types: [completed]
 
 permissions:
-  contents: write
-  pull-requests: write
-  id-token: write
-  statuses: write
+  contents: read
 
 jobs:
   release:
     name: Release
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+      statuses: write
     environment: production
     concurrency:
       group: release-production
@@ -55,51 +57,203 @@ jobs:
             -f context=CI \
             -f description="Skipped for version-only PR (code validated on main)"
 
-  canary:
+  publish-canary:
     name: Canary Release
     if: >-
-      github.event_name == 'pull_request' &&
-      contains(github.event.pull_request.labels.*.name, 'canary')
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.path == '.github/workflows/canary-build.yml' &&
+      github.event.workflow_run.pull_requests[0] != null
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+      id-token: write
+      issues: write
     environment: production
     concurrency:
-      group: canary-${{ github.event.pull_request.number }}
-      cancel-in-progress: true
+      group: canary-publish-${{ github.event.workflow_run.pull_requests[0].number }}
+      cancel-in-progress: false
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+      - name: Identify canary PR
+        id: pr
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
-          node-version-file: '.nvmrc'
-          cache: npm
+          script: |
+            const run = context.payload.workflow_run;
+            if (
+              run.repository.id !== context.payload.repository.id ||
+              run.pull_requests.length !== 1 ||
+              !Number.isSafeInteger(run.pull_requests[0].number) ||
+              !/^[a-f0-9]{40}$/.test(run.head_sha)
+            ) {
+              throw new Error('Canary build has unexpected repository or PR metadata');
+            }
+            const {data: pr} = await github.rest.pulls.get({
+              ...context.repo,
+              pull_number: run.pull_requests[0].number,
+            });
+            if (
+              pr.base.repo.id !== context.payload.repository.id ||
+              pr.base.ref !== 'main' ||
+              pr.head.repo?.id !== run.head_repository?.id ||
+              pr.head.sha !== run.head_sha ||
+              pr.state !== 'open' ||
+              !pr.labels.some(label => label.name === 'canary')
+            ) {
+              core.notice('Skipping canary publication: PR is stale, closed, or no longer eligible');
+              return;
+            }
+            core.setOutput('number', pr.number);
+            core.setOutput('sha', pr.head.sha);
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        if: steps.pr.outputs.number
+        with:
+          node-version: 26
           registry-url: 'https://registry.npmjs.org'
-      - run: npm ci
-      - run: npm run build
-
-      - name: Set canary version
-        id: version
-        working-directory: packages/storybook-addon-performance-panel
-        run: |
-          base_version=$(node -p "require('./package.json').version")
-          short_sha=$(echo "${{ github.event.pull_request.head.sha }}" | cut -c1-7)
-          canary_version="${base_version}-canary.${short_sha}"
-          npm version "$canary_version" --no-git-tag-version
-          echo "version=$canary_version" >> "$GITHUB_OUTPUT"
-
-      - name: Publish canary
-        working-directory: packages/storybook-addon-performance-panel
-        run: npm publish --tag canary --provenance --access public
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        if: steps.pr.outputs.number
+        with:
+          name: canary-package
+          path: ${{ runner.temp }}/canary-package
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Validate canary package
+        if: steps.pr.outputs.number
+        id: package
         env:
+          PR_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          import re
+          import sys
+          import tarfile
+
+          def reject_constant(value):
+              raise ValueError(f"Invalid JSON constant: {value}")
+
+          try:
+              archives = list(Path(os.environ["RUNNER_TEMP"]).glob("canary-package/*.tgz"))
+              if len(archives) != 1 or not archives[0].is_file():
+                  raise ValueError("Expected exactly one canary package archive")
+              archive_path = archives[0]
+              if "\n" in str(archive_path) or "\r" in str(archive_path):
+                  raise ValueError("Archive path must not contain line breaks")
+              with tarfile.open(archive_path, "r:gz") as archive:
+                  paths = {}
+                  manifest = None
+                  for entry in archive:
+                      parts = entry.name.split("/")
+                      if (
+                          parts[0] != "package"
+                          or any(part in ("", ".", "..") for part in parts)
+                          or "\\" in entry.name
+                          or entry.type not in (tarfile.REGTYPE, tarfile.AREGTYPE, tarfile.DIRTYPE)
+                          or (len(parts) == 1 and not entry.isdir())
+                          or entry.name in paths
+                      ):
+                          raise ValueError(f"Noncanonical or duplicate archive entry: {entry.name!r}")
+                      paths[entry.name] = entry.isdir()
+                      if entry.name == "package/package.json":
+                          if not entry.isfile():
+                              raise ValueError("Package manifest must be a regular file")
+                          manifest = entry
+
+                  for path in paths:
+                      parts = path.split("/")
+                      for index in range(1, len(parts)):
+                          if paths.get("/".join(parts[:index])) is False:
+                              raise ValueError(f"Archive entry has a file as its parent: {path!r}")
+                  if manifest is None:
+                      raise ValueError("Archive must contain package/package.json")
+                  with archive.extractfile(manifest) as source:
+                      pkg = json.load(source, parse_constant=reject_constant)
+
+              head_sha = os.environ["PR_HEAD_SHA"]
+              version = pkg.get("version") if isinstance(pkg, dict) else None
+              if (
+                  not isinstance(pkg, dict)
+                  or pkg.get("name") != "@github-ui/storybook-addon-performance-panel"
+                  or not re.fullmatch(r"[a-f0-9]{40}", head_sha)
+                  or not isinstance(version, str)
+                  or not re.fullmatch(
+                      r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-canary\." + head_sha[:7],
+                      version,
+                  )
+              ):
+                  raise ValueError("Unexpected package name or canary version")
+              settings = pkg.get("publishConfig", {})
+              allowed = {"registry": "https://registry.npmjs.org/", "access": "public"}
+              if not isinstance(settings, dict) or any(
+                  key not in allowed or value != allowed[key] for key, value in settings.items()
+              ):
+                  raise ValueError("Unexpected publish settings")
+              if "tag" in pkg and pkg["tag"] != "canary":
+                  raise ValueError("Unexpected publish tag")
+
+              with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+                  print(f"version={version}", file=output)
+                  print(f"archive={archive_path}", file=output)
+          except (OSError, tarfile.TarError, ValueError) as error:
+              sys.exit(f"::error::Invalid canary archive: {error}")
+          PY
+      - name: Verify current canary PR
+        if: steps.pr.outputs.number
+        id: current
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const {data: pr} = await github.rest.pulls.get({
+              ...context.repo,
+              pull_number: run.pull_requests[0].number,
+            });
+            if (
+              pr.head.sha !== run.head_sha ||
+              pr.state !== 'open' ||
+              !pr.labels.some(label => label.name === 'canary')
+            ) {
+              core.notice('Skipping canary publication: PR is stale, closed, or no longer eligible');
+              return;
+            }
+            core.setOutput('eligible', 'true');
+      - name: Publish canary
+        if: steps.current.outputs.eligible == 'true'
+        run: npm publish "$CANARY_ARCHIVE" --ignore-scripts --tag canary --provenance --access public
+        env:
+          CANARY_ARCHIVE: ${{ steps.package.outputs.archive }}
           NPM_TOKEN: ''
           NPM_CONFIG_PROVENANCE: true
 
       - name: Comment on PR
+        if: steps.current.outputs.eligible == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
-          CANARY_VERSION: ${{ steps.version.outputs.version }}
+          CANARY_VERSION: ${{ steps.package.outputs.version }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          PR_HEAD_SHA: ${{ steps.pr.outputs.sha }}
         with:
           script: |
             const pkg = '@github-ui/storybook-addon-performance-panel';
             const version = process.env.CANARY_VERSION;
+            const issue_number = Number(process.env.PR_NUMBER);
+            const {data: pr} = await github.rest.pulls.get({
+              ...context.repo,
+              pull_number: issue_number,
+            });
+            if (
+              pr.state !== 'open' ||
+              pr.head.sha !== process.env.PR_HEAD_SHA ||
+              !pr.labels.some(label => label.name === 'canary')
+            ) {
+              core.notice('Skipping canary comment: PR changed during publication');
+              return;
+            }
             const marker = '<!-- canary-release-comment -->';
             const body = [
               marker,
@@ -113,13 +267,13 @@ jobs:
               `npm install ${pkg}@${version}`,
               '```',
               '',
-              `_Published from ${context.sha.slice(0, 7)}_`,
+              `_Published from ${process.env.PR_HEAD_SHA.slice(0, 7)}_`,
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number,
             });
             const existing = comments.find(c => c.body.includes(marker));
 
@@ -134,7 +288,7 @@ jobs:
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
+                issue_number,
                 body,
               });
             }

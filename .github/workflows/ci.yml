@@ -79,6 +79,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version-file: '.nvmrc'
+      - run: python3 -m unittest discover -s .github/tests -v
       - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
@@ -108,7 +109,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        storybook-version: ['10.6.0', 'next']
+        # Alpha.9 moves Emotion APIs; keep that migration separate from publishing.
+        storybook-version: ['10.6.0', '11.0.0-alpha.8']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -121,7 +123,18 @@ jobs:
           npm pkg set 'dependencies.@storybook/addon-docs=${{ matrix.storybook-version }}' 'dependencies.@storybook/react-vite=${{ matrix.storybook-version }}' 'dependencies.storybook=${{ matrix.storybook-version }}' -w @github-ui/examples-react
           npm pkg set 'dependencies.@storybook/html-vite=${{ matrix.storybook-version }}' 'dependencies.storybook=${{ matrix.storybook-version }}' -w @github-ui/examples-html
           npm pkg set 'dependencies.storybook=${{ matrix.storybook-version }}' -w @github-ui/storybook-config
+          npm pkg set 'peerDependencies.@storybook/react=${{ matrix.storybook-version }}' 'peerDependencies.storybook=${{ matrix.storybook-version }}' -w @github-ui/storybook-addon-performance-panel
       - run: npm install --package-lock=false
+      - name: Verify selected Storybook version
+        env:
+          STORYBOOK_VERSION: ${{ matrix.storybook-version }}
+        run: |
+          node -e '
+            const path = require.resolve("storybook/package.json", {paths: [process.cwd() + "/packages/storybook-addon-performance-panel"]});
+            const version = require(path).version;
+            console.log(`Addon resolves Storybook ${version}`);
+            require("node:assert/strict").equal(version, process.env.STORYBOOK_VERSION);
+          '
       - run: npm run tsc
       - run: npm run build
       - run: npm run build-storybook -w @github-ui/examples-react
