@@ -13,7 +13,7 @@ WORKFLOW = Path(__file__).resolve().parents[1] / "workflows" / "publish.yml"
 VALIDATION_STEP = textwrap.dedent(
     WORKFLOW.read_text().split("      - name: Validate canary package\n", 1)[1]
     .split("        run: |\n", 1)[1]
-    .split("      - name: Publish canary\n", 1)[0]
+    .split("      - name: Verify current canary PR\n", 1)[0]
 )
 HEAD_SHA = "abcdef0" + "0" * 33
 MANIFEST = {"name": "@github-ui/storybook-addon-performance-panel", "version": "1.3.1-canary.abcdef0"}

@@ -3,9 +3,9 @@ name: Release
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened, labeled]
+  workflow_run:
+    workflows: [Canary Build]
+    types: [completed]
 
 permissions:
   contents: read
@@ -57,68 +57,74 @@ jobs:
             -f context=CI \
             -f description="Skipped for version-only PR (code validated on main)"
 
-  canary:
-    name: Canary Build
-    if: >-
-      github.event_name == 'pull_request' &&
-      contains(github.event.pull_request.labels.*.name, 'canary')
-    runs-on: ubuntu-latest
-    concurrency:
-      group: canary-build-${{ github.event.pull_request.number }}
-      cancel-in-progress: true
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-      - run: npm ci
-      - run: npm run build
-
-      - name: Set canary version
-        working-directory: packages/storybook-addon-performance-panel
-        run: |
-          base_version=$(node -p "require('./package.json').version")
-          short_sha=$(echo "${{ github.event.pull_request.head.sha }}" | cut -c1-7)
-          canary_version="${base_version}-canary.${short_sha}"
-          npm version "$canary_version" --no-git-tag-version
-
-      - run: npm pack --pack-destination "$RUNNER_TEMP"
-        working-directory: packages/storybook-addon-performance-panel
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: canary-package
-          path: ${{ runner.temp }}/*.tgz
-          if-no-files-found: error
-          retention-days: 1
-
   publish-canary:
     name: Canary Release
-    needs: canary
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.path == '.github/workflows/canary-build.yml' &&
+      github.event.workflow_run.pull_requests[0] != null
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      actions: read
+      pull-requests: read
       id-token: write
       issues: write
     environment: production
     concurrency:
-      group: canary-publish-${{ github.event.pull_request.number }}
-      cancel-in-progress: true
+      group: canary-publish-${{ github.event.workflow_run.pull_requests[0].number }}
+      cancel-in-progress: false
     steps:
+      - name: Identify canary PR
+        id: pr
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            if (
+              run.repository.id !== context.payload.repository.id ||
+              run.pull_requests.length !== 1 ||
+              !Number.isSafeInteger(run.pull_requests[0].number) ||
+              !/^[a-f0-9]{40}$/.test(run.head_sha)
+            ) {
+              throw new Error('Canary build has unexpected repository or PR metadata');
+            }
+            const {data: pr} = await github.rest.pulls.get({
+              ...context.repo,
+              pull_number: run.pull_requests[0].number,
+            });
+            if (
+              pr.base.repo.id !== context.payload.repository.id ||
+              pr.base.ref !== 'main' ||
+              pr.head.repo?.id !== run.head_repository?.id ||
+              pr.head.sha !== run.head_sha ||
+              pr.state !== 'open' ||
+              !pr.labels.some(label => label.name === 'canary')
+            ) {
+              core.notice('Skipping canary publication: PR is stale, closed, or no longer eligible');
+              return;
+            }
+            core.setOutput('number', pr.number);
+            core.setOutput('sha', pr.head.sha);
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        if: steps.pr.outputs.number
         with:
           node-version: 26
           registry-url: 'https://registry.npmjs.org'
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        if: steps.pr.outputs.number
         with:
           name: canary-package
           path: ${{ runner.temp }}/canary-package
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Validate canary package
+        if: steps.pr.outputs.number
         id: package
         env:
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           python3 - <<'PY'
           import json
@@ -196,7 +202,28 @@ jobs:
           except (OSError, tarfile.TarError, ValueError) as error:
               sys.exit(f"::error::Invalid canary archive: {error}")
           PY
+      - name: Verify current canary PR
+        if: steps.pr.outputs.number
+        id: current
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const {data: pr} = await github.rest.pulls.get({
+              ...context.repo,
+              pull_number: run.pull_requests[0].number,
+            });
+            if (
+              pr.head.sha !== run.head_sha ||
+              pr.state !== 'open' ||
+              !pr.labels.some(label => label.name === 'canary')
+            ) {
+              core.notice('Skipping canary publication: PR is stale, closed, or no longer eligible');
+              return;
+            }
+            core.setOutput('eligible', 'true');
       - name: Publish canary
+        if: steps.current.outputs.eligible == 'true'
         run: npm publish "$CANARY_ARCHIVE" --ignore-scripts --tag canary --provenance --access public
         env:
           CANARY_ARCHIVE: ${{ steps.package.outputs.archive }}
@@ -204,13 +231,29 @@ jobs:
           NPM_CONFIG_PROVENANCE: true
 
       - name: Comment on PR
+        if: steps.current.outputs.eligible == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
           CANARY_VERSION: ${{ steps.package.outputs.version }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          PR_HEAD_SHA: ${{ steps.pr.outputs.sha }}
         with:
           script: |
             const pkg = '@github-ui/storybook-addon-performance-panel';
             const version = process.env.CANARY_VERSION;
+            const issue_number = Number(process.env.PR_NUMBER);
+            const {data: pr} = await github.rest.pulls.get({
+              ...context.repo,
+              pull_number: issue_number,
+            });
+            if (
+              pr.state !== 'open' ||
+              pr.head.sha !== process.env.PR_HEAD_SHA ||
+              !pr.labels.some(label => label.name === 'canary')
+            ) {
+              core.notice('Skipping canary comment: PR changed during publication');
+              return;
+            }
             const marker = '<!-- canary-release-comment -->';
             const body = [
               marker,
@@ -224,13 +267,13 @@ jobs:
               `npm install ${pkg}@${version}`,
               '```',
               '',
-              `_Published from ${context.sha.slice(0, 7)}_`,
+              `_Published from ${process.env.PR_HEAD_SHA.slice(0, 7)}_`,
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number,
             });
             const existing = comments.find(c => c.body.includes(marker));
 
@@ -245,7 +288,7 @@ jobs:
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
+                issue_number,
                 body,
               });
             }

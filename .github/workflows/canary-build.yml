@@ -1,0 +1,44 @@
+name: Canary Build
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    name: Canary Build
+    if: contains(github.event.pull_request.labels.*.name, 'canary')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: canary-build-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      - name: Set canary version
+        working-directory: packages/storybook-addon-performance-panel
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          base_version=$(node -p "require('./package.json').version")
+          canary_version="${base_version}-canary.${PR_HEAD_SHA:0:7}"
+          npm version "$canary_version" --no-git-tag-version
+
+      - run: npm pack --pack-destination "$RUNNER_TEMP"
+        working-directory: packages/storybook-addon-performance-panel
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: canary-package
+          path: ${{ runner.temp }}/*.tgz
+          if-no-files-found: error
+          retention-days: 1
