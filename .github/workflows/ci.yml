@@ -123,7 +123,18 @@ jobs:
           npm pkg set 'dependencies.@storybook/addon-docs=${{ matrix.storybook-version }}' 'dependencies.@storybook/react-vite=${{ matrix.storybook-version }}' 'dependencies.storybook=${{ matrix.storybook-version }}' -w @github-ui/examples-react
           npm pkg set 'dependencies.@storybook/html-vite=${{ matrix.storybook-version }}' 'dependencies.storybook=${{ matrix.storybook-version }}' -w @github-ui/examples-html
           npm pkg set 'dependencies.storybook=${{ matrix.storybook-version }}' -w @github-ui/storybook-config
+          npm pkg set 'peerDependencies.@storybook/react=${{ matrix.storybook-version }}' 'peerDependencies.storybook=${{ matrix.storybook-version }}' -w @github-ui/storybook-addon-performance-panel
       - run: npm install --package-lock=false
+      - name: Verify selected Storybook version
+        env:
+          STORYBOOK_VERSION: ${{ matrix.storybook-version }}
+        run: |
+          node -e '
+            const path = require.resolve("storybook/package.json", {paths: [process.cwd() + "/packages/storybook-addon-performance-panel"]});
+            const version = require(path).version;
+            console.log(`Addon resolves Storybook ${version}`);
+            require("node:assert/strict").equal(version, process.env.STORYBOOK_VERSION);
+          '
       - run: npm run tsc
       - run: npm run build
       - run: npm run build-storybook -w @github-ui/examples-react
