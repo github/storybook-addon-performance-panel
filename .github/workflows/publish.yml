@@ -120,35 +120,82 @@ jobs:
         env:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          shopt -s nullglob
-          archives=("$RUNNER_TEMP"/canary-package/*.tgz)
-          if [[ ${#archives[@]} -ne 1 ]]; then
-            echo "::error::Expected exactly one canary package archive"
-            exit 1
-          fi
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          import re
+          import sys
+          import tarfile
 
-          package_json=$(tar -xOzf "${archives[0]}" package/package.json)
-          version=$(node -e '
-            const pkg = JSON.parse(process.argv[1]);
-            const headSha = process.env.PR_HEAD_SHA;
-            const canaryVersion = typeof pkg.version === "string"
-              ? pkg.version.match(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)-canary\.([a-f0-9]{7})$/)
-              : null;
+          def reject_constant(value):
+              raise ValueError(f"Invalid JSON constant: {value}")
 
-            if (
-              pkg.name !== "@github-ui/storybook-addon-performance-panel" ||
-              !/^[a-f0-9]{40}$/.test(headSha) ||
-              !canaryVersion ||
-              canaryVersion[4] !== headSha.slice(0, 7)
-            ) {
-              console.error("Canary archive has an unexpected package name or version");
-              process.exit(1);
-            }
+          try:
+              archives = list(Path(os.environ["RUNNER_TEMP"]).glob("canary-package/*.tgz"))
+              if len(archives) != 1 or not archives[0].is_file():
+                  raise ValueError("Expected exactly one canary package archive")
+              archive_path = archives[0]
+              if "\n" in str(archive_path) or "\r" in str(archive_path):
+                  raise ValueError("Archive path must not contain line breaks")
+              with tarfile.open(archive_path, "r:gz") as archive:
+                  paths = {}
+                  manifest = None
+                  for entry in archive:
+                      parts = entry.name.split("/")
+                      if (
+                          parts[0] != "package"
+                          or any(part in ("", ".", "..") for part in parts)
+                          or "\\" in entry.name
+                          or entry.type not in (tarfile.REGTYPE, tarfile.AREGTYPE, tarfile.DIRTYPE)
+                          or (len(parts) == 1 and not entry.isdir())
+                          or entry.name in paths
+                      ):
+                          raise ValueError(f"Noncanonical or duplicate archive entry: {entry.name!r}")
+                      paths[entry.name] = entry.isdir()
+                      if entry.name == "package/package.json":
+                          if not entry.isfile():
+                              raise ValueError("Package manifest must be a regular file")
+                          manifest = entry
 
-            process.stdout.write(pkg.version);
-          ' "$package_json")
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "archive=${archives[0]}" >> "$GITHUB_OUTPUT"
+                  for path in paths:
+                      parts = path.split("/")
+                      for index in range(1, len(parts)):
+                          if paths.get("/".join(parts[:index])) is False:
+                              raise ValueError(f"Archive entry has a file as its parent: {path!r}")
+                  if manifest is None:
+                      raise ValueError("Archive must contain package/package.json")
+                  with archive.extractfile(manifest) as source:
+                      pkg = json.load(source, parse_constant=reject_constant)
+
+              head_sha = os.environ["PR_HEAD_SHA"]
+              version = pkg.get("version") if isinstance(pkg, dict) else None
+              if (
+                  not isinstance(pkg, dict)
+                  or pkg.get("name") != "@github-ui/storybook-addon-performance-panel"
+                  or not re.fullmatch(r"[a-f0-9]{40}", head_sha)
+                  or not isinstance(version, str)
+                  or not re.fullmatch(
+                      r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-canary\." + head_sha[:7],
+                      version,
+                  )
+              ):
+                  raise ValueError("Unexpected package name or canary version")
+              settings = pkg.get("publishConfig", {})
+              allowed = {"registry": "https://registry.npmjs.org/", "access": "public"}
+              if not isinstance(settings, dict) or any(
+                  key not in allowed or value != allowed[key] for key, value in settings.items()
+              ):
+                  raise ValueError("Unexpected publish settings")
+              if "tag" in pkg and pkg["tag"] != "canary":
+                  raise ValueError("Unexpected publish tag")
+
+              with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+                  print(f"version={version}", file=output)
+                  print(f"archive={archive_path}", file=output)
+          except (OSError, tarfile.TarError, ValueError) as error:
+              sys.exit(f"::error::Invalid canary archive: {error}")
+          PY
       - name: Publish canary
         run: npm publish "$CANARY_ARCHIVE" --ignore-scripts --tag canary --provenance --access public
         env:
