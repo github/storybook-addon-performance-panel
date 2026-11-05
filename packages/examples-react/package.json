@@ -14,7 +14,7 @@
     "@storybook/react-vite": "*",
     "react": "^19.3.0",
     "react-dom": "^19.3.1",
-    "storybook": "^11.0.0-alpha.6"
+    "storybook": "^11.0.0-alpha.9"
   },
   "devDependencies": {
     "@types/eslint-plugin-jsx-a11y": "^6.10.1",
