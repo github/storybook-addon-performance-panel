@@ -1,5 +1,11 @@
 # @github-ui/storybook-addon-performance-panel
 
+## 1.3.2
+
+### Patch Changes
+
+- [#215](https://github.com/github/storybook-addon-performance-panel/pull/215) [`76021e5`](https://github.com/github/storybook-addon-performance-panel/commit/76021e5035129ddff5bbdbe125d2038d23fce7a2) Thanks [@github-agentic-autofix](https://github.com/apps/github-agentic-autofix)! - Separate canary builds from publishing so publishing uses the workflow on the default branch. Validate package contents and publishing settings, and skip publication for outdated or ineligible pull requests. Add regression tests for package validation and the build-to-publish handoff.
+
 ## 1.3.1
 
 ### Patch Changes
