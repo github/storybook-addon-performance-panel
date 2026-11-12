@@ -225,6 +225,32 @@ DOM mutation observation and layer-promotion scans are scoped to the active stor
 
 Use the reset button to clear accumulated metrics, or set `parameters.performancePanel.disable` to `true` to disable the addon for a story.
 
+## Test Runners and CI
+
+Test runners such as `@storybook/addon-vitest` have no manager UI, so the panel never opens and collection never starts. The `./test` entry turns on headless collection and reads the active story's metrics, so a test can assert a budget or write a report.
+
+```typescript
+// .storybook/vitest.setup.ts
+import {afterEach, expect} from 'vitest'
+import {enableHeadlessCollection, getStoryMetrics} from '@github-ui/storybook-addon-performance-panel/test'
+
+enableHeadlessCollection()
+
+afterEach(() => {
+  const snapshot = getStoryMetrics()
+  if (!snapshot) return
+  const story = snapshot.profilers[`Story(${snapshot.storyId})`]
+  expect(story?.reactPostMountMaxDuration ?? 0).toBeLessThan(50)
+  expect(snapshot.metrics.layoutShiftScore).toBeLessThan(0.1)
+})
+```
+
+- `enableHeadlessCollection()` starts collectors as soon as a story renders, without channel live updates. Call it before the first story renders.
+- `getStoryMetrics()` returns `{storyId, metrics, profilers}` for the active story, or `null`. `metrics` is the same `PerformanceMetrics` payload the panel shows; `profilers` holds React Profiler metrics keyed by profiler ID.
+- The addon's preview annotations must be part of the project annotations the tests use.
+
+Test runners usually render React in development mode and share CPU with other work, so treat timings as relative. Compare stories against their own history, or use generous budgets, rather than production thresholds.
+
 ## Collectors
 
 The addon uses modular collector classes for metrics gathering. Each collector uses the most accurate available API for its metrics.
