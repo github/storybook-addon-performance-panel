@@ -50,7 +50,7 @@
     "globals": "^17.12.0",
     "h3-v2": "npm:h3@2.0.1-rc.31",
     "jiti": "^2.7.0",
-    "portless": "^0.15.6",
+    "portless": "^0.17.0",
     "prettier": "^3.9.6",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.0",
