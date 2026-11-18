@@ -46,7 +46,7 @@
 
 import {SyncIcon} from '@storybook/icons'
 import React from 'react'
-import {AddonPanel, Badge, Button, Code, Popover, WithTooltip} from 'storybook/internal/components'
+import {AddonPanel, Badge, Button, Code, TooltipProvider} from 'storybook/internal/components'
 import {useChannel, useStorybookState} from 'storybook/manager-api'
 import {useTheme} from 'storybook/theming'
 
@@ -294,11 +294,11 @@ const Metric = React.memo(function Metric({
         {label}
         {isWebVital && <WebVitalBadge>Vital</WebVitalBadge>}
         {tooltip && (
-          <WithTooltip tooltip={<Popover hasChrome={false}>{tooltip}</Popover>} closeOnOutsideClick>
+          <TooltipProvider tooltip={tooltip}>
             <InfoIcon type="button" aria-label={`Info about ${label}`}>
               i
             </InfoIcon>
-          </WithTooltip>
+          </TooltipProvider>
         )}
       </MetricLabel>
       <MetricValue>{children}</MetricValue>
