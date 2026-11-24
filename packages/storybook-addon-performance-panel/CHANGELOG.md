@@ -1,5 +1,11 @@
 # @github-ui/storybook-addon-performance-panel
 
+## 1.3.2
+
+### Patch Changes
+
+- [#227](https://github.com/github/storybook-addon-performance-panel/pull/227) [`e73d65a`](https://github.com/github/storybook-addon-performance-panel/commit/e73d65ae6585fc8dd4cacfc7931a8cd2398eda50) Thanks [@mattcosta7](https://github.com/mattcosta7)! - Support Storybook 11 beta by replacing the removed `WithTooltip` with `PopoverProvider` for metric info popovers. The peer range now states the real Storybook 10 floor (10.1.0).
+
 ## 1.3.1
 
 ### Patch Changes
