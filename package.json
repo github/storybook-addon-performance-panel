@@ -32,7 +32,10 @@
   "overrides": {
     "h3": "$h3-v2",
     "h3-v2": "$h3-v2",
-    "fflate": "0.8.3"
+    "fflate": "0.8.3",
+    "typed-css-modules": {
+      "glob": "^14.0.0"
+    }
   },
   "devDependencies": {
     "@changesets/changelog-github": "^1.0.1",
