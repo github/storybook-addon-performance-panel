@@ -46,7 +46,7 @@
 
 import {SyncIcon} from '@storybook/icons'
 import React from 'react'
-import {AddonPanel, Badge, Button, Code, Popover, WithTooltip} from 'storybook/internal/components'
+import {AddonPanel, Badge, Button, Code, PopoverProvider} from 'storybook/internal/components'
 import {useChannel, useStorybookState} from 'storybook/manager-api'
 import {useTheme} from 'storybook/theming'
 
@@ -286,6 +286,8 @@ const Metric = React.memo(function Metric({
 }: MetricProps) {
   const hasDetail = detail != null || reserveDetailSpace === true
   const Container = hasDetail ? MetricItemWithDetail : MetricItem
+  // Spread so Storybook 10 (no `ariaLabel` prop) doesn't fail excess-property checks; 11 requires it.
+  const popoverA11yProps = {ariaLabel: `Info about ${label}`}
 
   return (
     <Container>
@@ -294,11 +296,11 @@ const Metric = React.memo(function Metric({
         {label}
         {isWebVital && <WebVitalBadge>Vital</WebVitalBadge>}
         {tooltip && (
-          <WithTooltip tooltip={<Popover hasChrome={false}>{tooltip}</Popover>} closeOnOutsideClick>
+          <PopoverProvider {...popoverA11yProps} hasChrome={false} popover={tooltip}>
             <InfoIcon type="button" aria-label={`Info about ${label}`}>
               i
             </InfoIcon>
-          </WithTooltip>
+          </PopoverProvider>
         )}
       </MetricLabel>
       <MetricValue>{children}</MetricValue>

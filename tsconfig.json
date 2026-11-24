@@ -16,6 +16,15 @@
     "noImplicitOverride": true,
     "noUncheckedIndexedAccess": true,
     "noUncheckedSideEffectImports": true,
+    // Storybook 11 types `storybook/theming` as the create-only entry while the browser build still
+    // exports the Emotion API (and 10.x has no `storybook/theming/emotion`). Prefer the Emotion
+    // declarations when present, else fall back to the default ones.
+    "paths": {
+      "storybook/theming": [
+        "./node_modules/storybook/dist/theming/emotion.d.ts",
+        "./node_modules/storybook/dist/theming/index.d.ts"
+      ]
+    },
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,

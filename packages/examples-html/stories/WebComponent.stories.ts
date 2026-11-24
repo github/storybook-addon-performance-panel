@@ -60,6 +60,12 @@ class PerfCounter extends HTMLElement {
   }
 }
 
+declare global {
+  interface HTMLElementTagNameMap {
+    'perf-counter': PerfCounter
+  }
+}
+
 // Register once (guard for HMR re-execution)
 if (!customElements.get('perf-counter')) {
   customElements.define('perf-counter', PerfCounter)
@@ -71,7 +77,7 @@ const meta = {
     label: 'Click me',
   },
   render: args => {
-    const el = document.createElement('perf-counter') as PerfCounter
+    const el = document.createElement('perf-counter')
     el.setAttribute('label', args.label)
     return el
   },

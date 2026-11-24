@@ -46,7 +46,7 @@ export default defineConfig(({mode}) => {
           filter: (page: {path: string}) => !page.path.includes('/examples/') && !page.path.includes('#'),
         },
       }),
-      react({babel: {plugins: [['babel-plugin-react-compiler']]}}),
+      react({compiler: true}),
     ],
     server: {
       // Listen on all interfaces so portless can proxy to the Vite dev server
