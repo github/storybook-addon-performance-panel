@@ -16,6 +16,7 @@
     "lint": "eslint . --cache",
     "test": "npm test -w @github-ui/storybook-addon-performance-panel",
     "tsc": "tsc -b packages/storybook-addon-performance-panel/tsconfig.build.json",
+    "tsc:website": "tsc -p packages/website/tsconfig.json",
     "docs": "npm run build && npm run storybook -w @github-ui/examples-react",
     "docs:build": "npm run build && npm run build-storybook -w @github-ui/examples-react",
     "docs:html": "npm run build && npm run storybook -w @github-ui/examples-html",

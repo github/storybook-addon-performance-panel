@@ -69,6 +69,7 @@ jobs:
             packages/storybook-addon-performance-panel/dist
           key: deps-${{ github.sha }}
       - run: npm run tsc
+      - run: npm run tsc:website
 
   test:
     name: Test
