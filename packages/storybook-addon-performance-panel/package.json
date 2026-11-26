@@ -98,7 +98,7 @@
     "@storybook/icons": "^2.0.0",
     "@storybook/react": "^10.1.0 || >=11.0.0-0 <12.0.0-0",
     "react": "^19",
-    "storybook": "^10.1.0 || >=11.0.0-0 <12.0.0-0"
+    "storybook": "^11.0.0-beta.4"
   },
   "peerDependenciesMeta": {
     "@storybook/react": {
